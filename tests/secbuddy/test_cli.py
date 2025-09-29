@@ -166,6 +166,30 @@ def test_redact() -> None:
     assert summary
 
 
+def test_ai_consent_flow(tmp_path, monkeypatch, capsys) -> None:
+    import os
+    old_home = os.environ.get("HOME")
+    os.environ["HOME"] = str(tmp_path)
+    try:
+        # Enable AI without consent; should fall back and include notice
+        cfg_path = tmp_path / ".secbuddy" / "config.toml"
+        cfg_path.parent.mkdir(parents=True, exist_ok=True)
+        cfg_path.write_text("ai.enabled = true\napprovals.ai_consent = false\n", encoding="utf-8")
+        from secbuddy.cli import main
+        code = main(["explain", "nmap -sV"])
+        out = capsys.readouterr().out
+        assert code == 0
+        assert "AI disabled without consent" in out
+        # With --send, should proceed (still stubbed but no consent warning)
+        code = main(["explain", "nmap -sV", "--send"])
+        out2 = capsys.readouterr().out
+        assert code == 0
+        assert "AI disabled without consent" not in out2
+    finally:
+        if old_home is not None:
+            os.environ["HOME"] = old_home
+
+
 @pytest.mark.parametrize(
     "text, expect",
     [

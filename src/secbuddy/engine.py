@@ -74,6 +74,26 @@ class OpenAIEngine:
         return self._call("plan", _prompt_plan(text))
 
 
+@dataclass(frozen=True)
+class ClaudeEngine(OpenAIEngine):
+    def _call(self, kind: str, prompt: str) -> str:
+        redacted, summary = self.redact_fn(prompt)
+        return (
+            f"[AI disabled in this build] Would call Claude ({self.model}) for {kind}.\n"
+            f"Summary: {summary}"
+        )
+
+
+@dataclass(frozen=True)
+class GeminiEngine(OpenAIEngine):
+    def _call(self, kind: str, prompt: str) -> str:
+        redacted, summary = self.redact_fn(prompt)
+        return (
+            f"[AI disabled in this build] Would call Gemini ({self.model}) for {kind}.\n"
+            f"Summary: {summary}"
+        )
+
+
 # Prompt templates
 SYSTEM = (
     "You are SecBuddy, a beginner-friendly cybersecurity helper. "
@@ -136,4 +156,3 @@ def redact(text: str) -> tuple[str, str]:
         red = re.sub(r"sk-[A-Za-z0-9]{20,}", "<TOKEN>", red)
         summary.append("tokens redacted")
     return red, ", ".join(summary) or "no sensitive patterns detected"
-

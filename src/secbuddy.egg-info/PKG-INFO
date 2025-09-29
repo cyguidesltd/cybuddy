@@ -1,3 +1,18 @@
+Metadata-Version: 2.4
+Name: secbuddy
+Version: 0.1.0
+Summary: A beginner-friendly cybersecurity helper CLI with Codex-like UX
+Author: Your Name
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"
+Requires-Dist: pytest-cov>=4.1; extra == "dev"
+Requires-Dist: ruff>=0.6.9; extra == "dev"
+Requires-Dist: mypy>=1.11; extra == "dev"
+Requires-Dist: types-setuptools; extra == "dev"
+
 # SecBuddy
 
 A minimal, beginner-friendly cybersecurity helper CLI inspired by Codex CLI’s flow and hackingBuddyGPT, but simplified for students. It provides structured prompts, checklists, and quick references for common tasks (recon, web, crypto, forensics) and a conversational helper.
@@ -6,26 +21,9 @@ A minimal, beginner-friendly cybersecurity helper CLI inspired by Codex CLI’s 
 
 ## Quickstart
 
-### Option A: One-shot script (recommended for local use)
-
-```bash
-./scripts/run_secbuddy.sh guide
-```
-
-The script creates `.venv/`, installs requirements plus SecBuddy itself if missing, and then forwards any arguments to the `secbuddy` CLI.
-
-### Option B: Manual install
-
-1. Create a virtual environment (optional but recommended):
-   `python -m venv .venv && source .venv/bin/activate`
-2. Install runtime dependencies:
-   `python -m pip install -r requirements.txt`
-3. Install SecBuddy so the CLI entry point is available:
-   `python -m pip install .`
-4. Run the assistant from anywhere with:
-   `secbuddy guide`
-
-The legacy `python -m secbuddy` entry point still works if you prefer not to install the script globally.
+- python -m venv .venv && source .venv/bin/activate
+- pip install -e .[dev]
+- make run  # or: python -m secbuddy
 
 ## Features
 - `secbuddy guide` – interactive helper with tips and commands.

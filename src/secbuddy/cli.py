@@ -203,23 +203,23 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Student helpers
     if cmd == "explain" and len(args) > 1:
-        text = " ".join(args[1:]).strip("\"")
-        return _maybe_json_print("explain", text, engine.explain(text))
+        text, send = _extract_text_and_send(args[1:])
+        return _maybe_json_print("explain", text, _maybe_ai(engine, "explain", text, send))
     if cmd in {"assist", "help"} and len(args) > 1:
-        text = " ".join(args[1:]).strip("\"")
-        return _maybe_json_print("assist", text, engine.assist(text))
+        text, send = _extract_text_and_send(args[1:])
+        return _maybe_json_print("assist", text, _maybe_ai(engine, "assist", text, send))
     if cmd == "tip" and len(args) > 1:
-        text = " ".join(args[1:]).strip("\"")
-        return _maybe_json_print("tip", text, engine.tip(text))
+        text, send = _extract_text_and_send(args[1:])
+        return _maybe_json_print("tip", text, _maybe_ai(engine, "tip", text, send))
     if cmd == "report" and len(args) > 1:
-        text = " ".join(args[1:]).strip("\"")
-        return _maybe_json_print("report", text, engine.report(text))
+        text, send = _extract_text_and_send(args[1:])
+        return _maybe_json_print("report", text, _maybe_ai(engine, "report", text, send))
     if cmd == "quiz" and len(args) > 1:
-        text = " ".join(args[1:]).strip("\"")
-        return _maybe_json_print("quiz", text, engine.quiz(text))
+        text, send = _extract_text_and_send(args[1:])
+        return _maybe_json_print("quiz", text, _maybe_ai(engine, "quiz", text, send))
     if cmd == "plan" and len(args) > 1:
-        text = " ".join(args[1:]).strip("\"")
-        return _maybe_json_print("plan", text, engine.plan(text))
+        text, send = _extract_text_and_send(args[1:])
+        return _maybe_json_print("plan", text, _maybe_ai(engine, "plan", text, send))
         
 
     if cmd == "todo":
@@ -237,6 +237,15 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 if __name__ == "__main__":  # pragma: no cover
     raise SystemExit(main())
+
+
+def _maybe_json_print(kind: str, input_text: str, output_text: str) -> int:
+    if os.environ.get("SECBUDDY_JSON") == "1":
+        obj = {"type": kind, "input": input_text, "output": output_text, "ts": _now_iso()}
+        print(json.dumps(obj))
+        return 0
+    print(output_text)
+    return 0
 
 # === Student-focused helpers (simple heuristics, no external calls) ===
 
@@ -394,6 +403,12 @@ def load_config() -> dict:
         "todo.path": str(_app_dir() / "todo.json"),
         "output.truncate_lines": 60,
         "approvals.require_exec": True,
+        "approvals.ai_consent": False,
+        "ai.enabled": False,
+        "ai.provider": "openai",
+        "ai.redact": True,
+        "ai.max_tokens": 300,
+        "history.verbatim": False,
     }
     path = _config_file()
     if not path.exists():
@@ -439,8 +454,14 @@ def history_append(event: dict, session: Optional[str] = None) -> None:
     if not cfg.get("history.enabled", True):
         return
     try:
+        payload = {"ts": _now_iso(), **event}
+        if event.get("type", "").startswith("ai:") and not load_config().get("history.verbatim", False):
+            data = event.get("data")
+            if isinstance(data, dict):
+                data = {k: v for k, v in data.items() if k in {"kind", "redaction", "len"}}
+            payload["data"] = data
         with _history_file(session).open("a", encoding="utf-8") as f:
-            f.write(json.dumps({"ts": _now_iso(), **event}) + "\n")
+            f.write(json.dumps(payload) + "\n")
     except Exception:
         pass
 
@@ -562,7 +583,46 @@ def _select_engine() -> AnswerEngine:
                 plan_fn=step_planner,
             )
         return OpenAIEngine(api_key=api_key, model=model, redact_fn=redact)
+    if provider == "claude":
+        return ClaudeEngine(api_key=str(cfg.get("claude.api_key", "")), model=str(cfg.get("claude.model", "claude-3")), redact_fn=redact)
+    if provider == "gemini":
+        return GeminiEngine(api_key=str(cfg.get("gemini.api_key", "")), model=str(cfg.get("gemini.model", "gemini-1.5")), redact_fn=redact)
     # Future: claude, gemini, custom
+    return HeuristicEngine(
+        explain_fn=explain_command,
+        tip_fn=quick_tip,
+        assist_fn=help_troubleshoot,
+        report_fn=micro_report,
+        quiz_fn=quiz_flashcards,
+        plan_fn=step_planner,
+    )
+
+
+def _extract_text_and_send(args: List[str]) -> Tuple[str, bool]:
+    send = False
+    cleaned: List[str] = []
+    for a in args:
+        if a == "--send":
+            send = True
+        else:
+            cleaned.append(a)
+    return " ".join(cleaned).strip("\""), send
+
+
+def _maybe_ai(engine: AnswerEngine, kind: str, text: str, send: bool) -> str:
+    cfg = load_config()
+    if not cfg.get("ai.enabled", False):
+        return getattr(_HeuristicProxy(), kind)(text)
+    if not cfg.get("approvals.ai_consent", False) and not send:
+        return f"[AI disabled without consent] Use --send or set approvals.ai_consent=true.\n" + getattr(_HeuristicProxy(), kind)(text)
+    redacted_text, summary = redact(text) if cfg.get("ai.redact", True) else (text, "no redaction")
+    history_append({"type": "ai:request", "data": {"kind": kind, "redaction": summary}})
+    result = getattr(engine, kind)(text)
+    history_append({"type": "ai:response", "data": {"kind": kind, "len": len(result)}})
+    return result
+
+
+def _HeuristicProxy() -> AnswerEngine:
     return HeuristicEngine(
         explain_fn=explain_command,
         tip_fn=quick_tip,

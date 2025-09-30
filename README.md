@@ -1,26 +1,22 @@
-# SecBuddy 🛡️
+# CyBuddy 🛡️
 
 Your friendly cybersecurity learning companion. Built for students, CTF players, and anyone learning offensive security.
 
-## What is SecBuddy?
+## What is CyBuddy?
 
-Think of it as a helpful mentor who's always available when you're stuck during a CTF, lab, or pentest exercise. Instead of Googling "how does nmap work" for the 10th time, just ask SecBuddy.
+Think of it as a helpful mentor who's always available when you're stuck during a CTF, lab, or pentest exercise. Instead of Googling "how does nmap work" for the 10th time, just ask CyBuddy.
 
 ## Quick Start
 
 ```bash
-# One-line install (creates venv and installs everything)
-./scripts/run_secbuddy.sh guide --tui
-
-# Or manual install
+# Manual install
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-pip install .
-secbuddy guide --tui
+pip install -e .
+cybuddy guide --tui
 ```
 
-That's it! You're now in the interactive learning interface.
+You're now in the interactive learning interface.
 
 ## The 7 Commands You Need
 
@@ -68,7 +64,7 @@ Once inside, you have exactly 7 simple commands:
 → Good luck! Document your steps and be safe.
 ```
 
-## Why SecBuddy?
+## Why CyBuddy?
 
 ### Problem
 You're doing a CTF. You find a weird service on port 8080. You Google "how to enumerate port 8080". You get 50 tabs of Stack Overflow, blog posts from 2015, and tool documentation that assumes you already know what you're doing.
@@ -127,28 +123,28 @@ You just went from stuck → understanding → action in 3 commands. No browser 
 
 ### Checklists for Common Tasks
 ```bash
-secbuddy checklist web
-secbuddy checklist recon
-secbuddy checklist crypto
-secbuddy checklist forensics
+cybuddy checklist web
+cybuddy checklist recon
+cybuddy checklist crypto
+cybuddy checklist forensics
 ```
 
 ### TODO Tracking
 ```bash
-secbuddy todo add "Enumerate SMB shares"
-secbuddy todo list
-secbuddy todo done 1
+cybuddy todo add "Enumerate SMB shares"
+cybuddy todo list
+cybuddy todo done 1
 ```
 
 ### Command History
 ```bash
-secbuddy history
-secbuddy history --clear
+cybuddy history
+cybuddy history --clear
 ```
 
 ### Dry-run Tool Execution
 ```bash
-secbuddy run nmap "-sV target.local"
+cybuddy run nmap "-sV target.local"
 # Shows safety warnings + what the command does
 # Add --exec to actually run it
 ```
@@ -158,7 +154,7 @@ secbuddy run nmap "-sV target.local"
 Want smarter answers? Enable AI (requires API key):
 
 ```bash
-# Create ~/.secbuddy/config.toml
+# Create ~/.cybuddy/config.toml
 ai.enabled = true
 ai.provider = "openai"
 openai.api_key = "sk-..."
@@ -167,20 +163,20 @@ openai.model = "gpt-4o-mini"
 
 Then use `--send` flag:
 ```bash
-secbuddy explain "nmap -A target" --send
+cybuddy explain "nmap -A target" --send
 ```
 
 **Default:** Built-in heuristics (no API needed)
 **With AI:** More detailed, context-aware responses
 
-## Why SecBuddy?
+## Why CyBuddy?
 
 Most security tools are:
 - **Complex** - 100 flags, 50 modes, steep learning curve
 - **Fragmented** - Different tool for every task
 - **Overwhelming** - Too many options when you just want an answer
 
-SecBuddy is:
+CyBuddy is:
 - **Simple** - 7 commands, one interface
 - **Focused** - Built for learning, not production pentesting
 - **Helpful** - Like a mentor who explains things clearly
@@ -217,4 +213,4 @@ A: Only if you enable AI mode and use --send. Otherwise everything is local.
 
 **Built for learners. By someone who remembers being stuck at 2am during a CTF.**
 
-Start learning: `secbuddy guide --tui`
+Start learning: `cybuddy guide --tui`

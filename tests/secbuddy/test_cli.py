@@ -31,14 +31,14 @@ def test_help_exits_zero(capsys: pytest.CaptureFixture[str]) -> None:
     code = run_cli(["--help"])
     captured = capsys.readouterr()
     assert code == 0
-    assert "SecBuddy" in captured.out
+    assert "CyBuddy" in captured.out
 
 
 def test_prompt_prints(capsys: pytest.CaptureFixture[str]) -> None:
     code = run_cli(["prompt"])
     captured = capsys.readouterr()
     assert code == 0
-    assert "SecBuddy" in captured.out
+    assert "CyBuddy" in captured.out
 
 
 def test_explain_nmap() -> None:

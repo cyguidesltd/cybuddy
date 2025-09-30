@@ -58,7 +58,7 @@ CHECKLISTS: dict[str, ChecklistItem] = {
 
 
 STARTER_PROMPT = (
-    "You are SecBuddy, a helpful cybersecurity study companion. "
+    "You are CyBuddy, a helpful cybersecurity study companion. "
     "You explain steps simply, provide safe defaults, and always suggest next actions. "
     "You avoid running destructive commands and emphasize documenting findings."
 )
@@ -67,10 +67,10 @@ STARTER_PROMPT = (
 def print_help() -> int:
     print(
         """
-SecBuddy - beginner-friendly cybersecurity helper
+CyBuddy - beginner-friendly cybersecurity helper
 
 7 Core Commands (Interactive TUI):
-  secbuddy guide [--tui]         Launch interactive learning interface (recommended)
+  cybuddy guide [--tui]         Launch interactive learning interface (recommended)
     → explain '<command>'        Learn what commands do (e.g., explain 'nmap -sV')
     → tip '<topic>'              Study guide for security topics
     → help '<error>'             Troubleshoot errors and issues
@@ -80,21 +80,21 @@ SecBuddy - beginner-friendly cybersecurity helper
     → exit                       Exit the interface
 
 Additional Commands:
-  secbuddy checklist [topic]     Show a checklist (recon|web|crypto|forensics)
-  secbuddy prompt                Print a starter LLM system prompt
-  secbuddy explain "<command>"   One-shot explain (use TUI for interactive)
-  secbuddy tip "<topic>"         One-shot tip (use TUI for interactive)
-  secbuddy assist "<issue>"      One-shot troubleshoot
-  secbuddy report "<finding>"    One-shot report template
-  secbuddy quiz "<topic>"        One-shot quiz
-  secbuddy plan "<context>"      One-shot plan
-  secbuddy todo [subcmd]         Plan tracker: list/add/done/clear
-  secbuddy history [--clear]     Show or clear recent session history
-  secbuddy config                Show resolved configuration
-  secbuddy run <tool> "<args>"   Dry-run wrapper with safety notes (use --exec to run)
+  cybuddy checklist [topic]     Show a checklist (recon|web|crypto|forensics)
+  cybuddy prompt                Print a starter LLM system prompt
+  cybuddy explain "<command>"   One-shot explain (use TUI for interactive)
+  cybuddy tip "<topic>"         One-shot tip (use TUI for interactive)
+  cybuddy assist "<issue>"      One-shot troubleshoot
+  cybuddy report "<finding>"    One-shot report template
+  cybuddy quiz "<topic>"        One-shot quiz
+  cybuddy plan "<context>"      One-shot plan
+  cybuddy todo [subcmd]         Plan tracker: list/add/done/clear
+  cybuddy history [--clear]     Show or clear recent session history
+  cybuddy config                Show resolved configuration
+  cybuddy run <tool> "<args>"   Dry-run wrapper with safety notes (use --exec to run)
 
 Examples:
-  secbuddy guide --tui                    # Launch interactive mode
+  cybuddy guide --tui                    # Launch interactive mode
   explain 'nmap -sV target.local'         # Inside TUI
   tip 'SQL injection basics'              # Inside TUI
   help 'sqlmap connection refused'        # Inside TUI
@@ -129,7 +129,17 @@ def cmd_checklist(topic: Optional[str]) -> int:
 
 
 def cmd_guide(stdin: Iterable[str] = sys.stdin, session: Optional[str] = None) -> int:
-    print("Welcome to SecBuddy Guide. Type 'exit' to quit. Use /tip, /plan, /checklist <topic>, /todo add <..>, /run <tool> \"args\"")
+    # Print colored shield logo with gradient (green to cyan) and medical cross
+    # Matches the SVG design: rgb(0,255,136) → rgb(0,255,255)
+    print("\033[1;38;2;0;255;136m        ▄▀▀▀▄\033[0m")
+    print("\033[1;38;2;0;255;150m       █  │  █\033[0m")
+    print("\033[1;38;2;0;255;170m      █ ──┼── █\033[0m      \033[1;97mCY\033[1;38;2;0;255;255mBUDDY\033[0m")
+    print("\033[1;38;2;0;255;190m      █   │   █\033[0m")
+    print("\033[1;38;2;0;255;210m       █     █\033[0m       \033[2mYour Security Learning Companion\033[0m")
+    print("\033[1;38;2;0;255;230m        █   █\033[0m")
+    print("\033[1;38;2;0;255;245m         █ █\033[0m")
+    print("\033[1;38;2;0;255;255m          ▀\033[0m\n")
+    print("Type 'exit' to quit. Use /tip, /plan, /checklist <topic>, /todo add <..>, /run <tool> \"args\"")
     while True:
         try:
             line = input("> ").strip()
@@ -294,119 +304,43 @@ if __name__ == "__main__":  # pragma: no cover
 
 
 def _maybe_json_print(kind: str, input_text: str, output_text: str) -> int:
-    if os.environ.get("SECBUDDY_JSON") == "1":
+    if os.environ.get("CYBUDDY_JSON") == "1":
         obj = {"type": kind, "input": input_text, "output": output_text, "ts": _now_iso()}
         print(json.dumps(obj))
         return 0
     print(output_text)
     return 0
 
-# === Student-focused helpers (simple heuristics, no external calls) ===
+# === Student-focused helpers (uses rich mockup data) ===
 
 def explain_command(command_text: str) -> str:
-    t = command_text.strip()
-    if t.startswith("nmap"):
-        parts = []
-        if "-sV" in t:
-            parts.append("-sV: version detection")
-        if "-Pn" in t:
-            parts.append("-Pn: treat hosts as up (no ping)")
-        if "-T" in t:
-            parts.append("-T<0-5>: timing (lower is safer)")
-        if not parts:
-            parts.append("Basic port/service scan")
-        parts.append("Use when enumerating services")
-        parts.append("Watch out: can be noisy on IDS")
-        return "\n".join(parts)
-    if t.startswith("sqlmap"):
-        return (
-            "sqlmap: automated SQLi testing\n"
-            "Use with explicit scope and consent\n"
-            "Flags: -u URL, --data, --risk/--level"
-        )
-    return "High-level explanation not found; try a simpler example."
+    from .mockup_data import smart_explain
+    return smart_explain(command_text)
 
 
 def quick_tip(topic: str) -> str:
-    k = topic.lower()
-    if "sql" in k:
-        return (
-            "Look for ' OR '1'='1 in forms\n"
-            "Check error messages\n"
-            "Use UNION to extract tables"
-        )
-    if any(s in k for s in ["xss", "cross-site"]):
-        return (
-            "Test reflected params with <script>alert(1)</script> (safely)\n"
-            "Prefer attribute/style/event variations\n"
-            "Check CSP and output encoding"
-        )
-    return "Start from basics, confirm assumptions, and test small examples."
+    from .mockup_data import smart_tip
+    return smart_tip(topic)
 
 
 def help_troubleshoot(issue: str) -> str:
-    k = issue.lower()
-    if "sqlmap" in k and ("refused" in k or "connection" in k):
-        return (
-            "Target may be down\n"
-            "Check host/IP & port\n"
-            "Ensure lab is running (Docker / VM)"
-        )
-    if "nmap" in k and "permission" in k:
-        return (
-            "Try non-privileged scans or sudo if appropriate\n"
-            "Avoid aggressive flags in shared labs\n"
-            "Document command and environment"
-        )
-    return "Reproduce the error, capture the exact message, and simplify the command."
+    from .mockup_data import smart_assist
+    return smart_assist(issue)
 
 
 def micro_report(finding: str) -> str:
-    # Produce a compact template regardless of input
-    return (
-        "Vulnerability: "
-        + (finding or "(describe succinctly)")
-        + "\nImpact: (what can an attacker do)\nMitigation: (least-privilege, patch, validation)"
-    )
+    from .mockup_data import smart_report
+    return smart_report(finding)
 
 
 def quiz_flashcards(topic: str) -> str:
-    k = topic.lower()
-    if "sql" in k:
-        return (
-            "Q: What is a common SQLi payload?\n"
-            "A: ' OR '1'='1 --\n"
-            "Q: Mitigation?\n"
-            "A: Use parameterized queries"
-        )
-    if "xss" in k:
-        return (
-            "Q: What is reflected XSS?\n"
-            "A: Injection reflected in immediate response\n"
-            "Q: Mitigation?\n"
-            "A: Output encoding + CSP"
-        )
-    return (
-        "Q: Define the core concept\n"
-        "A: One-sentence explanation\n"
-        "Q: Name a mitigation\n"
-        "A: One concrete step"
-    )
+    from .mockup_data import smart_quiz
+    return smart_quiz(topic)
 
 
 def step_planner(context: str) -> str:
-    k = context.lower()
-    if "nmap" in k and ("80" in k or "http" in k or "web" in k):
-        return (
-            "1. Enumerate the web service (nikto, directory brute force)\n"
-            "2. Check banners for version info\n"
-            "3. Test for common web vulns (XSS, SQLi)"
-        )
-    return (
-        "1. Clarify scope and objective\n"
-        "2. Choose safe default tools/flags\n"
-        "3. Record findings and plan next probe"
-    )
+    from .mockup_data import smart_plan
+    return smart_plan(context)
 
 
 # === Lightweight session history and TODO tracker ===
@@ -414,7 +348,7 @@ def step_planner(context: str) -> str:
 def _app_dir() -> Path:
     # Respect HOME override; do not create directories unless needed later
     home = os.environ.get("HOME") or os.path.expanduser("~")
-    return Path(home) / ".secbuddy"
+    return Path(home) / ".cybuddy"
 
 
 def _history_file(session: Optional[str] = None) -> Path:

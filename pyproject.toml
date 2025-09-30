@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "secbuddy"
+name = "cybuddy"
 version = "0.1.0"
 description = "A beginner-friendly cybersecurity helper CLI with Codex-like UX"
 readme = "README.md"
@@ -25,7 +25,7 @@ dev = [
 ]
 
 [project.scripts]
-secbuddy = "secbuddy.cli:main"
+cybuddy = "secbuddy.cli:main"
 
 [tool.ruff]
 line-length = 88

@@ -141,7 +141,7 @@ class SecbuddyApp:
             prompt.append("".join(self._current_input))
         else:
             prompt.append("Type security questions or /commands (try /tip, /checklist, /todo) · F2 for transcript", style="dim")
-        return Panel(prompt, title="SecBuddy Guide", border_style="cyan")
+        return Panel(prompt, title="CyBuddy Guide", border_style="cyan")
 
     def _render_shortcuts(self, overlay: Optional[Overlay]) -> RenderableType:
         table = Table.grid(expand=True)

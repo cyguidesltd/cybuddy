@@ -35,11 +35,15 @@ def handle_user_input(text: str, session: Optional[str] = None) -> GuideResponse
     Returns:
         GuideResponse with PLAN/ACTION/CMD/OUT/NEXT fields
     """
-    plan_text = suggest_next(text)
-    action = "Provide brief next step and safe command (if any)"
+    from .mockup_data import smart_plan
+
+    plan_text = smart_plan(text)
+    action = "Follow the suggested steps below with safe defaults"
     cmd_hint = _guide_command_hint(text)
-    output = "(analysis in brief; update your todo/history as needed)"
-    next_step = suggest_next(text)
+
+    # Generate contextual output based on input
+    output = _generate_contextual_output(text)
+    next_step = _extract_first_step(plan_text)
 
     return GuideResponse(
         response_type="structured",
@@ -50,6 +54,32 @@ def handle_user_input(text: str, session: Optional[str] = None) -> GuideResponse
         next_step=next_step,
         raw_input=text,
     )
+
+
+def _generate_contextual_output(text: str) -> str:
+    """Generate brief contextual analysis of user input."""
+    t = text.lower()
+    if any(k in t for k in ["nmap", "scan", "port"]):
+        return "Start with service version detection (-sV) and document all findings"
+    if any(k in t for k in ["web", "http", "xss", "sql"]):
+        return "Test inputs methodically, check for injection points, use Burp for inspection"
+    if any(k in t for k in ["hash", "crack", "password"]):
+        return "Identify hash type first (hashid), then select appropriate tool and wordlist"
+    if any(k in t for k in ["shell", "reverse", "access"]):
+        return "Stabilize connection, enumerate privileges, look for escalation paths"
+    if any(k in t for k in ["found", "discovered"]):
+        return "Document the finding, test for related vulnerabilities, plan next enumeration phase"
+    return "Break down the objective, choose safe tools, document each step carefully"
+
+
+def _extract_first_step(plan_text: str) -> str:
+    """Extract just the first step from a plan for next_step field."""
+    lines = [l.strip() for l in plan_text.split('\n') if l.strip()]
+    if lines:
+        # Remove numbering if present
+        first = lines[0].lstrip('0123456789.)- ')
+        return first
+    return "Document your findings and proceed methodically"
 
 
 def handle_slash_command(line: str, session: Optional[str] = None) -> SlashResponse:
@@ -202,24 +232,9 @@ def _guide_command_hint(text: str) -> str:
     return ""
 
 
-def suggest_next(user_text: str) -> str:
-    """Suggest next steps based on user input."""
-    t = user_text.lower()
-    if any(k in t for k in ["nmap", "scan", "port"]):
-        return "Try: nmap -sV -Pn -T2 <target>. Start safe; document findings."
-    if any(k in t for k in ["web", "http", "xss", "sql", "burp"]):
-        return "Check robots.txt, headers, inputs. Consider Burp with passive scans first."
-    if any(k in t for k in ["hash", "cipher", "encode", "crypto"]):
-        return "Identify format (hashid), test small samples, avoid brute-force blindly."
-    if any(k in t for k in ["forensic", "image", "pcap", "memory"]):
-        return "Verify file magic, run strings/hexdump, use appropriate carve/analysis tools."
-    return "Break the task down: scope -> safe defaults -> record results -> next step."
-
-
 __all__ = [
     "GuideResponse",
     "SlashResponse",
     "handle_user_input",
     "handle_slash_command",
-    "suggest_next",
 ]

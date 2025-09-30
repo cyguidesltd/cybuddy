@@ -22,7 +22,7 @@ class TerminalController:
 
     def __init__(self) -> None:
         self._input = create_input(sys.stdin)
-        self._output = create_output(stdout=True)
+        self._output = create_output(stdout=sys.stdout)
         self.console = Console(force_terminal=True, highlight=False)
         self._event_queue: asyncio.Queue[SecbuddyEvent] = asyncio.Queue()
         self._reader_task: Optional[asyncio.Task[None]] = None
@@ -44,14 +44,41 @@ class TerminalController:
         self._exit_stack.close()
 
     def _enter_terminal_modes(self) -> None:
+        """Enter raw mode and set up terminal properly."""
         self._exit_stack.enter_context(self._input.raw_mode())
-        self._exit_stack.enter_context(self._input.bracketed_paste_mode())
-        self._exit_stack.enter_context(self._input.attach(self._output))
+
+        # Bracketed paste mode is optional - not all input types support it
+        if hasattr(self._input, 'bracketed_paste_mode'):
+            try:
+                self._exit_stack.enter_context(self._input.bracketed_paste_mode())
+            except Exception:
+                pass  # Ignore if not supported
+
+        # Attach input to event loop - creates callback for reading
+        # The callback should be the input's read handler, not the output
+        if hasattr(self._input, 'attach'):
+            try:
+                # Create a callback that will trigger on input
+                def input_ready() -> None:
+                    pass  # The read_keys() call will handle actual reading
+
+                self._exit_stack.enter_context(self._input.attach(input_ready))
+            except Exception:
+                pass  # Not critical if attach fails
 
     async def _read_input(self) -> None:
+        """
+        Read input keys asynchronously.
+
+        read_keys() is blocking, so we run it in a thread executor to avoid
+        blocking the event loop.
+        """
         try:
+            loop = asyncio.get_running_loop()
             while True:
-                key_presses = await self._input.read_keys()
+                # Run the blocking read_keys() in a thread executor
+                key_presses = await loop.run_in_executor(None, self._input.read_keys)
+
                 for key_press in key_presses:
                     event = self._convert_key_press(key_press)
                     if event is not None:
@@ -109,10 +136,25 @@ class TerminalController:
         self._alt_active = False
 
     def draw_renderable(self, renderable: RenderableType) -> None:
-        self._output.write_raw("\x1b[2J\x1b[H")
+        """Draw a renderable to the screen, clearing and positioning first."""
+        # Hide cursor during drawing
+        self._output.write_raw("\x1b[?25l")  # Hide cursor
+
+        # Clear screen and move cursor to home position
+        self._output.write_raw("\x1b[2J")  # Clear entire screen
+        self._output.write_raw("\x1b[H")   # Move cursor to home (1,1)
         self._output.flush()
-        self.console.print(renderable, soft_wrap=True)
-        self.console.file.flush()
+
+        # Render with Rich
+        self.console.print(renderable, soft_wrap=True, end="")
+
+        # Show cursor again
+        self._output.write_raw("\x1b[?25h")  # Show cursor
+
+        # Make sure output is flushed
+        self._output.flush()
+        if hasattr(self.console.file, 'flush'):
+            self.console.file.flush()
 
     async def aclose(self) -> None:
         if self._reader_task is not None:

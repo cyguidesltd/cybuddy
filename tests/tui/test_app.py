@@ -40,14 +40,19 @@ def test_app_collects_input_and_toggles_overlay() -> None:
     app.process_event(key_event("a", "a"))
     app.process_event(key_event("enter"))
     snapshot = app.history.snapshot()
-    assert snapshot == ["a"]
+    # Now the app processes input through handlers, so expect structured response
+    assert len(snapshot) > 0
+    assert snapshot[0] == "> a"  # User input is prefixed with >
+    # Should contain PLAN/ACTION sections
+    assert any("PLAN:" in line for line in snapshot)
+    assert any("ACTION:" in line for line in snapshot)
 
     layout = app.render_for_testing()
     console = Console(record=True, width=60)
     console.print(layout)
     rendered = console.export_text(clear=True)
     assert "Session History" in rendered
-    assert "Input" in rendered
+    assert "SecBuddy Guide" in rendered  # Panel title changed from "Input"
 
     assert not terminal.alt_active
     app.process_event(key_event("f2"))

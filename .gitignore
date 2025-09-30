@@ -7,3 +7,6 @@ __pycache__/
 *.pyd
 .DS_Store
 
+# Ignore all markdown files except README.md
+*.md
+!README.md

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, cast
+from typing import Optional, cast, TYPE_CHECKING
 
 from rich.console import RenderableType
 from rich.layout import Layout
@@ -12,6 +12,9 @@ from rich.text import Text
 from .core import FrameScheduler, HistoryBuffer, SecbuddyEvent, TerminalController
 from .core.events import EventType, KeyEvent, PasteEvent
 from .overlays import Overlay, PagerOverlay
+
+if TYPE_CHECKING:
+    from secbuddy.handlers import GuideResponse
 
 
 @dataclass
@@ -42,12 +45,13 @@ class OverlayStack:
 class SecbuddyApp:
     """Main TUI orchestrator mirroring the Codex architecture."""
 
-    def __init__(self, *, terminal: Optional[TerminalController] = None) -> None:
+    def __init__(self, *, terminal: Optional[TerminalController] = None, session: Optional[str] = None) -> None:
         self.history = HistoryBuffer()
         self._terminal = terminal or TerminalController()
         self._overlay_stack = OverlayStack()
         self._scheduler: Optional[FrameScheduler] = None
         self._current_input: list[str] = []
+        self._session = session
 
     async def run(self) -> None:
         async with self._terminal:
@@ -136,8 +140,8 @@ class SecbuddyApp:
         if self._current_input:
             prompt.append("".join(self._current_input))
         else:
-            prompt.append("Type commands or notes; press Enter to log.", style="dim")
-        return Panel(prompt, title="Input", border_style="cyan")
+            prompt.append("Type security questions or /commands (try /tip, /checklist, /todo) · F2 for transcript", style="dim")
+        return Panel(prompt, title="SecBuddy Guide", border_style="cyan")
 
     def _render_shortcuts(self, overlay: Optional[Overlay]) -> RenderableType:
         table = Table.grid(expand=True)
@@ -182,7 +186,7 @@ class SecbuddyApp:
             if self._current_input:
                 text = "".join(self._current_input).strip()
                 if text:
-                    self.history.append(text)
+                    self._process_user_input(text)
                 self._current_input.clear()
                 self._request_frame()
             return
@@ -197,5 +201,60 @@ class SecbuddyApp:
         if event.data and not (event.ctrl or event.alt):
             self._current_input.append(event.data)
             self._request_frame()
+
+    def _process_user_input(self, text: str) -> None:
+        """Process user input through SecBuddy handlers and render response."""
+        # Add user input to history
+        self.history.append(f"> {text}")
+
+        # Handle exit commands
+        if text.lower() in {"exit", "quit"}:
+            import asyncio
+            loop = asyncio.get_running_loop()
+            loop.stop()
+            return
+
+        # Route through handlers
+        if text.startswith("/"):
+            from secbuddy.handlers import handle_slash_command
+            response = handle_slash_command(text, session=self._session)
+            self._render_simple_response(response.output)
+        else:
+            from secbuddy.handlers import handle_user_input
+            from secbuddy.cli import history_append
+            response = handle_user_input(text, session=self._session)
+            self._render_structured_response(response)
+            # Log to persistent history
+            history_append({"type": "guide", "data": {"input": text, "plan": response.plan}}, session=self._session)
+
+    def _render_simple_response(self, output: str) -> None:
+        """Render simple text response."""
+        for line in output.split("\n"):
+            if line.strip():
+                self.history.append(line)
+
+    def _render_structured_response(self, response: GuideResponse) -> None:
+        """Render structured PLAN/ACTION/CMD/OUT/NEXT response."""
+        from secbuddy.handlers import GuideResponse
+
+        self.history.append("")
+        self.history.append("PLAN:")
+        self.history.append(f"  {response.plan}")
+        self.history.append("")
+        self.history.append("ACTION:")
+        self.history.append(f"  {response.action}")
+
+        if response.cmd:
+            self.history.append("")
+            self.history.append("CMD:")
+            self.history.append(f"  {response.cmd}")
+
+        self.history.append("")
+        self.history.append("OUT:")
+        self.history.append(f"  {response.output}")
+        self.history.append("")
+        self.history.append("NEXT:")
+        self.history.append(f"  {response.next_step}")
+        self.history.append("")
 
 __all__ = ["SecbuddyApp"]

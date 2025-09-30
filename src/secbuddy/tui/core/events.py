@@ -24,65 +24,70 @@ class BaseEvent:
 class KeyEvent(BaseEvent):
     """Represents a key press with normalized modifier metadata."""
 
-    key: str
-    data: str | None
-    ctrl: bool
-    alt: bool
-    shift: bool
+    event_type: EventType = EventType.KEY
+    key: str = ""
+    data: str | None = None
+    ctrl: bool = False
+    alt: bool = False
+    shift: bool = False
 
     def __init__(self, key: str, data: str | None, *, ctrl: bool, alt: bool, shift: bool) -> None:
-        super().__setattr__("event_type", EventType.KEY)
-        super().__setattr__("key", key)
-        super().__setattr__("data", data)
-        super().__setattr__("ctrl", ctrl)
-        super().__setattr__("alt", alt)
-        super().__setattr__("shift", shift)
+        object.__setattr__(self, "event_type", EventType.KEY)
+        object.__setattr__(self, "key", key)
+        object.__setattr__(self, "data", data)
+        object.__setattr__(self, "ctrl", ctrl)
+        object.__setattr__(self, "alt", alt)
+        object.__setattr__(self, "shift", shift)
 
 
 @dataclass(frozen=True)
 class PasteEvent(BaseEvent):
     """Represents a bracketed paste payload."""
 
-    text: str
+    event_type: EventType = EventType.PASTE
+    text: str = ""
 
     def __init__(self, text: str) -> None:
-        super().__setattr__("event_type", EventType.PASTE)
-        super().__setattr__("text", text)
+        object.__setattr__(self, "event_type", EventType.PASTE)
+        object.__setattr__(self, "text", text)
 
 
 @dataclass(frozen=True)
 class DrawEvent(BaseEvent):
     """Signals that the UI should draw a frame."""
 
-    requested_at: float
+    event_type: EventType = EventType.DRAW
+    requested_at: float = 0.0
 
     def __init__(self, requested_at: float) -> None:
-        super().__setattr__("event_type", EventType.DRAW)
-        super().__setattr__("requested_at", requested_at)
+        object.__setattr__(self, "event_type", EventType.DRAW)
+        object.__setattr__(self, "requested_at", requested_at)
 
 
 @dataclass(frozen=True)
 class FocusEvent(BaseEvent):
     """Tracks terminal focus transitions where supported by the backend."""
 
-    gained: bool
+    event_type: EventType = EventType.FOCUS
+    gained: bool = False
 
     def __init__(self, gained: bool) -> None:
-        super().__setattr__("event_type", EventType.FOCUS)
-        super().__setattr__("gained", gained)
+        object.__setattr__(self, "event_type", EventType.FOCUS)
+        object.__setattr__(self, "gained", gained)
 
 
 @dataclass(frozen=True)
 class ResizeEvent(BaseEvent):
     """Terminal size change notification."""
 
-    width: int
-    height: int
+    event_type: EventType = EventType.RESIZE
+    width: int = 0
+    height: int = 0
 
     def __init__(self, width: int, height: int) -> None:
-        super().__setattr__("event_type", EventType.RESIZE)
-        super().__setattr__("width", width)
-        super().__setattr__("height", height)
+        object.__setattr__(self, "event_type", EventType.RESIZE)
+        object.__setattr__(self, "width", width)
+        object.__setattr__(self, "height", height)
 
 
 SecbuddyEvent = Union[KeyEvent, PasteEvent, DrawEvent, FocusEvent, ResizeEvent]

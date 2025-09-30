@@ -69,21 +69,35 @@ def print_help() -> int:
         """
 SecBuddy - beginner-friendly cybersecurity helper
 
-Usage:
-  secbuddy guide [--session NAME]  Interactive helper with PLAN/ACTION/CMD/OUT/NEXT; supports slash-commands
+7 Core Commands (Interactive TUI):
+  secbuddy guide [--tui]         Launch interactive learning interface (recommended)
+    → explain '<command>'        Learn what commands do (e.g., explain 'nmap -sV')
+    → tip '<topic>'              Study guide for security topics
+    → help '<error>'             Troubleshoot errors and issues
+    → report '<finding>'         Practice writing security reports (2-3 lines)
+    → quiz '<topic>'             Active recall with flashcards
+    → plan '<context>'           Get next steps guidance (3 steps)
+    → exit                       Exit the interface
+
+Additional Commands:
   secbuddy checklist [topic]     Show a checklist (recon|web|crypto|forensics)
   secbuddy prompt                Print a starter LLM system prompt
-  secbuddy help                  Show this help
-  secbuddy explain "<command>"   Explain a shell/tool command
-  secbuddy tip "<topic>"         Quick study tip/trick
-  secbuddy assist "<issue>"      Troubleshoot an error (alias: help!)
-  secbuddy report "<finding>"    2–3 line practice write-up
-  secbuddy quiz "<topic>"        Flashcard-style Q&A (2–3 items)
-  secbuddy plan "<context>"      Next steps guidance (3 steps)
+  secbuddy explain "<command>"   One-shot explain (use TUI for interactive)
+  secbuddy tip "<topic>"         One-shot tip (use TUI for interactive)
+  secbuddy assist "<issue>"      One-shot troubleshoot
+  secbuddy report "<finding>"    One-shot report template
+  secbuddy quiz "<topic>"        One-shot quiz
+  secbuddy plan "<context>"      One-shot plan
   secbuddy todo [subcmd]         Plan tracker: list/add/done/clear
   secbuddy history [--clear]     Show or clear recent session history
   secbuddy config                Show resolved configuration
-  secbuddy run <tool> "<args>"  Dry-run wrapper with safety notes (use --exec to run)
+  secbuddy run <tool> "<args>"   Dry-run wrapper with safety notes (use --exec to run)
+
+Examples:
+  secbuddy guide --tui                    # Launch interactive mode
+  explain 'nmap -sV target.local'         # Inside TUI
+  tip 'SQL injection basics'              # Inside TUI
+  help 'sqlmap connection refused'        # Inside TUI
         """.strip()
     )
     return 0
@@ -134,18 +148,44 @@ def cmd_guide(stdin: Iterable[str] = sys.stdin, session: Optional[str] = None) -
             print(_guide_handle_slash(line, session=session))
             continue
 
-        # Render codex-like sections
-        plan_text = suggest_next(line)
+        # Render codex-like sections using handlers
+        from .handlers import handle_user_input
+        response = handle_user_input(line, session=session)
         print("PLAN:")
-        print("- " + plan_text)
-        action = "Provide brief next step and safe command (if any)"
-        print("ACTION:\n- " + action)
-        cmd_hint = _guide_command_hint(line)
-        if cmd_hint:
-            print("CMD:\n" + cmd_hint)
-        print("OUT:\n(analysis in brief; update your todo/history as needed)")
-        print("NEXT:\n- " + suggest_next(line))
-        history_append({"type": "guide", "data": {"input": line, "plan": plan_text}}, session=session)
+        print("- " + response.plan)
+        print("ACTION:\n- " + response.action)
+        if response.cmd:
+            print("CMD:\n" + response.cmd)
+        print("OUT:\n" + response.output)
+        print("NEXT:\n- " + response.next_step)
+        history_append({"type": "guide", "data": {"input": line, "plan": response.plan}}, session=session)
+    return 0
+
+
+def _guide_handle_slash(line: str, session: Optional[str] = None) -> str:
+    """Handle slash commands in guide mode (delegates to handlers)."""
+    from .handlers import handle_slash_command
+    response = handle_slash_command(line, session=session)
+    return response.output
+
+
+def cmd_guide_tui(session: Optional[str] = None, simple: bool = True) -> int:
+    """
+    Launch the interactive TUI for guide mode.
+
+    Uses prompt_toolkit's proper async API (PromptSession.prompt_async)
+    instead of low-level read_keys() for reliable input handling.
+    """
+    import asyncio
+
+    # Use the fixed SimpleTUI with proper prompt_toolkit usage
+    from .simple_tui_fixed import SimpleTUI
+    app = SimpleTUI(session=session)
+
+    try:
+        asyncio.run(app.run())
+    except KeyboardInterrupt:
+        print("\nGood luck! Document your steps and be safe.")
     return 0
 
 
@@ -197,8 +237,22 @@ def main(argv: Optional[List[str]] = None) -> int:
         return cmd_checklist(topic)
     if cmd == "guide":
         session = None
-        if len(args) > 1 and args[1] == "--session" and len(args) > 2:
-            session = args[2]
+        use_tui = False
+        remaining_args = args[1:]
+
+        # Parse --session and --tui flags
+        while remaining_args:
+            if remaining_args[0] == "--session" and len(remaining_args) > 1:
+                session = remaining_args[1]
+                remaining_args = remaining_args[2:]
+            elif remaining_args[0] == "--tui":
+                use_tui = True
+                remaining_args = remaining_args[1:]
+            else:
+                remaining_args = remaining_args[1:]
+
+        if use_tui:
+            return cmd_guide_tui(session=session)
         return cmd_guide(session=session)
 
     # Student helpers

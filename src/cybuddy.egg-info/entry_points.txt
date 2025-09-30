@@ -1,0 +1,2 @@
+[console_scripts]
+cybuddy = secbuddy.cli:main

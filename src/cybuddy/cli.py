@@ -70,7 +70,7 @@ def print_help() -> int:
 CyBuddy - beginner-friendly cybersecurity helper
 
 7 Core Commands (Interactive TUI):
-  cybuddy guide [--tui]         Launch interactive learning interface (recommended)
+  cybuddy guide [--tui|--cli]   Launch interactive learning interface (auto-detects mode)
     → explain '<command>'        Learn what commands do (e.g., explain 'nmap -sV')
     → tip '<topic>'              Study guide for security topics
     → help '<error>'             Troubleshoot errors and issues
@@ -188,8 +188,8 @@ def cmd_guide_tui(session: Optional[str] = None, simple: bool = True) -> int:
     """
     import asyncio
 
-    # Use the fixed SimpleTUI with proper prompt_toolkit usage
-    from .simple_tui_fixed import SimpleTUI
+    # Use the TUI with proper prompt_toolkit usage
+    from .tui import SimpleTUI
     app = SimpleTUI(session=session)
 
     try:
@@ -250,7 +250,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         use_tui = False
         remaining_args = args[1:]
 
-        # Parse --session and --tui flags
+        # Parse --session, --tui, and --cli flags
         while remaining_args:
             if remaining_args[0] == "--session" and len(remaining_args) > 1:
                 session = remaining_args[1]
@@ -258,8 +258,19 @@ def main(argv: Optional[List[str]] = None) -> int:
             elif remaining_args[0] == "--tui":
                 use_tui = True
                 remaining_args = remaining_args[1:]
+            elif remaining_args[0] == "--cli":
+                use_tui = False
+                remaining_args = remaining_args[1:]
             else:
                 remaining_args = remaining_args[1:]
+
+        # Auto-detect mode if not explicitly specified
+        if not any(flag in args for flag in ["--tui", "--cli"]):
+            from .terminal_detection import select_mode, get_fallback_message
+            mode = select_mode()
+            if mode == 'cli':
+                print(get_fallback_message())
+            use_tui = (mode == 'tui')
 
         if use_tui:
             return cmd_guide_tui(session=session)
@@ -314,32 +325,32 @@ def _maybe_json_print(kind: str, input_text: str, output_text: str) -> int:
 # === Student-focused helpers (uses rich mockup data) ===
 
 def explain_command(command_text: str) -> str:
-    from .mockup_data import smart_explain
+    from .data import smart_explain
     return smart_explain(command_text)
 
 
 def quick_tip(topic: str) -> str:
-    from .mockup_data import smart_tip
+    from .data import smart_tip
     return smart_tip(topic)
 
 
 def help_troubleshoot(issue: str) -> str:
-    from .mockup_data import smart_assist
+    from .data import smart_assist
     return smart_assist(issue)
 
 
 def micro_report(finding: str) -> str:
-    from .mockup_data import smart_report
+    from .data import smart_report
     return smart_report(finding)
 
 
 def quiz_flashcards(topic: str) -> str:
-    from .mockup_data import smart_quiz
+    from .data import smart_quiz
     return smart_quiz(topic)
 
 
 def step_planner(context: str) -> str:
-    from .mockup_data import smart_plan
+    from .data import smart_plan
     return smart_plan(context)
 
 

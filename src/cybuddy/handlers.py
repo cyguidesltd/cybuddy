@@ -35,7 +35,7 @@ def handle_user_input(text: str, session: Optional[str] = None) -> GuideResponse
     Returns:
         GuideResponse with PLAN/ACTION/CMD/OUT/NEXT fields
     """
-    from .mockup_data import smart_plan
+    from .data import smart_plan
 
     plan_text = smart_plan(text)
     action = "Follow the suggested steps below with safe defaults"

@@ -126,7 +126,7 @@ def run_simple_guide(session: Optional[str] = None) -> int:
         console.print()
 
         # Log to history
-        history_append({"type": "simple_guide", "data": {"cmd": cmd, "arg": arg}}, session=session)
+        history_append({"type": "interactive_cli", "data": {"cmd": cmd, "arg": arg}}, session=session)
 
     return 0
 

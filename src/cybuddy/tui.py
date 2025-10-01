@@ -176,7 +176,7 @@ class SimpleTUI:
 
         # Log to history
         history_append(
-            {"type": "simple_tui", "data": {"cmd": cmd, "arg": arg}},
+            {"type": "tui", "data": {"cmd": cmd, "arg": arg}},
             session=self.session_name
         )
 

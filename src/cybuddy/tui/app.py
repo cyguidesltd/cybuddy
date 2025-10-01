@@ -236,6 +236,7 @@ class CybuddyApp:
     def _render_structured_response(self, response: GuideResponse) -> None:
         """Render structured PLAN/ACTION/CMD/OUT/NEXT response."""
         from cybuddy.handlers import GuideResponse
+        from cybuddy.formatters import create_syntax_highlight, is_likely_code
 
         self.history.append("")
         self.history.append("PLAN:")
@@ -247,7 +248,12 @@ class CybuddyApp:
         if response.cmd:
             self.history.append("")
             self.history.append("CMD:")
-            self.history.append(f"  {response.cmd}")
+            # Apply syntax highlighting to commands
+            if is_likely_code(response.cmd):
+                syntax = create_syntax_highlight(response.cmd, language="bash", line_numbers=False)
+                self.history.append(syntax)
+            else:
+                self.history.append(f"  {response.cmd}")
 
         self.history.append("")
         self.history.append("OUT:")

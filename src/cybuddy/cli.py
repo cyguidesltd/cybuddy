@@ -160,12 +160,19 @@ def cmd_guide(stdin: Iterable[str] = sys.stdin, session: Optional[str] = None) -
 
         # Render codex-like sections using handlers
         from .handlers import handle_user_input
+        from .formatters import highlight_command, is_likely_code
+
         response = handle_user_input(line, session=session)
         print("PLAN:")
         print("- " + response.plan)
         print("ACTION:\n- " + response.action)
         if response.cmd:
-            print("CMD:\n" + response.cmd)
+            print("CMD:")
+            # Apply syntax highlighting to commands in CLI mode
+            if is_likely_code(response.cmd):
+                highlight_command(response.cmd)
+            else:
+                print(response.cmd)
         print("OUT:\n" + response.output)
         print("NEXT:\n- " + response.next_step)
         history_append({"type": "guide", "data": {"input": line, "plan": response.plan}}, session=session)

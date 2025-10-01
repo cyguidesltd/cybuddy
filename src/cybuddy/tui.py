@@ -181,17 +181,52 @@ class SimpleTUI:
         )
 
     def _print_response(self, title: str, content: str) -> None:
-        """Print formatted response with README-style borders."""
+        """Print formatted response with README-style borders and syntax highlighting."""
+        from .formatters import create_syntax_highlight, is_likely_code
+
         # Top border with title
         border_len = 50 - len(title)
         self.console.print(f"[bold yellow]─── {title} {'─' * border_len}[/bold yellow]")
 
-        # Content with 2-space indent
-        for line in content.split("\n"):
-            if line.strip():
-                self.console.print(f"  {line}")
+        # Content with 2-space indent and syntax highlighting for code blocks
+        lines = content.split("\n")
+        code_buffer = []
+        in_code_block = False
+
+        for line in lines:
+            # Detect potential code lines (start with common commands or have flags)
+            if is_likely_code(line.strip()) and not in_code_block:
+                in_code_block = True
+                code_buffer = [line]
+            elif in_code_block:
+                # Continue code block if line looks like code or is empty
+                if is_likely_code(line.strip()) or not line.strip():
+                    code_buffer.append(line)
+                else:
+                    # End code block and print it
+                    if code_buffer:
+                        code_text = "\n".join(code_buffer)
+                        syntax = create_syntax_highlight(code_text, line_numbers=False)
+                        self.console.print(syntax)
+                        code_buffer = []
+                    in_code_block = False
+                    # Print current line as regular text
+                    if line.strip():
+                        self.console.print(f"  {line}")
+                    else:
+                        self.console.print()
             else:
-                self.console.print()
+                # Regular text line
+                if line.strip():
+                    self.console.print(f"  {line}")
+                else:
+                    self.console.print()
+
+        # Print any remaining code buffer
+        if code_buffer:
+            code_text = "\n".join(code_buffer)
+            syntax = create_syntax_highlight(code_text, line_numbers=False)
+            self.console.print(syntax)
 
         # Bottom border
         self.console.print("[bold yellow]{'─' * 60}[/bold yellow]")

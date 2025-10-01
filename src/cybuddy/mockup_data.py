@@ -1,6 +1,4 @@
 """
-Extensive mockup data for SecBuddy VC demo.
-
 This module contains comprehensive pattern-matched responses for all student helper commands,
 enabling realistic demonstrations without requiring AI API calls.
 """
@@ -563,6 +561,341 @@ EXPLAIN_DB: Dict[str, Dict[str, str]] = {
         "--threads": "Number of threads",
         "usage": "Use for: Subdomain enumeration, zone transfer attempts",
         "caution": "Noisy! Generates many DNS queries"
+    },
+
+    # Web Security Tools - Proxies
+    "burp suite": {
+        "base": "Industry-standard web application security testing platform with comprehensive proxy, scanner, and manual testing tools",
+        "proxy": "Intercept and modify HTTP/S traffic between browser and target",
+        "repeater": "Manually manipulate and resend individual requests",
+        "intruder": "Automated customized attacks with position markers and payload lists",
+        "scanner": "Automated vulnerability scanning (Professional version only)",
+        "decoder": "Encode/decode data in various formats (Base64, URL, HTML, etc.)",
+        "comparer": "Visual diff tool to compare responses and find subtle differences",
+        "extensions": "Extend functionality with BApp Store plugins",
+        "usage": "Use for: Web app pentesting, API testing, manual security testing, traffic analysis",
+        "caution": "Professional version required for scanner. Free version has limited features. Install CA certificate for HTTPS interception"
+    },
+
+    "owasp zap": {
+        "base": "Free and open source web application security scanner with proxy capabilities",
+        "proxy": "Intercept and modify HTTP/S traffic",
+        "spider": "Automatically crawl web application to discover pages and functionality",
+        "active scan": "Automated vulnerability scanning with customizable policies",
+        "passive scan": "Analyze traffic for security issues without sending additional requests",
+        "fuzzer": "Customizable fuzzing for parameter and input testing",
+        "api": "REST API for integration with CI/CD pipelines",
+        "usage": "Use for: Automated security testing, CI/CD integration, learning web security",
+        "caution": "Can be noisy during active scanning. Configure scan policies appropriately for target environment"
+    },
+
+    "mitmproxy": {
+        "base": "Interactive TLS-capable intercepting HTTP proxy for penetration testers and software developers",
+        "web": "Web interface for traffic inspection and modification",
+        "console": "Command-line interface for advanced users",
+        "scripts": "Python scripting for automated traffic manipulation",
+        "addons": "Extend functionality with custom Python addons",
+        "ssl": "Built-in SSL/TLS certificate generation and management",
+        "usage": "Use for: Traffic analysis, API testing, mobile app testing, automated proxy tasks",
+        "caution": "Requires certificate installation on target devices. Use responsibly on authorized targets only"
+    },
+
+    "caido": {
+        "base": "Modern web security testing platform with real-time traffic analysis and automated testing",
+        "proxy": "High-performance HTTP/S proxy with real-time traffic capture",
+        "replay": "Replay and modify captured requests",
+        "scanning": "Automated vulnerability scanning with modern detection techniques",
+        "api": "REST API for integration and automation",
+        "collaboration": "Team features for sharing findings and workflows",
+        "usage": "Use for: Modern web security testing, team collaboration, API security testing",
+        "caution": "Commercial tool with subscription model. Ensure proper licensing for your use case"
+    },
+
+    "http toolkit": {
+        "base": "Beautiful and open-source HTTP(S) debugging proxy, inspector, and repeater",
+        "proxy": "Intercept and modify HTTP/S traffic with modern interface",
+        "repeater": "Manually test and modify requests",
+        "inspector": "Detailed analysis of HTTP headers, cookies, and responses",
+        "mock": "Create mock responses for API testing",
+        "usage": "Use for: API development, web debugging, security testing, learning HTTP",
+        "caution": "Primarily designed for development. Use additional security tools for comprehensive testing"
+    },
+
+    # Web Security Tools - Scanners
+    "nikto": {
+        "base": "Web server scanner that checks for dangerous files, outdated software, and misconfigurations",
+        "-h": "Target host/URL to scan",
+        "-p": "Port to scan (default 80)",
+        "-ssl": "Force SSL mode for HTTPS scanning",
+        "-Tuning": "Tune tests (1=interesting files, 2=misconfig, 3=information disclosure, etc.)",
+        "-nossl": "Disable SSL",
+        "-C": "Include cookies in requests",
+        "-useragent": "Custom user agent string",
+        "usage": "Use for: Quick vulnerability assessment, finding known issues, initial reconnaissance",
+        "caution": "Very noisy! Generates many requests. Not stealthy at all. Use on authorized targets only"
+    },
+
+    "wpscan": {
+        "base": "WordPress vulnerability scanner that checks for vulnerable plugins, themes, and core issues",
+        "--url": "Target WordPress site URL",
+        "--enumerate": "Enumerate (u=users, p=plugins, t=themes, vp=vulnerable plugins, vt=vulnerable themes)",
+        "--api-token": "WPScan API token for vulnerability database access",
+        "--force": "Force scan even if WordPress not detected",
+        "--stealthy": "Use stealth mode to avoid detection",
+        "--update": "Update vulnerability database",
+        "usage": "Use for: WordPress site reconnaissance, plugin/theme enumeration, vulnerability assessment",
+        "caution": "Noisy scan. Can be detected by WAF/IPS. Requires API token for full vulnerability data"
+    },
+
+    "wapiti": {
+        "base": "Web application vulnerability scanner that performs black-box testing",
+        "-u": "Target URL to scan",
+        "-m": "Modules to use (sql, xss, file, etc.)",
+        "-f": "Output format (txt, xml, json, html)",
+        "-o": "Output file",
+        "--scope": "Define scan scope with regex patterns",
+        "--auth": "Authentication configuration",
+        "usage": "Use for: Automated web vulnerability scanning, comprehensive security assessment",
+        "caution": "Can generate significant traffic. Configure scope appropriately. May trigger security alerts"
+    },
+
+    "arachni": {
+        "base": "Feature-full, modular, high-performance Ruby framework aimed towards helping penetration testers and administrators evaluate the security of web applications",
+        "webui": "Web-based user interface for scan management",
+        "cli": "Command-line interface for automated scanning",
+        "plugins": "Extensible plugin system for custom checks",
+        "reports": "Multiple output formats (HTML, JSON, XML, etc.)",
+        "usage": "Use for: Comprehensive web application security testing, custom vulnerability checks",
+        "caution": "Resource intensive. Requires Ruby environment. Can be slow on large applications"
+    },
+
+    "skipfish": {
+        "base": "Active web application security reconnaissance tool that prepares an interactive sitemap for the target site",
+        "-o": "Output directory for results",
+        "-S": "Dictionary file for content discovery",
+        "-W": "Wordlist file for parameter fuzzing",
+        "-C": "Cookie string for authenticated scanning",
+        "-X": "Exclude URLs matching pattern",
+        "usage": "Use for: Web application reconnaissance, sitemap generation, security assessment",
+        "caution": "Can be resource intensive. May generate significant traffic. Use appropriate wordlists"
+    },
+
+    "nuclei": {
+        "base": "Fast vulnerability scanner based on simple YAML templates for security testing",
+        "-u": "Target URL to scan",
+        "-l": "List of URLs from file",
+        "-t": "Template file or directory",
+        "-tags": "Execute templates with specific tags",
+        "-severity": "Filter by severity (info, low, medium, high, critical)",
+        "-rate-limit": "Rate limit requests per second",
+        "usage": "Use for: Fast vulnerability scanning, custom template development, CI/CD integration",
+        "caution": "Very fast scanner. Use rate limiting to avoid overwhelming targets. Keep templates updated"
+    },
+
+    "acunetix": {
+        "base": "Commercial web vulnerability scanner with comprehensive testing capabilities",
+        "features": "Automated scanning, manual testing tools, CI/CD integration, compliance reporting",
+        "coverage": "Tests for OWASP Top 10, SANS Top 25, and custom vulnerabilities",
+        "reporting": "Detailed reports with remediation guidance",
+        "usage": "Use for: Enterprise security testing, compliance scanning, comprehensive vulnerability assessment",
+        "caution": "Commercial license required. Expensive but comprehensive. Use for authorized testing only"
+    },
+
+    "nessus": {
+        "base": "Commercial vulnerability scanner with web application testing modules",
+        "web": "Web application scanning with specialized plugins",
+        "compliance": "Compliance scanning for various standards",
+        "reporting": "Comprehensive reporting with remediation guidance",
+        "usage": "Use for: Enterprise vulnerability management, compliance scanning, comprehensive security assessment",
+        "caution": "Commercial license required. Expensive but industry standard. Requires proper licensing"
+    },
+
+    # Web Security Tools - Directory/File Fuzzers
+    "ffuf": {
+        "base": "Fast web fuzzer written in Go with excellent performance and flexibility",
+        "-u": "Target URL with FUZZ keyword placeholder",
+        "-w": "Wordlist file path",
+        "-mc": "Match HTTP response codes (e.g., -mc 200,204,301,302)",
+        "-fc": "Filter HTTP response codes (e.g., -fc 404,403)",
+        "-fs": "Filter response size (e.g., -fs 1234)",
+        "-t": "Number of threads (default 40)",
+        "-H": "Add custom header (e.g., -H \"Cookie: session=abc\")",
+        "usage": "Use for: Directory fuzzing, parameter discovery, subdomain enumeration, content discovery",
+        "caution": "Very fast. Can overwhelm servers. Start with lower thread count. Use rate limiting"
+    },
+
+    "wfuzz": {
+        "base": "Web application fuzzer that can be used for finding resources not linked, bruteforcing GET and POST parameters, and more",
+        "-w": "Wordlist file",
+        "-c": "Colorize output",
+        "-t": "Number of threads",
+        "-s": "Delay between requests",
+        "-H": "Add custom header",
+        "-d": "POST data string",
+        "usage": "Use for: Web application fuzzing, parameter discovery, directory brute-forcing",
+        "caution": "Slower than ffuf but more feature-rich. Can generate significant traffic"
+    },
+
+    "dirbuster": {
+        "base": "Java application designed to brute-force directories and files names on web/application servers",
+        "gui": "Graphical user interface for easy configuration",
+        "wordlists": "Built-in wordlists for common directories and files",
+        "threading": "Multi-threaded scanning for faster results",
+        "usage": "Use for: Directory enumeration, file discovery, web content scanning",
+        "caution": "Older tool, slower than modern alternatives. Consider gobuster or ffuf for better performance"
+    },
+
+    "gobuster": {
+        "base": "Directory/file brute-forcing tool written in Go with excellent performance",
+        "dir": "Directory brute-forcing mode",
+        "dns": "DNS subdomain enumeration mode",
+        "vhost": "Virtual host brute-forcing mode",
+        "-u": "Target URL",
+        "-w": "Wordlist path (e.g., /usr/share/wordlists/dirb/common.txt)",
+        "-t": "Number of threads (default 10)",
+        "-x": "File extensions to search for (e.g., -x php,html,txt)",
+        "usage": "Use for: Finding hidden endpoints, admin panels, backup files, subdomain enumeration",
+        "caution": "Generates significant traffic. Use small wordlists for stealth. Consider rate limiting"
+    },
+
+    "feroxbuster": {
+        "base": "Fast, simple, recursive content discovery tool written in Rust",
+        "-u": "Target URL",
+        "-w": "Wordlist file",
+        "-t": "Number of threads",
+        "-x": "File extensions to search for",
+        "-s": "Status codes to include",
+        "-f": "Status codes to filter out",
+        "usage": "Use for: Fast directory enumeration, content discovery, web reconnaissance",
+        "caution": "Very fast Rust-based tool. Use appropriate rate limiting. Can overwhelm targets"
+    },
+
+    # Web Security Tools - CMS Scanners
+    "joomscan": {
+        "base": "Joomla vulnerability scanner that checks for vulnerable components and configurations",
+        "-u": "Target Joomla site URL",
+        "-ec": "Enable component enumeration",
+        "-ed": "Enable directory enumeration",
+        "-ef": "Enable file enumeration",
+        "usage": "Use for: Joomla site reconnaissance, component enumeration, vulnerability assessment",
+        "caution": "Noisy scanner. Can be detected by WAF/IPS. Use on authorized targets only"
+    },
+
+    "droopescan": {
+        "base": "Plugin-based scanner that identifies issues with several CMSs, mainly Drupal and Silverstripe",
+        "drupal": "Drupal-specific vulnerability scanning",
+        "silverstripe": "Silverstripe CMS scanning",
+        "wordpress": "WordPress scanning capabilities",
+        "usage": "Use for: CMS-specific vulnerability scanning, Drupal security assessment",
+        "caution": "Focuses on specific CMSs. May not cover all vulnerability types. Use as part of comprehensive testing"
+    },
+
+    "cmsmap": {
+        "base": "Open source Python CMS scanner that automates the process of detecting security flaws in the most popular CMSs",
+        "wordpress": "WordPress vulnerability scanning",
+        "joomla": "Joomla vulnerability scanning",
+        "drupal": "Drupal vulnerability scanning",
+        "usage": "Use for: Multi-CMS vulnerability scanning, automated CMS security assessment",
+        "caution": "May generate significant traffic. Use appropriate rate limiting. Keep updated for latest vulnerabilities"
+    },
+
+    "whatweb": {
+        "base": "Web scanner that identifies websites and their technologies",
+        "-u": "Target URL",
+        "-a": "Aggressive scan mode",
+        "-v": "Verbose output",
+        "--log": "Log results to file",
+        "usage": "Use for: Technology fingerprinting, web technology identification, reconnaissance",
+        "caution": "Passive reconnaissance tool. Generally safe to use. Good for initial target analysis"
+    },
+
+    # Web Security Tools - Specialized
+    "sqlmap": {
+        "base": "Automatic SQL injection and database takeover tool with comprehensive testing capabilities",
+        "-u": "Target URL",
+        "--data": "POST data string",
+        "--cookie": "HTTP Cookie header value",
+        "--dbs": "Enumerate databases",
+        "--tables": "Enumerate tables",
+        "--dump": "Dump table data",
+        "--risk": "Risk level (1-3, higher = more dangerous tests)",
+        "--level": "Level of tests (1-5, higher = more comprehensive)",
+        "--batch": "Non-interactive mode (accept defaults)",
+        "usage": "Use for: Automated SQLi testing and exploitation, database enumeration",
+        "caution": "Very aggressive! Only use on authorized targets. Can modify database. Use --batch for automation"
+    },
+
+    "xsstrike": {
+        "base": "Advanced XSS detection and exploitation tool with intelligent payload generation",
+        "-u": "Target URL",
+        "--data": "POST data string",
+        "--headers": "Custom headers",
+        "--crawl": "Crawl target for XSS vulnerabilities",
+        "--blind": "Blind XSS testing mode",
+        "usage": "Use for: XSS vulnerability detection, payload generation, XSS exploitation",
+        "caution": "Can generate malicious payloads. Use only on authorized targets. May trigger security alerts"
+    },
+
+    "commix": {
+        "base": "Automated command injection testing tool with comprehensive payload generation",
+        "-u": "Target URL",
+        "--data": "POST data string",
+        "--cookie": "HTTP Cookie header value",
+        "--os": "Target operating system",
+        "--shell": "Reverse shell payload",
+        "usage": "Use for: Command injection testing, OS command execution, shell access",
+        "caution": "Can execute system commands. Use only on authorized targets. Very dangerous if misused"
+    },
+
+    "nosqlmap": {
+        "base": "Automated NoSQL injection testing tool for MongoDB, CouchDB, and other NoSQL databases",
+        "-u": "Target URL",
+        "--data": "POST data string",
+        "--cookie": "HTTP Cookie header value",
+        "--method": "HTTP method (GET, POST, etc.)",
+        "usage": "Use for: NoSQL injection testing, MongoDB security assessment",
+        "caution": "Can access NoSQL databases. Use only on authorized targets. May modify database contents"
+    },
+
+    "ssrf sheriff": {
+        "base": "Server-Side Request Forgery (SSRF) testing tool with comprehensive payload generation",
+        "-u": "Target URL",
+        "--data": "POST data string",
+        "--headers": "Custom headers",
+        "--payloads": "Custom payload file",
+        "usage": "Use for: SSRF vulnerability testing, internal network scanning, cloud metadata access",
+        "caution": "Can access internal services. Use only on authorized targets. May trigger security alerts"
+    },
+
+    "xxe injector": {
+        "base": "XML External Entity (XXE) injection testing tool with comprehensive payload generation",
+        "-u": "Target URL",
+        "--data": "POST data string",
+        "--headers": "Custom headers",
+        "--file": "File to read (e.g., /etc/passwd)",
+        "usage": "Use for: XXE vulnerability testing, local file inclusion, SSRF via XXE",
+        "caution": "Can read local files. Use only on authorized targets. May cause denial of service"
+    },
+
+    "tplmap": {
+        "base": "Server-Side Template Injection (SSTI) testing tool with support for multiple template engines",
+        "-u": "Target URL",
+        "--data": "POST data string",
+        "--cookie": "HTTP Cookie header value",
+        "--engine": "Template engine (jinja2, twig, etc.)",
+        "usage": "Use for: SSTI vulnerability testing, template engine exploitation",
+        "caution": "Can execute code on server. Use only on authorized targets. Very dangerous if misused"
+    },
+
+    "arjun": {
+        "base": "HTTP parameter discovery suite with intelligent parameter detection",
+        "-u": "Target URL",
+        "--data": "POST data string",
+        "--headers": "Custom headers",
+        "--include": "Include specific parameters",
+        "--exclude": "Exclude specific parameters",
+        "usage": "Use for: Parameter discovery, API endpoint testing, hidden parameter finding",
+        "caution": "Can discover sensitive parameters. Use only on authorized targets. May reveal application internals"
     }
 }
 

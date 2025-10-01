@@ -501,6 +501,207 @@ EXPLAIN_DB: Dict[str, Dict[str, str]] = {
         "caution": "Requires Frida server on target. Can be detected by anti-debugging"
     },
 
+    # Attack Techniques
+    "kerberoasting": {
+        "base": "Active Directory attack to extract service account credentials by requesting TGS tickets and cracking them offline",
+        "methodology": "1. Enumerate service accounts with SPNs 2. Request TGS tickets for target services 3. Extract tickets and crack offline 4. Use cracked credentials for lateral movement",
+        "tools": "Rubeus, Impacket, Invoke-Kerberoast, hashcat",
+        "detection": "Monitor for unusual TGS ticket requests, alert on abnormal service account activity",
+        "mitigation": "Use strong service account passwords (25+ chars), enable AES encryption for Kerberos",
+        "usage": "Use for: Lateral movement in Active Directory environments, service account compromise",
+        "caution": "Requires domain access. Can be detected by monitoring TGS requests"
+    },
+
+    "pass-the-hash": {
+        "base": "Authentication technique using NTLM hash instead of plaintext password",
+        "methodology": "1. Obtain NTLM hash from compromised system 2. Use hash to authenticate to other systems 3. Bypass password requirements",
+        "tools": "Mimikatz, Impacket, CrackMapExec, Metasploit",
+        "detection": "Monitor for NTLM authentication without password, unusual logon patterns",
+        "mitigation": "Enable NTLMv2, use strong passwords, implement LAPS",
+        "usage": "Use for: Lateral movement without cracking passwords, maintaining persistence",
+        "caution": "Requires NTLM authentication enabled. Can be detected by security tools"
+    },
+
+    "pass-the-ticket": {
+        "base": "Authentication technique using Kerberos tickets instead of passwords",
+        "methodology": "1. Steal or forge Kerberos tickets 2. Use tickets to authenticate to services 3. Bypass password requirements",
+        "tools": "Mimikatz, Rubeus, Impacket, Metasploit",
+        "detection": "Monitor for unusual ticket usage, abnormal authentication patterns",
+        "mitigation": "Enable Kerberos authentication, implement ticket validation",
+        "usage": "Use for: Lateral movement in Kerberos environments, maintaining persistence",
+        "caution": "Requires Kerberos authentication. Can be detected by monitoring ticket usage"
+    },
+
+    "golden-ticket": {
+        "base": "Forged Kerberos ticket granting ticket (TGT) for persistent domain access",
+        "methodology": "1. Obtain KRBTGT account hash 2. Forge TGT with any user 3. Use ticket for domain authentication 4. Maintain persistent access",
+        "tools": "Mimikatz, Rubeus, Impacket",
+        "detection": "Monitor for unusual TGT requests, abnormal authentication patterns",
+        "mitigation": "Rotate KRBTGT password, monitor for ticket anomalies",
+        "usage": "Use for: Persistent domain access, bypassing authentication controls",
+        "caution": "Requires KRBTGT hash. Very powerful attack with long-term persistence"
+    },
+
+    "dcsync": {
+        "base": "Active Directory attack to replicate domain controller data and extract credentials",
+        "methodology": "1. Compromise account with replication rights 2. Use DCSync to replicate AD data 3. Extract password hashes 4. Use for lateral movement",
+        "tools": "Mimikatz, Impacket, PowerView, BloodHound",
+        "detection": "Monitor for replication requests, unusual domain controller access",
+        "mitigation": "Limit replication rights, monitor for DCSync attempts",
+        "usage": "Use for: Extracting domain credentials, comprehensive domain compromise",
+        "caution": "Requires replication rights. Can be detected by monitoring domain controller access"
+    },
+
+    "ssrf": {
+        "base": "Server-Side Request Forgery - forcing server to make requests to unintended locations",
+        "methodology": "1. Find parameter that accepts URLs 2. Craft malicious URL pointing to internal resources 3. Server makes request to internal system 4. Access internal services",
+        "tools": "Burp Suite, OWASP ZAP, custom scripts",
+        "detection": "Monitor for unusual outbound requests, internal service access",
+        "mitigation": "Validate and sanitize URLs, use allowlists, network segmentation",
+        "usage": "Use for: Accessing internal services, bypassing firewalls, data exfiltration",
+        "caution": "Can access internal systems. Test carefully to avoid disrupting services"
+    },
+
+    "xxe": {
+        "base": "XML External Entity - exploiting XML parsers to access local files or execute code",
+        "methodology": "1. Find XML input in application 2. Craft malicious XML with external entities 3. Server processes XML and accesses local files 4. Extract sensitive data",
+        "tools": "Burp Suite, OWASP ZAP, XXEinjector, custom payloads",
+        "detection": "Monitor for unusual file access, XML parsing errors",
+        "mitigation": "Disable external entities, use safe XML parsers, input validation",
+        "usage": "Use for: File disclosure, internal network reconnaissance, data exfiltration",
+        "caution": "Can access sensitive files. Test carefully to avoid system damage"
+    },
+
+    "deserialization": {
+        "base": "Insecure deserialization - exploiting object deserialization to execute code",
+        "methodology": "1. Find serialized objects in application 2. Craft malicious serialized object 3. Application deserializes object 4. Code execution achieved",
+        "tools": "Burp Suite, ysoserial, custom payloads",
+        "detection": "Monitor for unusual deserialization, code execution patterns",
+        "mitigation": "Use safe deserialization, input validation, code signing",
+        "usage": "Use for: Remote code execution, system compromise, lateral movement",
+        "caution": "Can lead to full system compromise. Test in isolated environment"
+    },
+
+    "ssti": {
+        "base": "Server-Side Template Injection - injecting malicious code into server-side templates",
+        "methodology": "1. Find template parameters in application 2. Inject malicious template code 3. Server processes template 4. Code execution achieved",
+        "tools": "Burp Suite, tplmap, custom payloads",
+        "detection": "Monitor for unusual template processing, code execution patterns",
+        "mitigation": "Use safe templates, input validation, sandboxing",
+        "usage": "Use for: Remote code execution, system compromise, data exfiltration",
+        "caution": "Can lead to full system compromise. Test carefully to avoid system damage"
+    },
+
+    "http-smuggling": {
+        "base": "HTTP Request Smuggling - exploiting differences in HTTP parsing to bypass security controls",
+        "methodology": "1. Find HTTP parsing differences between frontend and backend 2. Craft malicious HTTP request 3. Request is parsed differently by components 4. Bypass security controls",
+        "tools": "Burp Suite, custom scripts, HTTP Smuggler",
+        "detection": "Monitor for unusual HTTP requests, parsing errors",
+        "mitigation": "Use consistent HTTP parsing, input validation, security headers",
+        "usage": "Use for: Bypassing security controls, cache poisoning, request smuggling",
+        "caution": "Can bypass security controls. Test carefully to avoid disrupting services"
+    },
+
+    "suid-exploitation": {
+        "base": "Exploiting SUID binaries for privilege escalation on Unix-like systems",
+        "methodology": "1. Find SUID binaries on system 2. Identify vulnerable SUID binaries 3. Exploit binary to gain root privileges 4. Maintain elevated access",
+        "tools": "find, strings, gdb, custom exploits",
+        "detection": "Monitor for unusual SUID binary execution, privilege escalation",
+        "mitigation": "Remove unnecessary SUID bits, audit SUID binaries, use principle of least privilege",
+        "usage": "Use for: Privilege escalation on Unix systems, gaining root access",
+        "caution": "Can lead to full system compromise. Test carefully to avoid system damage"
+    },
+
+    "sudo-misconfig": {
+        "base": "Exploiting sudo misconfigurations for privilege escalation",
+        "methodology": "1. Check sudo configuration for vulnerabilities 2. Find misconfigured sudo rules 3. Exploit to gain root privileges 4. Maintain elevated access",
+        "tools": "sudo -l, custom scripts, exploit databases",
+        "detection": "Monitor for unusual sudo usage, privilege escalation",
+        "mitigation": "Review sudo configuration, use principle of least privilege, audit sudo usage",
+        "usage": "Use for: Privilege escalation, gaining root access, lateral movement",
+        "caution": "Can lead to full system compromise. Test carefully to avoid system damage"
+    },
+
+    "kernel-exploits": {
+        "base": "Exploiting kernel vulnerabilities for privilege escalation",
+        "methodology": "1. Identify kernel version and vulnerabilities 2. Find appropriate kernel exploit 3. Compile and execute exploit 4. Gain root privileges",
+        "tools": "uname, exploit databases, gcc, custom exploits",
+        "detection": "Monitor for unusual kernel access, privilege escalation",
+        "mitigation": "Keep kernel updated, use security modules, monitor for exploits",
+        "usage": "Use for: Privilege escalation, gaining root access, system compromise",
+        "caution": "Can lead to system instability. Test carefully to avoid system damage"
+    },
+
+    "token-impersonation": {
+        "base": "Windows token impersonation for privilege escalation",
+        "methodology": "1. Find processes with high privileges 2. Steal or duplicate access tokens 3. Impersonate token to gain privileges 4. Maintain elevated access",
+        "tools": "Mimikatz, Incognito, Metasploit, custom tools",
+        "detection": "Monitor for unusual token usage, privilege escalation",
+        "mitigation": "Use principle of least privilege, monitor token usage, implement UAC",
+        "usage": "Use for: Privilege escalation on Windows, gaining administrative access",
+        "caution": "Can lead to full system compromise. Test carefully to avoid system damage"
+    },
+
+    "dll-hijacking": {
+        "base": "DLL hijacking for privilege escalation on Windows",
+        "methodology": "1. Find applications that load DLLs from insecure locations 2. Create malicious DLL 3. Place DLL in insecure location 4. Application loads malicious DLL",
+        "tools": "Process Monitor, custom DLLs, Metasploit",
+        "detection": "Monitor for unusual DLL loading, privilege escalation",
+        "mitigation": "Use secure DLL loading, implement DLL signing, monitor DLL usage",
+        "usage": "Use for: Privilege escalation on Windows, maintaining persistence",
+        "caution": "Can lead to full system compromise. Test carefully to avoid system damage"
+    },
+
+    "arp-spoofing": {
+        "base": "ARP spoofing/poisoning for man-in-the-middle attacks",
+        "methodology": "1. Identify target network and devices 2. Send malicious ARP packets 3. Redirect traffic through attacker 4. Intercept and modify traffic",
+        "tools": "ettercap, bettercap, arpspoof, custom scripts",
+        "detection": "Monitor for unusual ARP traffic, duplicate IP addresses",
+        "mitigation": "Use static ARP entries, network segmentation, ARP monitoring",
+        "usage": "Use for: Man-in-the-middle attacks, traffic interception, credential harvesting",
+        "caution": "Can disrupt network communication. Test carefully to avoid network issues"
+    },
+
+    "dns-spoofing": {
+        "base": "DNS spoofing for redirecting traffic to malicious servers",
+        "methodology": "1. Identify target DNS queries 2. Send malicious DNS responses 3. Redirect traffic to attacker-controlled servers 4. Intercept and modify traffic",
+        "tools": "ettercap, bettercap, dnsspoof, custom scripts",
+        "detection": "Monitor for unusual DNS responses, traffic redirection",
+        "mitigation": "Use DNSSEC, secure DNS servers, network segmentation",
+        "usage": "Use for: Traffic redirection, credential harvesting, phishing attacks",
+        "caution": "Can redirect legitimate traffic. Test carefully to avoid disrupting services"
+    },
+
+    "vlan-hopping": {
+        "base": "VLAN hopping for accessing different network segments",
+        "methodology": "1. Identify VLAN configuration 2. Exploit VLAN misconfigurations 3. Access different network segments 4. Perform lateral movement",
+        "tools": "Yersinia, Scapy, custom scripts",
+        "detection": "Monitor for unusual VLAN traffic, cross-segment access",
+        "mitigation": "Proper VLAN configuration, network segmentation, monitoring",
+        "usage": "Use for: Lateral movement, accessing restricted network segments",
+        "caution": "Can access restricted network segments. Test carefully to avoid network issues"
+    },
+
+    "ipv6-mitm": {
+        "base": "IPv6 man-in-the-middle attacks for traffic interception",
+        "methodology": "1. Identify IPv6-enabled networks 2. Exploit IPv6 configuration issues 3. Redirect IPv6 traffic through attacker 4. Intercept and modify traffic",
+        "tools": "bettercap, thc-ipv6, custom scripts",
+        "detection": "Monitor for unusual IPv6 traffic, traffic redirection",
+        "mitigation": "Secure IPv6 configuration, network segmentation, monitoring",
+        "usage": "Use for: IPv6 traffic interception, credential harvesting, lateral movement",
+        "caution": "Can disrupt IPv6 communication. Test carefully to avoid network issues"
+    },
+
+    "smb-relay": {
+        "base": "SMB relay attacks for credential harvesting and lateral movement",
+        "methodology": "1. Identify SMB-enabled systems 2. Set up SMB relay server 3. Trick users into authenticating to relay server 4. Use credentials for lateral movement",
+        "tools": "Impacket, Responder, Metasploit, custom scripts",
+        "detection": "Monitor for unusual SMB authentication, credential usage",
+        "mitigation": "Disable SMB authentication, use SMB signing, network segmentation",
+        "usage": "Use for: Credential harvesting, lateral movement, maintaining persistence",
+        "caution": "Can harvest credentials. Test carefully to avoid compromising legitimate accounts"
+    },
+
     # Web Enumeration
     "gobuster": {
         "base": "Directory/file brute-forcing tool written in Go",

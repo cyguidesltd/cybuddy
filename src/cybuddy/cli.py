@@ -391,54 +391,42 @@ def _todo_file(session: Optional[str] = None) -> Path:
 
 
 def _config_file() -> Path:
+    """Legacy config file path for backward compatibility."""
     return _app_dir() / "config.toml"
 
 
 def load_config() -> dict:
-    # Defaults
-    cfg: dict = {
-        "history.enabled": True,
-        "history.path": str(_app_dir() / "history.jsonl"),
+    """Load configuration using the new config system."""
+    from .config import load_config as load_new_config
+    
+    # Load new config system
+    new_config = load_new_config()
+    
+    # Convert to old format for backward compatibility
+    cfg = {
+        "history.enabled": new_config.get("history", {}).get("enabled", True),
+        "history.path": new_config.get("history", {}).get("path", str(_app_dir() / "history.jsonl")),
         "todo.path": str(_app_dir() / "todo.json"),
-        "output.truncate_lines": 60,
-        "approvals.require_exec": True,
-        "approvals.ai_consent": False,
-        "ai.enabled": False,
-        "ai.provider": "openai",
-        "ai.redact": True,
-        "ai.max_tokens": 300,
-        "history.verbatim": False,
+        "output.truncate_lines": new_config.get("output", {}).get("truncate_lines", 60),
+        "approvals.require_exec": new_config.get("approvals", {}).get("require_exec", True),
+        "approvals.ai_consent": new_config.get("approvals", {}).get("ai_consent", False),
+        "ai.enabled": new_config.get("ai", {}).get("enabled", False),
+        "ai.provider": new_config.get("ai", {}).get("provider", "openai"),
+        "ai.redact": new_config.get("ai", {}).get("redact", True),
+        "ai.max_tokens": new_config.get("ai", {}).get("max_tokens", 300),
+        "history.verbatim": new_config.get("history", {}).get("verbatim", False),
     }
-    path = _config_file()
-    if not path.exists():
-        return cfg
-    try:
-        # Minimal TOML parser: handle key = value lines without sections
-        for raw in path.read_text(encoding="utf-8").splitlines():
-            line = raw.strip()
-            if not line or line.startswith("#"):
-                continue
-            if "=" not in line:
-                continue
-            k, v = [p.strip() for p in line.split("=", 1)]
-            v = v.strip()
-            if v.lower() in {"true", "false"}:
-                cfg[k] = v.lower() == "true"
-            elif v.startswith('"') and v.endswith('"'):
-                cfg[k] = v.strip('"')
-            else:
-                try:
-                    cfg[k] = int(v)
-                except ValueError:
-                    cfg[k] = v
-    except Exception:
-        pass
+    
     return cfg
 
 
 def cmd_config() -> int:
+    from .config import _config_path
+    
     cfg = load_config()
-    print("Config file:", _config_file())
+    print("Config file:", _config_path())
+    print("(Config is optional - CyBuddy works with defaults)")
+    print()
     for k in sorted(cfg):
         print(f"{k} = {cfg[k]}")
     return 0

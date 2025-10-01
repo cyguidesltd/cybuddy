@@ -154,11 +154,20 @@ cybuddy run nmap "-sV target.local"
 Want smarter answers? Enable AI (requires API key):
 
 ```bash
-# Create ~/.cybuddy/config.toml
-ai.enabled = true
-ai.provider = "openai"
-openai.api_key = "sk-..."
-openai.model = "gpt-4o-mini"
+# Create ~/.config/cybuddy/config.yaml (optional)
+tui:
+  theme: default
+  show_tips: true
+
+cli:
+  color: true
+  verbose: false
+
+ai:
+  enabled: true
+  provider: openai
+  api_key: sk-...
+  model: gpt-4o-mini
 ```
 
 Then use `--send` flag:
@@ -168,6 +177,31 @@ cybuddy explain "nmap -A target" --send
 
 **Default:** Built-in heuristics (no API needed)
 **With AI:** More detailed, context-aware responses
+
+## Configuration
+
+CyBuddy works out of the box with no configuration needed. All settings have sensible defaults.
+
+For advanced users, create `~/.config/cybuddy/config.yaml`:
+
+```yaml
+tui:
+  theme: default  # or 'dark', 'light'
+  show_tips: true
+
+cli:
+  color: true
+  verbose: false
+
+data:
+  mock_mode: true  # v1.0 is always mock
+
+ai:
+  enabled: false
+  provider: openai
+  redact: true
+  max_tokens: 300
+```
 
 ## Why CyBuddy?
 

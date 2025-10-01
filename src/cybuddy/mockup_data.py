@@ -226,6 +226,142 @@ EXPLAIN_DB: Dict[str, Dict[str, str]] = {
         "caution": "Credential harvesting tool. Only use on authorized networks"
     },
 
+    # Digital Forensics Tools
+    "volatility": {
+        "base": "Advanced memory forensics framework for analyzing RAM dumps",
+        "-f": "Memory dump file (e.g., -f memory.dmp)",
+        "windows.pslist": "List running processes",
+        "windows.pstree": "Process tree view",
+        "windows.memmap": "Memory map for process",
+        "windows.cmdline": "Command line arguments",
+        "windows.netstat": "Network connections",
+        "usage": "Use for: Memory analysis, malware detection, incident response",
+        "caution": "Requires memory dump files. Use Volatility 3 for modern systems"
+    },
+
+    "rekall": {
+        "base": "Memory forensics framework with advanced analysis capabilities",
+        "-f": "Memory dump file (e.g., -f memory.dmp)",
+        "pslist": "List processes",
+        "pstree": "Process tree",
+        "netscan": "Network connections",
+        "cmdline": "Process command lines",
+        "usage": "Use for: Memory forensics, malware analysis, advanced memory artifacts",
+        "caution": "Alternative to Volatility. Choose based on specific analysis needs"
+    },
+
+    "lime": {
+        "base": "Linux Memory Extractor for acquiring memory dumps",
+        "-o": "Output file (e.g., -o memory.lime)",
+        "-f": "Format (lime, elf, etc.)",
+        "-d": "Device to write to",
+        "usage": "Use for: Memory acquisition on Linux systems, creating memory dumps",
+        "caution": "Requires kernel module. Use on compromised systems carefully"
+    },
+
+    "autopsy": {
+        "base": "Graphical digital forensics platform with case management",
+        "gui": "Launch graphical interface",
+        "usage": "Use for: Complete digital forensics investigations, case management, evidence analysis",
+        "caution": "Resource intensive. Requires significant disk space for large cases"
+    },
+
+    "sleuthkit": {
+        "base": "Command-line digital forensics toolkit (TSK)",
+        "fls": "List files and directories",
+        "ils": "List inodes",
+        "fsstat": "File system statistics",
+        "icat": "Extract file contents",
+        "usage": "Use for: Disk analysis, file recovery, timeline analysis",
+        "caution": "Command-line tool. Requires understanding of file systems"
+    },
+
+    "ftk": {
+        "base": "Forensic Toolkit Imager for disk imaging and analysis",
+        "gui": "Launch FTK Imager GUI",
+        "usage": "Use for: Disk imaging, evidence acquisition, hash verification",
+        "caution": "Commercial tool. Ensure proper licensing for professional use"
+    },
+
+    "dd": {
+        "base": "Data duplicator for creating bit-for-bit copies of storage devices",
+        "if": "Input file/device (e.g., if=/dev/sda)",
+        "of": "Output file (e.g., of=image.dd)",
+        "bs": "Block size (e.g., bs=4M)",
+        "status": "Show progress",
+        "usage": "Use for: Disk imaging, evidence acquisition, data recovery",
+        "caution": "Powerful tool. Can overwrite data. Double-check input/output parameters"
+    },
+
+    "binwalk": {
+        "base": "Firmware analysis tool for extracting embedded files and code",
+        "-e": "Extract files (e.g., -e firmware.bin)",
+        "-A": "Analyze binary for common architectures",
+        "-M": "Recursive extraction",
+        "-f": "Signature file",
+        "usage": "Use for: Firmware analysis, embedded file extraction, reverse engineering",
+        "caution": "Can extract large amounts of data. Ensure sufficient disk space"
+    },
+
+    "exiftool": {
+        "base": "Metadata extraction and manipulation tool",
+        "-a": "Show all metadata",
+        "-g": "Group by tag",
+        "-s": "Short output",
+        "-d": "Date format",
+        "usage": "Use for: Metadata analysis, image forensics, document analysis",
+        "caution": "Can reveal sensitive information. Handle metadata carefully"
+    },
+
+    "strings": {
+        "base": "Extract printable strings from binary files",
+        "-a": "Scan entire file",
+        "-n": "Minimum string length (e.g., -n 8)",
+        "-t": "Output format (d=decimal, o=octal, x=hex)",
+        "usage": "Use for: String extraction, malware analysis, evidence examination",
+        "caution": "Can reveal sensitive information. Use appropriate filtering"
+    },
+
+    "foremost": {
+        "base": "File carving tool for recovering deleted files",
+        "-i": "Input file (e.g., -i disk.dd)",
+        "-o": "Output directory (e.g., -o recovered/)",
+        "-t": "File types to carve",
+        "-v": "Verbose output",
+        "usage": "Use for: File recovery, deleted file analysis, evidence extraction",
+        "caution": "Can recover sensitive deleted files. Handle recovered data appropriately"
+    },
+
+    "networkminer": {
+        "base": "Network forensics analysis tool for pcap files",
+        "gui": "Launch NetworkMiner GUI",
+        "usage": "Use for: Network traffic analysis, file extraction from network captures",
+        "caution": "Windows-based tool. May require Windows environment or Wine"
+    },
+
+    "xplico": {
+        "base": "Network forensics analysis tool for protocol analysis",
+        "web": "Launch web interface",
+        "usage": "Use for: Network protocol analysis, traffic reconstruction, evidence extraction",
+        "caution": "Web-based tool. Ensure secure access to analysis interface"
+    },
+
+    "andriller": {
+        "base": "Android forensics tool for analyzing Android devices",
+        "gui": "Launch Andriller GUI",
+        "usage": "Use for: Android device analysis, app data extraction, mobile forensics",
+        "caution": "Requires Android device access. Follow proper legal procedures"
+    },
+
+    "aleapp": {
+        "base": "Android Logs Events And Protobuf Parser for mobile forensics",
+        "-t": "Input type (fs, tar, zip)",
+        "-i": "Input path",
+        "-o": "Output directory",
+        "usage": "Use for: Android log analysis, mobile device forensics, app data extraction",
+        "caution": "Specialized tool. Requires understanding of Android file systems"
+    },
+
     # Web Enumeration
     "gobuster": {
         "base": "Directory/file brute-forcing tool written in Go",

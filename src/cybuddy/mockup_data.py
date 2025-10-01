@@ -362,6 +362,145 @@ EXPLAIN_DB: Dict[str, Dict[str, str]] = {
         "caution": "Specialized tool. Requires understanding of Android file systems"
     },
 
+    # Reverse Engineering Tools
+    "ghidra": {
+        "base": "NSA's open-source reverse engineering framework with decompiler",
+        "gui": "Launch Ghidra GUI (ghidraRun)",
+        "headless": "Headless analysis (analyzeHeadless)",
+        "import": "Import binary (e.g., -import binary.exe)",
+        "usage": "Use for: Static binary analysis, decompiling executables, malware analysis",
+        "caution": "Resource intensive. Let auto-analysis complete before exploring"
+    },
+
+    "ida": {
+        "base": "Interactive Disassembler - professional reverse engineering platform",
+        "gui": "Launch IDA Pro/Free GUI",
+        "headless": "Command-line analysis mode",
+        "script": "Run IDA Python scripts",
+        "usage": "Use for: Professional reverse engineering, malware analysis, vulnerability research",
+        "caution": "Commercial tool (IDA Pro). IDA Free has limitations. Steep learning curve"
+    },
+
+    "radare2": {
+        "base": "Open-source reverse engineering framework with command-line interface",
+        "-A": "Analyze binary (e.g., r2 -A binary)",
+        "aaa": "Auto-analyze all functions",
+        "pdf": "Print disassembly of function",
+        "px": "Print hexdump",
+        "usage": "Use for: Command-line reverse engineering, scripting, automation",
+        "caution": "Steep learning curve. Command-line interface requires memorization"
+    },
+
+    "binaryninja": {
+        "base": "Modern reverse engineering platform with advanced analysis",
+        "gui": "Launch Binary Ninja GUI",
+        "api": "Python API for automation",
+        "usage": "Use for: Modern reverse engineering, API automation, advanced analysis",
+        "caution": "Commercial tool. Expensive but very powerful with excellent API"
+    },
+
+    "gdb": {
+        "base": "GNU Debugger - standard debugger for Unix-like systems",
+        "-g": "Compile with debug symbols (gcc -g)",
+        "run": "Start program execution",
+        "break": "Set breakpoint (e.g., break main)",
+        "step": "Step into function calls",
+        "next": "Step over function calls",
+        "usage": "Use for: Dynamic analysis, debugging, exploit development",
+        "caution": "Requires debug symbols for meaningful analysis"
+    },
+
+    "pwndbg": {
+        "base": "Enhanced GDB with exploit development features",
+        "gdb": "Launch with pwndbg (gdb -ex 'source /path/to/pwndbg/gdbinit.py')",
+        "heap": "Heap analysis commands",
+        "telescope": "Examine memory regions",
+        "usage": "Use for: Exploit development, heap analysis, CTF challenges",
+        "caution": "Requires GDB. Install via pip: pip install pwndbg"
+    },
+
+    "x64dbg": {
+        "base": "Windows debugger with GUI for x64 and x32 applications",
+        "gui": "Launch x64dbg GUI",
+        "breakpoint": "Set breakpoints via GUI",
+        "patch": "Patch binary in memory",
+        "usage": "Use for: Windows reverse engineering, malware analysis, binary patching",
+        "caution": "Windows-only tool. Requires Windows environment"
+    },
+
+    "edb": {
+        "base": "Evan's Debugger - cross-platform debugger with GUI",
+        "gui": "Launch EDB GUI",
+        "plugin": "Load plugins for enhanced functionality",
+        "usage": "Use for: Cross-platform debugging, plugin-based analysis",
+        "caution": "Less popular than GDB. Limited plugin ecosystem"
+    },
+
+    "objdump": {
+        "base": "Object file disassembler and analyzer",
+        "-d": "Disassemble executable sections",
+        "-h": "Display section headers",
+        "-s": "Display full contents of sections",
+        "-t": "Display symbol table",
+        "usage": "Use for: Quick disassembly, section analysis, symbol inspection",
+        "caution": "Basic tool. Use for quick analysis, not detailed reverse engineering"
+    },
+
+    "readelf": {
+        "base": "ELF file analyzer for examining ELF binaries",
+        "-h": "Display ELF header",
+        "-S": "Display section headers",
+        "-s": "Display symbol table",
+        "-l": "Display program headers",
+        "usage": "Use for: ELF file analysis, section inspection, symbol analysis",
+        "caution": "ELF-specific tool. Not useful for PE (Windows) binaries"
+    },
+
+    "nm": {
+        "base": "Symbol table analyzer for object files",
+        "-D": "Display dynamic symbols",
+        "-u": "Display undefined symbols",
+        "-g": "Display global symbols",
+        "usage": "Use for: Symbol analysis, library inspection, linking issues",
+        "caution": "Limited to symbol information. Use with other tools for complete analysis"
+    },
+
+    "file": {
+        "base": "File type identification utility",
+        "binary": "Analyze binary file (e.g., file binary.exe)",
+        "-i": "Display MIME type",
+        "-b": "Brief output",
+        "usage": "Use for: File type identification, initial binary analysis",
+        "caution": "Basic identification only. May not detect obfuscated or packed binaries"
+    },
+
+    "ltrace": {
+        "base": "Library call tracer for dynamic analysis",
+        "-p": "Trace process by PID",
+        "-f": "Trace child processes",
+        "-e": "Filter specific functions",
+        "usage": "Use for: Library call analysis, API monitoring, dynamic analysis",
+        "caution": "Linux-specific tool. May impact performance on large programs"
+    },
+
+    "strace": {
+        "base": "System call tracer for dynamic analysis",
+        "-p": "Trace process by PID",
+        "-f": "Trace child processes",
+        "-e": "Filter specific system calls",
+        "usage": "Use for: System call analysis, behavior monitoring, debugging",
+        "caution": "Linux-specific tool. Can generate large amounts of output"
+    },
+
+    "frida": {
+        "base": "Dynamic instrumentation toolkit for reverse engineering",
+        "-U": "Connect to USB device",
+        "-f": "Spawn application",
+        "-l": "Load JavaScript script",
+        "usage": "Use for: Dynamic instrumentation, hooking, runtime manipulation",
+        "caution": "Requires Frida server on target. Can be detected by anti-debugging"
+    },
+
     # Web Enumeration
     "gobuster": {
         "base": "Directory/file brute-forcing tool written in Go",

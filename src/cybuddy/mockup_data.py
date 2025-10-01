@@ -37,6 +37,195 @@ EXPLAIN_DB: Dict[str, Dict[str, str]] = {
         "caution": "Very noisy! Can crash weak network infrastructure. Use low rates in labs"
     },
 
+    # Packet Analyzers
+    "wireshark": {
+        "base": "World's most popular network protocol analyzer with GUI",
+        "-i": "Interface to capture on (e.g., -i eth0)",
+        "-f": "Capture filter (e.g., -f 'host 192.168.1.1')",
+        "-w": "Save to file (e.g., -w capture.pcap)",
+        "-r": "Read from file (e.g., -r capture.pcap)",
+        "usage": "Use for: Live packet capture, protocol analysis, network troubleshooting",
+        "caution": "Requires root/sudo for raw packet access. Can generate large files"
+    },
+
+    "tcpdump": {
+        "base": "Command-line packet analyzer, lightweight alternative to Wireshark",
+        "-i": "Interface to capture on (e.g., -i eth0)",
+        "-n": "Don't resolve hostnames (faster)",
+        "-v": "Verbose output",
+        "-c": "Capture count (e.g., -c 100)",
+        "-w": "Write to file (e.g., -w capture.pcap)",
+        "-r": "Read from file (e.g., -r capture.pcap)",
+        "usage": "Use for: Quick packet capture, scripting, server environments",
+        "caution": "Requires root/sudo. Use filters to avoid capturing too much data"
+    },
+
+    "tshark": {
+        "base": "Wireshark command-line interface, powerful CLI packet analyzer",
+        "-i": "Interface to capture on (e.g., -i eth0)",
+        "-f": "Capture filter (e.g., -f 'tcp port 80')",
+        "-Y": "Display filter (e.g., -Y 'http')",
+        "-T": "Output format (fields, json, xml, etc.)",
+        "-w": "Write to file (e.g., -w capture.pcap)",
+        "-r": "Read from file (e.g., -r capture.pcap)",
+        "usage": "Use for: Advanced packet analysis, automation, server environments",
+        "caution": "Requires root/sudo. Complex syntax but very powerful"
+    },
+
+    "termshark": {
+        "base": "Terminal-based Wireshark with TUI interface",
+        "-i": "Interface to capture on (e.g., -i eth0)",
+        "-r": "Read from file (e.g., -r capture.pcap)",
+        "-f": "Capture filter (e.g., -f 'host 192.168.1.1')",
+        "usage": "Use for: Terminal-based packet analysis, remote servers, SSH sessions",
+        "caution": "Requires root/sudo. Great for remote analysis without GUI"
+    },
+
+    # Advanced Port Scanners
+    "unicornscan": {
+        "base": "Asynchronous network scanner with advanced features",
+        "-m": "Scan mode (U=UDP, T=TCP, A=All)",
+        "-I": "Interface to use",
+        "-r": "Rate (packets per second)",
+        "-p": "Port range (e.g., -p 1-65535)",
+        "usage": "Use for: Fast asynchronous scanning, advanced timing control",
+        "caution": "Can be very noisy. Use appropriate rates to avoid detection"
+    },
+
+    "rustscan": {
+        "base": "Ultra-fast port scanner written in Rust",
+        "-a": "Target address (e.g., -a 192.168.1.0/24)",
+        "-p": "Port range (e.g., -p 1-65535)",
+        "-T": "Timeout (e.g., -T 1500)",
+        "-b": "Batch size (e.g., -b 1000)",
+        "usage": "Use for: Extremely fast port scanning, large network ranges",
+        "caution": "Very fast and noisy. Can overwhelm targets and trigger alerts"
+    },
+
+    "naabu": {
+        "base": "Fast port scanner with advanced features",
+        "-host": "Target host (e.g., -host 192.168.1.1)",
+        "-p": "Port range (e.g., -p 1-65535)",
+        "-rate": "Packet rate (e.g., -rate 1000)",
+        "-top-ports": "Scan top N ports (e.g., -top-ports 1000)",
+        "usage": "Use for: Fast port discovery, integration with other tools",
+        "caution": "High rate can trigger IDS/IPS. Use appropriate timing"
+    },
+
+    # Network Utilities
+    "netcat": {
+        "base": "Network utility for reading/writing data across network connections",
+        "-l": "Listen mode (server)",
+        "-p": "Port number (e.g., -p 8080)",
+        "-v": "Verbose output",
+        "-n": "Don't resolve hostnames",
+        "-e": "Execute command (e.g., -e /bin/bash)",
+        "usage": "Use for: Port scanning, banner grabbing, reverse shells, file transfer",
+        "caution": "Powerful tool. Can be used for malicious purposes. Use responsibly"
+    },
+
+    "ncat": {
+        "base": "Nmap's netcat implementation with enhanced features",
+        "-l": "Listen mode (server)",
+        "-p": "Port number (e.g., -p 8080)",
+        "-v": "Verbose output",
+        "--ssl": "Use SSL/TLS encryption",
+        "-e": "Execute command (e.g., -e /bin/bash)",
+        "usage": "Use for: Secure connections, SSL tunneling, enhanced netcat features",
+        "caution": "More secure than netcat. Still powerful - use responsibly"
+    },
+
+    "socat": {
+        "base": "Multipurpose relay tool for bidirectional data transfer",
+        "TCP-LISTEN": "Listen on TCP port (e.g., TCP-LISTEN:8080)",
+        "TCP-CONNECT": "Connect to TCP host (e.g., TCP-CONNECT:target:80)",
+        "SSL-LISTEN": "Listen with SSL (e.g., SSL-LISTEN:443)",
+        "EXEC": "Execute command (e.g., EXEC:/bin/bash)",
+        "usage": "Use for: Port forwarding, SSL tunneling, protocol conversion",
+        "caution": "Very flexible tool. Complex syntax but extremely powerful"
+    },
+
+    "proxychains": {
+        "base": "Proxy chain tool for routing traffic through multiple proxies",
+        "-f": "Configuration file (e.g., -f /etc/proxychains.conf)",
+        "-q": "Quiet mode (less verbose)",
+        "-d": "Debug mode (very verbose)",
+        "usage": "Use for: Anonymizing traffic, bypassing restrictions, proxy chaining",
+        "caution": "Can slow down connections. Ensure proxy configuration is correct"
+    },
+
+    # DNS Enumeration
+    "dig": {
+        "base": "DNS lookup utility for querying DNS servers",
+        "@": "DNS server to query (e.g., @8.8.8.8)",
+        "-t": "Record type (A, AAAA, MX, NS, TXT, etc.)",
+        "-x": "Reverse DNS lookup (e.g., -x 192.168.1.1)",
+        "+short": "Short output format",
+        "+trace": "Trace DNS resolution path",
+        "usage": "Use for: DNS reconnaissance, record enumeration, DNS troubleshooting",
+        "caution": "Can generate DNS queries. Use appropriate rate limiting"
+    },
+
+    "dnsenum": {
+        "base": "DNS enumeration tool for comprehensive DNS reconnaissance",
+        "-d": "Domain to enumerate (e.g., -d example.com)",
+        "-f": "Wordlist file for subdomain brute-forcing",
+        "-t": "Threads (e.g., -t 10)",
+        "-o": "Output file (e.g., -o results.txt)",
+        "usage": "Use for: Subdomain discovery, DNS zone transfers, comprehensive DNS recon",
+        "caution": "Can generate many DNS queries. Use responsibly to avoid rate limiting"
+    },
+
+    "fierce": {
+        "base": "DNS reconnaissance tool for subdomain enumeration",
+        "-d": "Domain to scan (e.g., -d example.com)",
+        "-w": "Wordlist file (e.g., -w /usr/share/wordlists/dnsmap.txt)",
+        "-t": "Threads (e.g., -t 10)",
+        "-o": "Output file (e.g., -o results.txt)",
+        "usage": "Use for: Subdomain discovery, DNS reconnaissance, domain mapping",
+        "caution": "Generates many DNS queries. Use appropriate wordlists and timing"
+    },
+
+    # MITM & Spoofing
+    "ettercap": {
+        "base": "Comprehensive suite for man-in-the-middle attacks",
+        "-T": "Text interface mode",
+        "-M": "MITM attack mode (e.g., -M arp:remote)",
+        "-i": "Interface to use (e.g., -i eth0)",
+        "-q": "Quiet mode",
+        "usage": "Use for: ARP spoofing, MITM attacks, network interception",
+        "caution": "Powerful attack tool. Only use on authorized networks for testing"
+    },
+
+    "bettercap": {
+        "base": "Modern, modular MITM framework with web interface",
+        "-I": "Interface to use (e.g., -I eth0)",
+        "-X": "Enable HTTP/HTTPS proxy",
+        "-S": "Enable SSL stripping",
+        "-P": "Enable packet capture",
+        "usage": "Use for: Modern MITM attacks, network analysis, penetration testing",
+        "caution": "Very powerful tool. Only use on authorized networks with permission"
+    },
+
+    "arpspoof": {
+        "base": "ARP spoofing tool for man-in-the-middle attacks",
+        "-i": "Interface to use (e.g., -i eth0)",
+        "-t": "Target IP (e.g., -t 192.168.1.100)",
+        "-r": "Target router IP (e.g., -r 192.168.1.1)",
+        "usage": "Use for: ARP spoofing attacks, network interception",
+        "caution": "Attack tool. Only use on authorized networks for testing purposes"
+    },
+
+    "responder": {
+        "base": "LLMNR, NBT-NS and MDNS poisoner for credential harvesting",
+        "-I": "Interface to use (e.g., -I eth0)",
+        "-r": "Enable answers for netbios wredir suffix queries",
+        "-d": "Enable answers for netbios domain suffix queries",
+        "-w": "Start the WPAD rogue proxy server",
+        "usage": "Use for: Credential harvesting, LLMNR/NBT-NS poisoning",
+        "caution": "Credential harvesting tool. Only use on authorized networks"
+    },
+
     # Web Enumeration
     "gobuster": {
         "base": "Directory/file brute-forcing tool written in Go",

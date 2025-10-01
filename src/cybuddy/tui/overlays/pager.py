@@ -7,7 +7,7 @@ from rich.console import Console, RenderableType
 from rich.panel import Panel
 from rich.text import Text
 
-from secbuddy.tui.core.events import EventType, KeyEvent, PasteEvent, SecbuddyEvent
+from cybuddy.tui.core.events import EventType, KeyEvent, PasteEvent, CybuddyEvent
 
 from .base import Overlay
 
@@ -25,7 +25,7 @@ class PagerOverlay(Overlay):
         self._match_indices: List[int] = []
         self._active_match: int = 0
 
-    def handle_event(self, event: SecbuddyEvent) -> bool:
+    def handle_event(self, event: CybuddyEvent) -> bool:
         if event.event_type is EventType.KEY:
             return self._handle_key(cast(KeyEvent, event))
         if event.event_type is EventType.PASTE:

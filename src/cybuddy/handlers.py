@@ -1,4 +1,4 @@
-"""Business logic handlers for SecBuddy commands, shared between CLI and TUI."""
+"""Business logic handlers for CyBuddy commands, shared between CLI and TUI."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -214,7 +214,7 @@ def handle_slash_command(line: str, session: Optional[str] = None) -> SlashRespo
         lines.append("CMD:")
         lines.append(f"{tool} {joined}".strip())
         lines.append("")
-        lines.append("NOT RUN (dry-run). Use 'secbuddy run' CLI for --exec flag.")
+        lines.append("NOT RUN (dry-run). Use 'cybuddy run' CLI for --exec flag.")
         return SlashResponse("\n".join(lines))
 
     return SlashResponse(f"Unknown command: /{cmd}", success=False)

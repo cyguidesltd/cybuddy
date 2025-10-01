@@ -1,4 +1,4 @@
-"""Overlay widgets for the SecBuddy TUI."""
+"""Overlay widgets for the CyBuddy TUI."""
 
 from .base import Overlay
 from .pager import PagerOverlay

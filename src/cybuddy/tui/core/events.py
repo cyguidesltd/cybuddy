@@ -90,13 +90,13 @@ class ResizeEvent(BaseEvent):
         object.__setattr__(self, "height", height)
 
 
-SecbuddyEvent = Union[KeyEvent, PasteEvent, DrawEvent, FocusEvent, ResizeEvent]
+CybuddyEvent = Union[KeyEvent, PasteEvent, DrawEvent, FocusEvent, ResizeEvent]
 
 
 class EventConsumer(Protocol):
     """Lightweight protocol so overlays/app can advertise event handling."""
 
-    def handle_event(self, event: SecbuddyEvent) -> bool:
+    def handle_event(self, event: CybuddyEvent) -> bool:
         """Handle the event; return True if it was consumed."""
 
 
@@ -109,5 +109,5 @@ __all__ = [
     "KeyEvent",
     "PasteEvent",
     "ResizeEvent",
-    "SecbuddyEvent",
+    "CybuddyEvent",
 ]

@@ -119,7 +119,7 @@ show_section "1️⃣  EXPLAIN - Learn Security Tools"
 narrate "Let me understand nmap flags..."
 
 run_command \
-    "python3 -m secbuddy explain 'nmap -sV -Pn target'" \
+    "python3 -m cybuddy explain 'nmap -sV -Pn target'" \
     "Explain nmap command"
 
 # Scenario 2: Get Guidance
@@ -128,7 +128,7 @@ show_section "2️⃣  TIP - Security Guidance & Techniques"
 narrate "Found a login form. How do I test for SQL injection?"
 
 run_command \
-    "python3 -m secbuddy tip 'sql injection'" \
+    "python3 -m cybuddy tip 'sql injection'" \
     "Learn SQLi techniques"
 
 # Scenario 3: Plan Next Steps
@@ -137,7 +137,7 @@ show_section "3️⃣  PLAN - What to Do Next"
 narrate "I got a shell! What's my next move?"
 
 run_command \
-    "python3 -m secbuddy plan 'got user shell'" \
+    "python3 -m cybuddy plan 'got user shell'" \
     "Plan privilege escalation"
 
 # Scenario 4: Troubleshoot Errors
@@ -146,7 +146,7 @@ show_section "4️⃣  ASSIST - Fix Common Errors"
 narrate "Getting 'connection refused' error..."
 
 run_command \
-    "python3 -m secbuddy assist 'connection refused'" \
+    "python3 -m cybuddy assist 'connection refused'" \
     "Troubleshoot connection error"
 
 # Scenario 5: Write Reports
@@ -155,7 +155,7 @@ show_section "5️⃣  REPORT - Document Vulnerabilities"
 narrate "Need to document my findings professionally..."
 
 run_command \
-    "python3 -m secbuddy report 'xss in comment field'" \
+    "python3 -m cybuddy report 'xss in comment field'" \
     "Generate vulnerability report"
 
 # Scenario 6: Test Knowledge
@@ -164,7 +164,7 @@ show_section "6️⃣  QUIZ - Test Your Knowledge"
 narrate "Let me test what I learned about web security..."
 
 run_command \
-    "python3 -m secbuddy quiz 'jwt'" \
+    "python3 -m cybuddy quiz 'jwt'" \
     "Test JWT knowledge"
 
 # Final Statistics

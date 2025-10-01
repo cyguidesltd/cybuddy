@@ -5,8 +5,8 @@ import asyncio
 
 from rich.console import Console
 
-from secbuddy.simple_tui import SimpleTUI
-from secbuddy.tui.core.events import KeyEvent
+from cybuddy.simple_tui import SimpleTUI
+from cybuddy.tui.core.events import KeyEvent
 
 
 def key_event(key: str, data: str | None = None) -> KeyEvent:
@@ -47,7 +47,7 @@ def test_simple_tui_shows_welcome() -> None:
     app._show_welcome()
 
     snapshot = app.history.snapshot()
-    assert any("SecBuddy" in line for line in snapshot)
+    assert any("CyBuddy" in line for line in snapshot)
     assert any("explain" in line for line in snapshot)
     assert any("tip" in line for line in snapshot)
 
@@ -101,5 +101,5 @@ def test_simple_tui_renders_layout() -> None:
     console.print(layout)
     rendered = console.export_text(clear=True)
 
-    assert "SecBuddy Session" in rendered
+    assert "CyBuddy Session" in rendered
     assert "Command" in rendered

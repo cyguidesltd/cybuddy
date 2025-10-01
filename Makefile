@@ -4,7 +4,7 @@ install:
 	pip install -e .[dev]
 
 run:
-	python -m secbuddy --help || true
+	python -m cybuddy --help || true
 
 test:
 	pytest -q

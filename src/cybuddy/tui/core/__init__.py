@@ -1,4 +1,4 @@
-"""Core event loop primitives for the SecBuddy TUI."""
+"""Core event loop primitives for the CyBuddy TUI."""
 
 from .events import (
     BaseEvent,
@@ -7,7 +7,7 @@ from .events import (
     KeyEvent,
     PasteEvent,
     ResizeEvent,
-    SecbuddyEvent,
+    CybuddyEvent,
 )
 from .history import HistoryBuffer
 from .scheduler import FrameScheduler
@@ -20,7 +20,7 @@ __all__ = [
     "KeyEvent",
     "PasteEvent",
     "ResizeEvent",
-    "SecbuddyEvent",
+    "CybuddyEvent",
     "HistoryBuffer",
     "FrameScheduler",
     "TerminalController",

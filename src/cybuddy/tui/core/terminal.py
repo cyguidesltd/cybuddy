@@ -14,7 +14,7 @@ from prompt_toolkit.output.defaults import create_output
 from rich.console import Console
 from rich.console import RenderableType
 
-from .events import DrawEvent, FocusEvent, KeyEvent, PasteEvent, ResizeEvent, SecbuddyEvent
+from .events import DrawEvent, FocusEvent, KeyEvent, PasteEvent, ResizeEvent, CybuddyEvent
 
 
 class TerminalController:
@@ -24,14 +24,14 @@ class TerminalController:
         self._input = create_input(sys.stdin)
         self._output = create_output(stdout=sys.stdout)
         self.console = Console(force_terminal=True, highlight=False)
-        self._event_queue: asyncio.Queue[SecbuddyEvent] = asyncio.Queue()
+        self._event_queue: asyncio.Queue[CybuddyEvent] = asyncio.Queue()
         self._reader_task: Optional[asyncio.Task[None]] = None
         self._exit_stack = ExitStack()
         self._alt_active = False
 
     async def __aenter__(self) -> "TerminalController":
         self._enter_terminal_modes()
-        self._reader_task = asyncio.create_task(self._read_input(), name="secbuddy-tui-input")
+        self._reader_task = asyncio.create_task(self._read_input(), name="cybuddy-tui-input")
         return self
 
     async def __aexit__(self, exc_type, exc, tb) -> None:
@@ -86,7 +86,7 @@ class TerminalController:
         except asyncio.CancelledError:
             pass
 
-    def _convert_key_press(self, key_press: KeyPress) -> SecbuddyEvent | None:
+    def _convert_key_press(self, key_press: KeyPress) -> CybuddyEvent | None:
         if key_press.key == Keys.BracketedPaste:
             text = key_press.data or ""
             return PasteEvent(text=text)
@@ -102,7 +102,7 @@ class TerminalController:
         data = key_press.data or None
         return KeyEvent(key=key_name, data=data, ctrl=ctrl, alt=alt, shift=shift)
 
-    async def event_stream(self) -> AsyncIterator[SecbuddyEvent]:
+    async def event_stream(self) -> AsyncIterator[CybuddyEvent]:
         while True:
             event = await self._event_queue.get()
             yield event
@@ -112,7 +112,7 @@ class TerminalController:
         self._event_queue.put_nowait(event)
 
     @property
-    def event_queue(self) -> "asyncio.Queue[SecbuddyEvent]":
+    def event_queue(self) -> "asyncio.Queue[CybuddyEvent]":
         return self._event_queue
 
     def send_focus(self, gained: bool) -> None:

@@ -5,7 +5,7 @@ from typing import Optional
 
 from rich.console import Console, RenderableType
 
-from secbuddy.tui.core.events import SecbuddyEvent
+from cybuddy.tui.core.events import CybuddyEvent
 
 
 class Overlay(ABC):
@@ -20,7 +20,7 @@ class Overlay(ABC):
         """Hook executed when the overlay is removed."""
 
     @abstractmethod
-    def handle_event(self, event: SecbuddyEvent) -> bool:
+    def handle_event(self, event: CybuddyEvent) -> bool:
         """Process an incoming event; return True when consumed."""
 
     @abstractmethod

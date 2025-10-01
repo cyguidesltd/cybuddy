@@ -507,7 +507,7 @@ def cmd_todo(args: List[str]) -> int:
     items = _todo_load(session)
     if not args:
         if not items:
-            print("No TODO items. Add one with: secbuddy todo add \"Do recon\"")
+            print("No TODO items. Add one with: cybuddy todo add \"Do recon\"")
             return 0
         for i, it in enumerate(items, 1):
             status = it.get("status", "pending")
@@ -625,7 +625,7 @@ def _HeuristicProxy() -> AnswerEngine:
 
 def cmd_run(args: List[str]) -> int:
     if not args:
-        print("Usage: secbuddy run <tool> \"<args>\" [--exec]")
+        print("Usage: cybuddy run <tool> \"<args>\" [--exec]")
         return 1
     tool = args[0]
     exec_flag = "--exec" in args

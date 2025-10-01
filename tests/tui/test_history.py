@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from rich.console import Console
 
-from secbuddy.tui.core.history import HistoryBuffer
+from cybuddy.tui.core.history import HistoryBuffer
 
 
 def test_history_buffer_trims_to_max_items() -> None:

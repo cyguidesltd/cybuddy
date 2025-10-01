@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from rich.console import Console
 
-from secbuddy.tui.core.events import KeyEvent, PasteEvent
-from secbuddy.tui.overlays.pager import PagerOverlay
+from cybuddy.tui.core.events import KeyEvent, PasteEvent
+from cybuddy.tui.overlays.pager import PagerOverlay
 
 
 def make_key(key: str, data: str | None = None) -> KeyEvent:

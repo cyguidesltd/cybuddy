@@ -5,14 +5,14 @@ import contextlib
 from dataclasses import dataclass
 from typing import Optional
 
-from .events import DrawEvent, SecbuddyEvent
+from .events import DrawEvent, CybuddyEvent
 
 
 @dataclass
 class FrameScheduler:
     """Coalesces frame requests into single draw events, similar to Codex."""
 
-    _queue: "asyncio.Queue[SecbuddyEvent]"
+    _queue: "asyncio.Queue[CybuddyEvent]"
     _pending_deadline: Optional[float] = None
     _task: Optional[asyncio.Task[None]] = None
 

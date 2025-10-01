@@ -11,7 +11,7 @@ from rich.table import Table
 from rich.text import Text
 
 from .tui.core import TerminalController, FrameScheduler, HistoryBuffer
-from .tui.core.events import EventType, KeyEvent, PasteEvent, SecbuddyEvent
+from .tui.core.events import EventType, KeyEvent, PasteEvent, CybuddyEvent
 from .handlers import handle_slash_command
 from .cli import (
     explain_command,
@@ -34,7 +34,7 @@ class SimpleTUI:
         "report": "Practice write-ups (e.g., report 'Found SQLi')",
         "quiz": "Active recall (e.g., quiz 'SQL Injection')",
         "plan": "Next steps (e.g., plan 'found port 80 open')",
-        "exit": "Exit SecBuddy",
+        "exit": "Exit CyBuddy",
     }
 
     def __init__(self, *, terminal: Optional[TerminalController] = None, session: Optional[str] = None) -> None:
@@ -60,7 +60,7 @@ class SimpleTUI:
     def _show_welcome(self) -> None:
         """Show welcome message on startup."""
         self.history.append("╔════════════════════════════════════════════════════════════╗")
-        self.history.append("║        SecBuddy - Simple Security Learning Helper         ║")
+        self.history.append("║        CyBuddy - Simple Security Learning Helper         ║")
         self.history.append("╚════════════════════════════════════════════════════════════╝")
         self.history.append("")
         self.history.append("Available commands:")
@@ -75,7 +75,7 @@ class SimpleTUI:
         self.history.append("Type a command to begin...")
         self.history.append("")
 
-    def _handle_event(self, event: SecbuddyEvent) -> None:
+    def _handle_event(self, event: CybuddyEvent) -> None:
         """Handle incoming events."""
         if event.event_type is EventType.DRAW:
             self._draw()
@@ -245,7 +245,7 @@ class SimpleTUI:
                 if index < len(entries) - 1:
                     text.append("\n")
 
-        return Panel(text, title="SecBuddy Session", border_style="cyan")
+        return Panel(text, title="CyBuddy Session", border_style="cyan")
 
     def _render_prompt(self) -> Panel:
         """Render the input prompt."""

@@ -96,7 +96,7 @@ class GeminiEngine(OpenAIEngine):
 
 # Prompt templates
 SYSTEM = (
-    "You are SecBuddy, a beginner-friendly cybersecurity helper. "
+    "You are CyBuddy, a beginner-friendly cybersecurity helper. "
     "Use 2-4 concise bullets, safe defaults, no destructive commands."
 )
 

@@ -5,8 +5,8 @@ import asyncio
 from rich.console import Console
 from rich.console import RenderableType
 
-from secbuddy.tui.core.events import KeyEvent
-from secbuddy.tui.app import SecbuddyApp
+from cybuddy.tui.core.events import KeyEvent
+from cybuddy.tui.app import CybuddyApp
 
 
 def key_event(key: str, data: str | None = None) -> KeyEvent:
@@ -36,7 +36,7 @@ class StubTerminal:
 
 def test_app_collects_input_and_toggles_overlay() -> None:
     terminal = StubTerminal()
-    app = SecbuddyApp(terminal=terminal)  # type: ignore[arg-type]
+    app = CybuddyApp(terminal=terminal)  # type: ignore[arg-type]
     app.process_event(key_event("a", "a"))
     app.process_event(key_event("enter"))
     snapshot = app.history.snapshot()
@@ -52,7 +52,7 @@ def test_app_collects_input_and_toggles_overlay() -> None:
     console.print(layout)
     rendered = console.export_text(clear=True)
     assert "Session History" in rendered
-    assert "SecBuddy Guide" in rendered  # Panel title changed from "Input"
+    assert "CyBuddy Guide" in rendered  # Panel title changed from "Input"
 
     assert not terminal.alt_active
     app.process_event(key_event("f2"))

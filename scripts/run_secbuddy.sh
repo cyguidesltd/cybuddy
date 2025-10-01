@@ -14,8 +14,8 @@ source "$VENV_PATH/bin/activate"
 python -m pip install --quiet --upgrade pip
 python -m pip install --quiet -r "$PROJECT_ROOT/requirements.txt"
 
-if ! python -m pip show --quiet secbuddy >/dev/null 2>&1; then
+if ! python -m pip show --quiet cybuddy >/dev/null 2>&1; then
   python -m pip install --quiet "$PROJECT_ROOT"
 fi
 
-exec "$VENV_PATH/bin/secbuddy" "$@"
+exec "$VENV_PATH/bin/cybuddy" "$@"

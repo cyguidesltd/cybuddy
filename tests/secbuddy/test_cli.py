@@ -5,7 +5,7 @@ from typing import List
 
 import pytest
 
-from secbuddy.cli import (
+from cybuddy.cli import (
     main,
     suggest_next,
     explain_command,
@@ -20,7 +20,7 @@ from secbuddy.cli import (
     load_config,
     cmd_config,
 )
-from secbuddy.engine import HeuristicEngine, redact
+from cybuddy.engine import HeuristicEngine, redact
 
 
 def run_cli(args: List[str]) -> int:
@@ -43,7 +43,7 @@ def test_prompt_prints(capsys: pytest.CaptureFixture[str]) -> None:
 
 def test_explain_nmap() -> None:
     out = explain_command('nmap -sV target.local')
-    assert "version detection" in out
+    assert "service detection" in out
 
 
 def test_tip_sql() -> None:
@@ -53,7 +53,7 @@ def test_tip_sql() -> None:
 
 def test_help_sqlmap() -> None:
     out = help_troubleshoot('sqlmap: connection refused')
-    assert "Target may be down" in out
+    assert "may be down" in out
 
 
 def test_report_template() -> None:
@@ -138,7 +138,7 @@ def test_guide_sections(tmp_path, monkeypatch, capsys) -> None:
     try:
         inputs = iter(["scan target.local", "exit"])  # two lines then exit
         monkeypatch.setattr("builtins.input", lambda prompt="": next(inputs))
-        from secbuddy.cli import cmd_guide
+        from cybuddy.cli import cmd_guide
 
         assert cmd_guide(session="sess1") == 0
         out = capsys.readouterr().out
@@ -157,7 +157,7 @@ def test_engine_heuristic() -> None:
         quiz_fn=quiz_flashcards,
         plan_fn=step_planner,
     )
-    assert "version" in eng.explain("nmap -sV")
+    assert "service" in eng.explain("nmap -sV")
 
 
 def test_redact() -> None:
@@ -172,10 +172,10 @@ def test_ai_consent_flow(tmp_path, monkeypatch, capsys) -> None:
     os.environ["HOME"] = str(tmp_path)
     try:
         # Enable AI without consent; should fall back and include notice
-        cfg_path = tmp_path / ".secbuddy" / "config.toml"
+        cfg_path = tmp_path / ".cybuddy" / "config.toml"
         cfg_path.parent.mkdir(parents=True, exist_ok=True)
         cfg_path.write_text("ai.enabled = true\napprovals.ai_consent = false\n", encoding="utf-8")
-        from secbuddy.cli import main
+        from cybuddy.cli import main
         code = main(["explain", "nmap -sV"])
         out = capsys.readouterr().out
         assert code == 0

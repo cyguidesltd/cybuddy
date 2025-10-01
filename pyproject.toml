@@ -25,7 +25,7 @@ dev = [
 ]
 
 [project.scripts]
-cybuddy = "secbuddy.cli:main"
+cybuddy = "cybuddy.cli:main"
 
 [tool.ruff]
 line-length = 88

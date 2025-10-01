@@ -9,12 +9,12 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .core import FrameScheduler, HistoryBuffer, SecbuddyEvent, TerminalController
+from .core import FrameScheduler, HistoryBuffer, CybuddyEvent, TerminalController
 from .core.events import EventType, KeyEvent, PasteEvent
 from .overlays import Overlay, PagerOverlay
 
 if TYPE_CHECKING:
-    from secbuddy.handlers import GuideResponse
+    from cybuddy.handlers import GuideResponse
 
 
 @dataclass
@@ -42,7 +42,7 @@ class OverlayStack:
             self.pop()
 
 
-class SecbuddyApp:
+class CybuddyApp:
     """Main TUI orchestrator mirroring the Codex architecture."""
 
     def __init__(self, *, terminal: Optional[TerminalController] = None, session: Optional[str] = None) -> None:
@@ -60,7 +60,7 @@ class SecbuddyApp:
             async for event in self._terminal.event_stream():
                 self._handle_event(event)
 
-    def process_event(self, event: SecbuddyEvent) -> None:
+    def process_event(self, event: CybuddyEvent) -> None:
         """Expose deterministic event processing for tests or headless drivers."""
         self._handle_event(event)
 
@@ -68,7 +68,7 @@ class SecbuddyApp:
         """Return the current layout without writing to the terminal."""
         return self._compose_layout()
 
-    def _handle_event(self, event: SecbuddyEvent) -> None:
+    def _handle_event(self, event: CybuddyEvent) -> None:
         if event.event_type is EventType.DRAW:
             self._draw()
             return
@@ -203,7 +203,7 @@ class SecbuddyApp:
             self._request_frame()
 
     def _process_user_input(self, text: str) -> None:
-        """Process user input through SecBuddy handlers and render response."""
+        """Process user input through CyBuddy handlers and render response."""
         # Add user input to history
         self.history.append(f"> {text}")
 
@@ -216,12 +216,12 @@ class SecbuddyApp:
 
         # Route through handlers
         if text.startswith("/"):
-            from secbuddy.handlers import handle_slash_command
+            from cybuddy.handlers import handle_slash_command
             response = handle_slash_command(text, session=self._session)
             self._render_simple_response(response.output)
         else:
-            from secbuddy.handlers import handle_user_input
-            from secbuddy.cli import history_append
+            from cybuddy.handlers import handle_user_input
+            from cybuddy.cli import history_append
             response = handle_user_input(text, session=self._session)
             self._render_structured_response(response)
             # Log to persistent history
@@ -235,7 +235,7 @@ class SecbuddyApp:
 
     def _render_structured_response(self, response: GuideResponse) -> None:
         """Render structured PLAN/ACTION/CMD/OUT/NEXT response."""
-        from secbuddy.handlers import GuideResponse
+        from cybuddy.handlers import GuideResponse
 
         self.history.append("")
         self.history.append("PLAN:")
@@ -257,4 +257,4 @@ class SecbuddyApp:
         self.history.append(f"  {response.next_step}")
         self.history.append("")
 
-__all__ = ["SecbuddyApp"]
+__all__ = ["CybuddyApp"]

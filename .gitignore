@@ -72,8 +72,9 @@ Thumbs.db
 .cursor/
 memory/
 coordination/
-story/
+docs/
 tests/
+
 
 
 # Logs

@@ -294,7 +294,7 @@ class CybuddyApp:
     def _render_structured_response(self, response: GuideResponse) -> None:
         """Render structured PLAN/ACTION/CMD/OUT/NEXT response."""
         from cybuddy.handlers import GuideResponse
-        from cybuddy.formatters import create_syntax_highlight, is_likely_code
+        from ..formatters import create_syntax_highlight, is_likely_code
 
         self.history.append("")
         self.history.append("PLAN:")

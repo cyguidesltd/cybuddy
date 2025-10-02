@@ -1,9 +1,24 @@
 Metadata-Version: 2.4
 Name: cybuddy
-Version: 0.1.0
-Summary: A beginner-friendly cybersecurity helper CLI with Codex-like UX
-Author: Your Name
-License: MIT
+Version: 1.0.0
+Summary: AI-powered cybersecurity learning assistant
+Author: CyBuddy Team
+License-Expression: MIT
+Project-URL: Homepage, https://github.com/cybuddy/cybuddy
+Project-URL: Documentation, https://github.com/cybuddy/cybuddy#readme
+Project-URL: Issues, https://github.com/cybuddy/cybuddy/issues
+Project-URL: Source, https://github.com/cybuddy/cybuddy
+Keywords: cybersecurity,learning,pentesting,security,cli,tui
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Education
+Classifier: Intended Audience :: Information Technology
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Security
+Classifier: Topic :: Education
+Classifier: Topic :: System :: Networking
 Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 Requires-Dist: prompt-toolkit>=3.0
@@ -171,11 +186,20 @@ cybuddy run nmap "-sV target.local"
 Want smarter answers? Enable AI (requires API key):
 
 ```bash
-# Create ~/.cybuddy/config.toml
-ai.enabled = true
-ai.provider = "openai"
-openai.api_key = "sk-..."
-openai.model = "gpt-4o-mini"
+# Create ~/.config/cybuddy/config.yaml (optional)
+tui:
+  theme: default
+  show_tips: true
+
+cli:
+  color: true
+  verbose: false
+
+ai:
+  enabled: true
+  provider: openai
+  api_key: sk-...
+  model: gpt-4o-mini
 ```
 
 Then use `--send` flag:
@@ -185,6 +209,31 @@ cybuddy explain "nmap -A target" --send
 
 **Default:** Built-in heuristics (no API needed)
 **With AI:** More detailed, context-aware responses
+
+## Configuration
+
+CyBuddy works out of the box with no configuration needed. All settings have sensible defaults.
+
+For advanced users, create `~/.config/cybuddy/config.yaml`:
+
+```yaml
+tui:
+  theme: default  # or 'dark', 'light'
+  show_tips: true
+
+cli:
+  color: true
+  verbose: false
+
+data:
+  mock_mode: true  # v1.0 is always mock
+
+ai:
+  enabled: false
+  provider: openai
+  redact: true
+  max_tokens: 300
+```
 
 ## Why CyBuddy?
 

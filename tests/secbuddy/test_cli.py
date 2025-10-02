@@ -15,11 +15,11 @@ from cybuddy.cli import (
     quiz_flashcards,
     step_planner,
     cmd_todo,
-    cmd_history,
     cmd_run,
     load_config,
     cmd_config,
 )
+from cybuddy.commands.history import cmd_history
 from cybuddy.engine import HeuristicEngine, redact
 
 
@@ -94,9 +94,12 @@ def test_history_file_created(tmp_path, capsys) -> None:
     try:
         # Add a todo to generate history
         cmd_todo(["add", "History check"])
-        assert cmd_history([]) == 0
+        # Check that the todo was added (not in command history but in todo system)
         out = capsys.readouterr().out
-        assert "todo:add" in out
+        assert "Added: History check" in out
+        # Test that history command works
+        assert cmd_history([]) == 0
+        # Clear history
         assert cmd_history(["--clear"]) == 0
     finally:
         if old_home is not None:

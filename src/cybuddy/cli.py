@@ -8,6 +8,8 @@ from datetime import datetime
 import json
 import os
 
+from .history import add_command
+
 
 @dataclass(frozen=True)
 class ChecklistItem:
@@ -265,7 +267,20 @@ def main(argv: Optional[List[str]] = None) -> int:
         return print_help()
 
     engine = _select_engine()
-    cmd = args[0]
+    
+    # Check for natural language query (quoted string or multiple words)
+    if len(args) == 1 and (' ' in args[0] or args[0].startswith('"') or args[0].startswith("'")):
+        from .nl_parser import parse_natural_query, is_natural_language
+        query = args[0].strip('"\'')
+        if is_natural_language(query):
+            cmd, parsed_query = parse_natural_query(query)
+            print(f"🤔 I think you mean: {cmd} \"{parsed_query}\"")
+            # Execute the parsed command
+            args = [cmd, parsed_query]
+        else:
+            cmd = args[0]
+    else:
+        cmd = args[0]
     if cmd == "prompt":
         return cmd_prompt()
     if cmd == "checklist":
@@ -308,36 +323,42 @@ def main(argv: Optional[List[str]] = None) -> int:
             from .errors import handle_missing_argument
             return handle_missing_argument("explain", "command", "cybuddy explain 'nmap -sV'")
         text, send = _extract_text_and_send(args[1:])
+        add_command(f"explain {text}")
         return _maybe_json_print("explain", text, _maybe_ai(engine, "explain", text, send))
     if cmd in {"assist", "help"}:
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument(cmd, "issue", "cybuddy assist 'connection refused'")
         text, send = _extract_text_and_send(args[1:])
+        add_command(f"{cmd} {text}")
         return _maybe_json_print("assist", text, _maybe_ai(engine, "assist", text, send))
     if cmd == "tip":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("tip", "topic", "cybuddy tip 'sql injection'")
         text, send = _extract_text_and_send(args[1:])
+        add_command(f"tip {text}")
         return _maybe_json_print("tip", text, _maybe_ai(engine, "tip", text, send))
     if cmd == "report":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("report", "finding", "cybuddy report 'found XSS in login'")
         text, send = _extract_text_and_send(args[1:])
+        add_command(f"report {text}")
         return _maybe_json_print("report", text, _maybe_ai(engine, "report", text, send))
     if cmd == "quiz":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("quiz", "topic", "cybuddy quiz 'nmap'")
         text, send = _extract_text_and_send(args[1:])
+        add_command(f"quiz {text}")
         return _maybe_json_print("quiz", text, _maybe_ai(engine, "quiz", text, send))
     if cmd == "plan":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("plan", "context", "cybuddy plan 'found open port 8080'")
         text, send = _extract_text_and_send(args[1:])
+        add_command(f"plan {text}")
         return _maybe_json_print("plan", text, _maybe_ai(engine, "plan", text, send))
         
 
@@ -349,6 +370,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     if cmd == "config":
         return cmd_config()
     if cmd == "run":
+        # Add to history before processing
+        if len(args) > 1:
+            add_command(f"run {' '.join(args[1:])}")
         return cmd_run(args[1:])
 
     # Unknown command - provide smart suggestions
@@ -660,7 +684,12 @@ def cmd_run(args: List[str]) -> int:
     for tip in notes:
         print(f"- TIP: {tip}")
     print("CMD:")
-    print(command or tool)
+    # Apply syntax highlighting to the command
+    from .formatters import highlight_command, is_likely_code
+    if is_likely_code(command or tool):
+        highlight_command(command or tool)
+    else:
+        print(command or tool)
 
     if not exec_flag and load_config().get("approvals.require_exec", True):
         print("NOT RUN (dry-run). Pass --exec to execute.")
@@ -729,5 +758,7 @@ from .engine import (
     AnswerEngine,
     HeuristicEngine,
     OpenAIEngine,
+    ClaudeEngine,
+    GeminiEngine,
     redact,
 )

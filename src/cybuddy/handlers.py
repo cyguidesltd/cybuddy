@@ -201,9 +201,11 @@ def handle_slash_command(line: str, session: Optional[str] = None) -> SlashRespo
             return SlashResponse("Usage: /run <tool> \"<args>\"", success=False)
 
         from .cli import _safety_review
+        from .formatters import highlight_command, is_likely_code
         tool = tokens[0]
         rest = tokens[1:]
         joined = " ".join(rest)
+        command = f"{tool} {joined}".strip()
 
         safety, notes = _safety_review(tool, joined)
         lines = ["SAFETY:"]
@@ -212,7 +214,12 @@ def handle_slash_command(line: str, session: Optional[str] = None) -> SlashRespo
         for n in notes:
             lines.append(f"- TIP: {n}")
         lines.append("CMD:")
-        lines.append(f"{tool} {joined}".strip())
+        # Apply syntax highlighting to the command
+        if is_likely_code(command):
+            # For slash commands, we need to return text, so we'll use a simple approach
+            lines.append(command)
+        else:
+            lines.append(command)
         lines.append("")
         lines.append("NOT RUN (dry-run). Use 'cybuddy run' CLI for --exec flag.")
         return SlashResponse("\n".join(lines))

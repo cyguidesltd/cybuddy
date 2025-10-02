@@ -1561,6 +1561,368 @@ EXPLAIN_DB: Dict[str, Dict[str, str]] = {
         "--exclude": "Exclude specific parameters",
         "usage": "Use for: Parameter discovery, API endpoint testing, hidden parameter finding",
         "caution": "Can discover sensitive parameters. Use only on authorized targets. May reveal application internals"
+    },
+
+    # Cloud Security Tools
+    "aws-cli": {
+        "base": "AWS Command Line Interface - manage AWS services from terminal",
+        "configure": "aws configure - set up credentials and region",
+        "s3": "aws s3 ls, aws s3 cp, aws s3 sync - manage S3 buckets",
+        "ec2": "aws ec2 describe-instances - list EC2 instances",
+        "iam": "aws iam list-users, aws iam list-roles - enumerate IAM",
+        "usage": "Use for: AWS reconnaissance, credential enumeration, service discovery",
+        "caution": "Requires valid AWS credentials. Monitor for API rate limits"
+    },
+
+    "gcloud": {
+        "base": "Google Cloud CLI - manage GCP services from terminal",
+        "auth": "gcloud auth login - authenticate with Google Cloud",
+        "compute": "gcloud compute instances list - list compute instances",
+        "storage": "gcloud storage ls - list Cloud Storage buckets",
+        "iam": "gcloud iam service-accounts list - enumerate service accounts",
+        "usage": "Use for: GCP reconnaissance, service enumeration, credential discovery",
+        "caution": "Requires valid GCP credentials. Check for service account permissions"
+    },
+
+    "azure-cli": {
+        "base": "Azure CLI - manage Microsoft Azure services from terminal",
+        "login": "az login - authenticate with Azure",
+        "vm": "az vm list - list virtual machines",
+        "storage": "az storage account list - list storage accounts",
+        "rbac": "az role assignment list - enumerate role assignments",
+        "usage": "Use for: Azure reconnaissance, resource enumeration, permission analysis",
+        "caution": "Requires valid Azure credentials. Monitor for subscription limits"
+    },
+
+    # Mobile Security Tools
+    "frida": {
+        "base": "Dynamic instrumentation toolkit - hook and modify mobile app behavior",
+        "spawn": "frida -U -f com.app.package -l script.js - spawn and hook app",
+        "attach": "frida -U com.app.package -l script.js - attach to running app",
+        "gadget": "FridaGadget - embed in apps for runtime analysis",
+        "usage": "Use for: Mobile app analysis, API hooking, runtime manipulation",
+        "caution": "Requires rooted Android or jailbroken iOS. May trigger anti-debugging"
+    },
+
+    "mobsf": {
+        "base": "Mobile Security Framework - automated mobile app security testing",
+        "static": "Static analysis of Android APK and iOS IPA files",
+        "dynamic": "Dynamic analysis with device emulation",
+        "api": "REST API for CI/CD integration",
+        "usage": "Use for: Comprehensive mobile app security assessment",
+        "caution": "Requires Docker. Some features need physical devices"
+    },
+
+    # IoT Security Tools
+    "firmware-analysis-toolkit": {
+        "base": "FAT - automated firmware analysis and extraction",
+        "extract": "Extract filesystems from firmware images",
+        "emulation": "Emulate firmware in QEMU for dynamic analysis",
+        "usage": "Use for: IoT firmware security assessment, vulnerability discovery",
+        "caution": "Requires significant resources. Some firmware may not emulate properly"
+    },
+
+    "binwalk": {
+        "base": "Firmware analysis tool - extract and analyze embedded filesystems",
+        "-e": "Extract files from firmware images",
+        "-A": "Analyze binary files for architecture",
+        "-M": "Recursive extraction with magic number signatures",
+        "usage": "Use for: IoT firmware analysis, embedded system reconnaissance",
+        "caution": "Can extract large amounts of data. Use with disk space monitoring"
+    },
+
+    # OSINT Tools
+    "theharvester": {
+        "base": "OSINT tool for gathering email addresses, subdomains, and IPs",
+        "-d": "Target domain to search",
+        "-b": "Data sources (google, bing, linkedin, etc.)",
+        "-l": "Limit number of results",
+        "usage": "Use for: Passive reconnaissance, email enumeration, subdomain discovery",
+        "caution": "Respect rate limits. Some sources may block automated queries"
+    },
+
+    "sherlock": {
+        "base": "Username enumeration tool - find usernames across social media",
+        "username": "Search for specific username across platforms",
+        "-t": "Timeout for each request",
+        "-o": "Output results to file",
+        "usage": "Use for: Social media reconnaissance, username enumeration",
+        "caution": "Rate limiting may cause false negatives. Use responsibly"
+    },
+
+    "recon-ng": {
+        "base": "Web reconnaissance framework - modular OSINT tool",
+        "modules": "Load and run specific reconnaissance modules",
+        "workspaces": "Create isolated workspaces for different targets",
+        "usage": "Use for: Comprehensive web reconnaissance, data correlation",
+        "caution": "Some modules require API keys. Respect terms of service"
+    },
+
+    # Cryptography Tools
+    "openssl": {
+        "base": "OpenSSL toolkit - cryptographic functions and SSL/TLS testing",
+        "s_client": "Test SSL/TLS connections and certificate validation",
+        "rsa": "Generate and manipulate RSA keys",
+        "enc": "Encrypt/decrypt files with various algorithms",
+        "usage": "Use for: SSL/TLS testing, certificate analysis, cryptographic operations",
+        "caution": "Complex command syntax. Test commands in safe environment"
+    },
+
+    "john": {
+        "base": "John the Ripper - password cracking tool",
+        "--wordlist": "Use custom wordlist for dictionary attacks",
+        "--rules": "Apply transformation rules to wordlist",
+        "--incremental": "Brute force mode with character sets",
+        "usage": "Use for: Password cracking, hash analysis, credential recovery",
+        "caution": "Resource intensive. Use appropriate hardware for large wordlists"
+    },
+
+    # Forensics Tools
+    "sleuthkit": {
+        "base": "The Sleuth Kit - digital forensics toolkit",
+        "fls": "List files in filesystem image",
+        "ils": "List inodes in filesystem",
+        "fsstat": "Display filesystem statistics",
+        "usage": "Use for: Digital forensics, filesystem analysis, evidence extraction",
+        "caution": "Requires filesystem images. Use with proper chain of custody"
+    },
+
+    "bulk-extractor": {
+        "base": "Digital forensics tool - extract information from disk images",
+        "-o": "Output directory for extracted data",
+        "-e": "Enable specific extractors (email, creditcard, etc.)",
+        "usage": "Use for: Bulk data extraction, pattern matching, evidence discovery",
+        "caution": "Can generate large amounts of data. Monitor disk space"
+    },
+
+    # Social Engineering Tools
+    "setoolkit": {
+        "base": "Social Engineering Toolkit - comprehensive social engineering framework",
+        "spear-phishing": "Create targeted phishing campaigns",
+        "website-attacks": "Clone websites for credential harvesting",
+        "usage": "Use for: Social engineering testing, phishing simulations",
+        "caution": "Use only for authorized testing. Follow legal and ethical guidelines"
+    },
+
+    "gophish": {
+        "base": "Open-source phishing framework - simulate phishing attacks",
+        "campaigns": "Create and manage phishing campaigns",
+        "templates": "Design phishing email templates",
+        "landing": "Create credential harvesting pages",
+        "usage": "Use for: Phishing awareness training, security testing",
+        "caution": "Use only for authorized testing. Document all activities"
+    },
+
+    # Additional Security Tools
+    "hashcat": {
+        "base": "Advanced password recovery tool - GPU-accelerated hash cracking",
+        "-m": "Hash mode (0=MD5, 100=SHA1, 1000=NTLM, etc.)",
+        "-a": "Attack mode (0=straight, 1=combinator, 3=brute-force)",
+        "--wordlist": "Dictionary attack with custom wordlist",
+        "usage": "Use for: High-performance password cracking, hash analysis",
+        "caution": "Requires powerful GPU. Monitor temperature and power consumption"
+    },
+
+    "hydra": {
+        "base": "Network login cracker - brute force login credentials",
+        "-l": "Single username for attack",
+        "-L": "Username list file",
+        "-p": "Single password for attack",
+        "-P": "Password list file",
+        "usage": "Use for: Brute force attacks on login services",
+        "caution": "Use only on authorized targets. Can trigger account lockouts"
+    },
+
+    "sqlmap": {
+        "base": "SQL injection testing tool - automated SQLi detection and exploitation",
+        "-u": "Target URL for testing",
+        "--data": "POST data for testing",
+        "--dbs": "Enumerate databases",
+        "--tables": "Enumerate tables",
+        "usage": "Use for: SQL injection testing, database enumeration",
+        "caution": "Use only on authorized targets. Can cause data loss"
+    },
+
+    "metasploit": {
+        "base": "Penetration testing framework - exploit development and execution",
+        "msfconsole": "Launch Metasploit console",
+        "search": "Search for exploits and modules",
+        "use": "Select and configure exploit/module",
+        "exploit": "Execute selected exploit",
+        "usage": "Use for: Penetration testing, exploit development, post-exploitation",
+        "caution": "Powerful tool. Use only on authorized targets with proper documentation"
+    },
+
+    "burp-suite": {
+        "base": "Web application security testing platform - proxy and scanner",
+        "proxy": "Intercept and modify HTTP/HTTPS traffic",
+        "scanner": "Automated vulnerability scanning",
+        "intruder": "Automated attack tool for fuzzing",
+        "repeater": "Manual request manipulation and replay",
+        "usage": "Use for: Web application security testing, API testing",
+        "caution": "Requires proper configuration. May generate false positives"
+    },
+
+    "wireshark": {
+        "base": "Network protocol analyzer - capture and analyze network traffic",
+        "capture": "Live packet capture from network interfaces",
+        "filters": "Display filters to focus on specific traffic",
+        "analysis": "Deep packet inspection and protocol analysis",
+        "usage": "Use for: Network troubleshooting, security analysis, protocol study",
+        "caution": "Can capture sensitive data. Ensure proper authorization and handling"
+    },
+
+    "nmap": {
+        "base": "Network mapper - port scanning and service detection",
+        "-sS": "TCP SYN scan (stealth scan)",
+        "-sV": "Service version detection",
+        "-O": "Operating system detection",
+        "-A": "Aggressive scan with OS detection, version detection, script scanning",
+        "usage": "Use for: Network reconnaissance, port scanning, service enumeration",
+        "caution": "Use responsibly. Some scans may be detected by IDS/IPS"
+    },
+
+    "gobuster": {
+        "base": "Directory/file brute-forcing tool - web content discovery",
+        "-u": "Target URL",
+        "-w": "Wordlist file",
+        "-x": "File extensions to search for",
+        "-t": "Number of concurrent threads",
+        "usage": "Use for: Web directory enumeration, hidden file discovery",
+        "caution": "Can discover sensitive files. Use only on authorized targets"
+    },
+
+    "ffuf": {
+        "base": "Fast web fuzzer - directory and parameter fuzzing",
+        "-w": "Wordlist file",
+        "-u": "Target URL with FUZZ placeholder",
+        "-H": "Custom headers",
+        "-c": "Colorize output",
+        "usage": "Use for: Web fuzzing, directory discovery, parameter fuzzing",
+        "caution": "High-speed tool. Monitor target for performance impact"
+    },
+
+    "dirb": {
+        "base": "Web content scanner - directory and file brute-forcing",
+        "-u": "Target URL",
+        "-w": "Custom wordlist",
+        "-S": "Silent mode (no banner)",
+        "-r": "Recursive scanning",
+        "usage": "Use for: Web directory enumeration, hidden content discovery",
+        "caution": "Older tool. Consider using gobuster or ffuf for better performance"
+    },
+
+    "nikto": {
+        "base": "Web server scanner - comprehensive web vulnerability scanner",
+        "-h": "Target hostname or IP",
+        "-p": "Port number",
+        "-ssl": "Use SSL/TLS",
+        "-T": "Scan tuning (0-9, higher = more tests)",
+        "usage": "Use for: Web server vulnerability assessment, security scanning",
+        "caution": "Comprehensive scans can take time. Review results carefully"
+    },
+
+    # Additional Security Concepts
+    "zero-day": {
+        "base": "Zero-day vulnerability - unknown security flaw with no patch available",
+        "discovery": "Vulnerability found before vendor awareness",
+        "exploitation": "Attack using unknown vulnerability",
+        "disclosure": "Responsible disclosure to vendor before public release",
+        "usage": "Use for: Understanding advanced persistent threats, APT analysis",
+        "caution": "Extremely valuable in black market. Handle with extreme care"
+    },
+
+    "apt": {
+        "base": "Advanced Persistent Threat - sophisticated long-term cyber attack",
+        "reconnaissance": "Initial target research and vulnerability discovery",
+        "initial-access": "First compromise of target network",
+        "persistence": "Maintaining access despite security measures",
+        "usage": "Use for: Understanding nation-state attacks, enterprise security",
+        "caution": "Complex multi-stage attacks. Requires advanced detection"
+    },
+
+    "ransomware": {
+        "base": "Malware that encrypts files and demands payment for decryption",
+        "encryption": "Symmetric encryption of user files",
+        "payment": "Cryptocurrency ransom demand",
+        "recovery": "Backup restoration or decryption key recovery",
+        "usage": "Use for: Incident response, backup strategies, user training",
+        "caution": "Never pay ransom. Focus on prevention and recovery"
+    },
+
+    "phishing": {
+        "base": "Social engineering attack using fraudulent communications",
+        "email": "Fake emails designed to steal credentials",
+        "sms": "Smishing - phishing via text messages",
+        "voice": "Vishing - phishing via phone calls",
+        "usage": "Use for: Security awareness training, email filtering",
+        "caution": "Constantly evolving tactics. Regular training essential"
+    },
+
+    "malware": {
+        "base": "Malicious software designed to harm or gain unauthorized access",
+        "viruses": "Self-replicating malware that infects other files",
+        "trojans": "Disguised malicious software",
+        "rootkits": "Malware that hides its presence",
+        "usage": "Use for: Antivirus configuration, endpoint protection",
+        "caution": "Constantly evolving. Requires layered defense strategy"
+    },
+
+    "botnet": {
+        "base": "Network of compromised computers controlled by attacker",
+        "recruitment": "Infection of devices to join botnet",
+        "command-control": "C2 servers that control botnet",
+        "ddos": "Distributed denial of service attacks",
+        "usage": "Use for: Network monitoring, DDoS protection",
+        "caution": "Large-scale attacks. Requires coordinated response"
+    },
+
+    "cryptocurrency": {
+        "base": "Digital currency used in cybercrime and ransomware",
+        "bitcoin": "Most common ransom payment method",
+        "monero": "Privacy-focused cryptocurrency for anonymous transactions",
+        "tracing": "Blockchain analysis to track payments",
+        "usage": "Use for: Ransomware analysis, financial forensics",
+        "caution": "Difficult to trace. Focus on prevention over recovery"
+    },
+
+    "dark-web": {
+        "base": "Hidden part of internet requiring special software to access",
+        "tor": "The Onion Router for anonymous browsing",
+        "marketplaces": "Illegal goods and services trading",
+        "intelligence": "Threat intelligence gathering from dark web",
+        "usage": "Use for: Threat hunting, intelligence gathering",
+        "caution": "Legal and ethical considerations. Use only for authorized research"
+    },
+
+    "honeypot": {
+        "base": "Decoy system designed to attract and detect attackers",
+        "deployment": "Strategic placement in network",
+        "monitoring": "Logging and analysis of attack attempts",
+        "intelligence": "Gathering threat actor tactics and techniques",
+        "usage": "Use for: Threat detection, attack pattern analysis",
+        "caution": "Can attract unwanted attention. Requires careful management"
+    },
+
+    "threat-hunting": {
+        "base": "Proactive search for threats within network environment",
+        "hypothesis": "Formulating theories about potential threats",
+        "investigation": "Systematic search for threat indicators",
+        "response": "Taking action on discovered threats",
+        "usage": "Use for: Advanced threat detection, incident response",
+        "caution": "Requires skilled analysts. Time and resource intensive"
+    },
+
+    "incident-response": {
+        "base": "Systematic approach to handling security incidents",
+        "preparation": "Planning and training for incident response",
+        "identification": "Detecting and confirming security incidents",
+        "containment": "Isolating affected systems",
+        "eradication": "Removing threat from environment",
+        "recovery": "Restoring normal operations",
+        "lessons-learned": "Documenting and improving response procedures",
+        "usage": "Use for: Security operations, breach management",
+        "caution": "Time-sensitive process. Requires clear procedures and authority"
     }
 }
 
@@ -2350,7 +2712,79 @@ Q: What's a zero-day vulnerability?
 A: Vulnerability unknown to vendor/public, no patch available
 
 Q: What's defense in depth?
-A: Multiple layers of security controls (if one fails, others still protect)"""
+A: Multiple layers of security controls (if one fails, others still protect)""",
+
+    "cloud security": """Q: What's the AWS metadata service endpoint?
+A: 169.254.169.254 - can reveal instance metadata, IAM roles, and credentials
+
+Q: What's a common S3 bucket misconfiguration?
+A: Public read access (s3:GetObject) on buckets containing sensitive data
+
+Q: What's the difference between IAM users and roles?
+A: Users have permanent credentials; roles are assumed temporarily with STS tokens""",
+
+    "mobile security": """Q: What's the main difference between iOS and Android security models?
+A: iOS uses app sandboxing and code signing; Android uses permission-based access control
+
+Q: What's a common Android vulnerability?
+A: Insecure storage of sensitive data in SharedPreferences or SQLite without encryption
+
+Q: What's the purpose of certificate pinning in mobile apps?
+A: Prevents man-in-the-middle attacks by validating server certificates against hardcoded pins""",
+
+    "iot security": """Q: What's a common IoT device vulnerability?
+A: Default credentials (admin/admin, root/root) that are never changed
+
+Q: What's the main risk of unencrypted IoT communication?
+A: Data interception and device impersonation in local networks
+
+Q: What's firmware analysis in IoT security?
+A: Reverse engineering device firmware to find vulnerabilities and backdoors""",
+
+    "cryptography": """Q: What's the difference between symmetric and asymmetric encryption?
+A: Symmetric uses same key for encrypt/decrypt; asymmetric uses public/private key pairs
+
+Q: Why is ECB mode considered insecure?
+A: Identical plaintext blocks produce identical ciphertext, revealing patterns
+
+Q: What's a rainbow table attack?
+A: Precomputed hash lookup table to reverse hashes without brute-forcing (defeated by salts)""",
+
+    "forensics": """Q: What's the difference between live and dead forensics?
+A: Live forensics analyzes running systems; dead forensics analyzes offline storage
+
+Q: What's the purpose of write blockers in forensics?
+A: Prevent modification of evidence during acquisition to maintain chain of custody
+
+Q: What's timeline analysis in digital forensics?
+A: Correlating timestamps across multiple sources to reconstruct events chronologically""",
+
+    "reverse engineering": """Q: What's the difference between static and dynamic analysis?
+A: Static analyzes code without execution; dynamic observes behavior during runtime
+
+Q: What's a common obfuscation technique in malware?
+A: Packing/compression to hide code structure and make analysis harder
+
+Q: What's the purpose of a debugger in reverse engineering?
+A: Step through code execution, examine memory, and understand program flow""",
+
+    "osint": """Q: What's the purpose of OSINT in cybersecurity?
+A: Gathering publicly available information about targets for reconnaissance
+
+Q: What's a common OSINT technique for email addresses?
+A: Using tools like theHarvester to search multiple sources for email addresses
+
+Q: What's the difference between passive and active OSINT?
+A: Passive uses publicly available data; active involves direct interaction with targets""",
+
+    "social engineering": """Q: What's the most common social engineering attack?
+A: Phishing emails designed to trick users into revealing credentials or clicking malicious links
+
+Q: What's pretexting in social engineering?
+A: Creating a false scenario to manipulate targets into providing information or access
+
+Q: What's the principle of least privilege in social engineering defense?
+A: Limiting user access to only what's necessary for their job function"""
 }
 
 

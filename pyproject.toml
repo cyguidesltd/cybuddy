@@ -4,12 +4,25 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cybuddy"
-version = "0.1.0"
-description = "A beginner-friendly cybersecurity helper CLI with Codex-like UX"
+version = "1.0.0"
+description = "AI-powered cybersecurity learning assistant"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "MIT"}
-authors = [{ name = "Your Name" }]
+license = "MIT"
+authors = [{ name = "CyBuddy Team" }]
+keywords = ["cybersecurity", "learning", "pentesting", "security", "cli", "tui"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Education",
+    "Intended Audience :: Information Technology",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+    "Topic :: Education",
+    "Topic :: System :: Networking",
+]
 dependencies = [
   "prompt-toolkit>=3.0",
   "rich>=13.7",
@@ -23,6 +36,12 @@ dev = [
   "mypy>=1.11",
   "types-setuptools",
 ]
+
+[project.urls]
+Homepage = "https://github.com/cybuddy/cybuddy"
+Documentation = "https://github.com/cybuddy/cybuddy#readme"
+Issues = "https://github.com/cybuddy/cybuddy/issues"
+Source = "https://github.com/cybuddy/cybuddy"
 
 [project.scripts]
 cybuddy = "cybuddy.cli:main"

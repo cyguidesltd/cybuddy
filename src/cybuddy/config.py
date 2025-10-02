@@ -39,9 +39,16 @@ DEFAULT_CONFIG = {
     },
     'ai': {
         'enabled': False,
-        'provider': 'openai',
+        'provider': 'openai',  # openai, claude, or gemini
+        'api_key': None,
+        'auto_send': False,  # If true, always use AI; if false, require --send flag
         'redact': True,
-        'max_tokens': 300
+        'max_tokens': 500,
+        'models': {
+            'openai': 'gpt-4o-mini',
+            'claude': 'claude-3-5-sonnet-20241022',
+            'gemini': 'gemini-1.5-flash'
+        }
     }
 }
 
@@ -128,16 +135,21 @@ def migrate_old_config() -> bool:
 def load_config() -> Dict[str, Any]:
     """
     Load configuration with fallback to defaults.
-    
+
+    Environment variables override config file:
+    - CYBUDDY_API_KEY: API key for AI provider
+    - CYBUDDY_PROVIDER: AI provider (openai, claude, gemini)
+    - CYBUDDY_AUTO_SEND: Auto-send queries to AI (true/false)
+
     Returns:
         Configuration dictionary with user settings merged over defaults.
     """
     # Start with defaults
     config = DEFAULT_CONFIG.copy()
-    
+
     # Try to migrate old config first
     migrate_old_config()
-    
+
     # Load user config if it exists
     config_path = _config_path()
     if config_path.exists():
@@ -148,7 +160,21 @@ def load_config() -> Dict[str, Any]:
                 _deep_merge(config, user_config)
         except Exception as e:
             print(f"Warning: Could not load config file {config_path}: {e}")
-    
+
+    # Environment variables override config file
+    if os.getenv('CYBUDDY_API_KEY'):
+        config['ai']['api_key'] = os.getenv('CYBUDDY_API_KEY')
+        config['ai']['enabled'] = True
+
+    if os.getenv('CYBUDDY_PROVIDER'):
+        provider = os.getenv('CYBUDDY_PROVIDER').lower()
+        if provider in ('openai', 'claude', 'anthropic', 'gemini'):
+            config['ai']['provider'] = provider
+
+    if os.getenv('CYBUDDY_AUTO_SEND'):
+        auto_send_val = os.getenv('CYBUDDY_AUTO_SEND').lower()
+        config['ai']['auto_send'] = auto_send_val in ('true', '1', 'yes', 'on')
+
     return config
 
 

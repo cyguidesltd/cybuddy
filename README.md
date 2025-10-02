@@ -1,26 +1,92 @@
 # CyBuddy 🛡️
 
-Your friendly cybersecurity learning companion. Built for students, CTF players, and anyone learning offensive security.
+AI-powered cybersecurity learning assistant for students and professionals.
 
-## What is CyBuddy?
+## Features
 
-Think of it as a helpful mentor who's always available when you're stuck during a CTF, lab, or pentest exercise. Instead of Googling "how does nmap work" for the 10th time, just ask CyBuddy.
+- 300+ cybersecurity tools explained
+- Attack techniques and methodologies  
+- Real-world scenarios and examples
+- Beautiful TUI interface
+- Zero configuration required
+
+## Installation
+
+```bash
+pip install cybuddy
+```
 
 ## Quick Start
 
 ```bash
-# Manual install
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
+# Explain a tool
+cybuddy explain "nmap"
+
+# Interactive TUI mode
 cybuddy guide --tui
+
+# CLI mode
+cybuddy guide --cli
 ```
 
-You're now in the interactive learning interface.
+## Commands
+
+- `cybuddy explain <tool>` - Get detailed tool explanation
+- `cybuddy tip <topic>` - Study guide for security topics
+- `cybuddy help <issue>` - Troubleshoot errors and issues
+- `cybuddy report <finding>` - Practice writing security reports
+- `cybuddy quiz <topic>` - Active recall with flashcards
+- `cybuddy plan <context>` - Get next steps guidance
+- `cybuddy checklist [topic]` - Show checklists (recon|web|crypto|forensics)
+- `cybuddy guide [--tui|--cli]` - Launch interactive learning interface
+- `cybuddy --help` - Show all available commands
+
+## Examples
+
+### Basic Usage
+```bash
+# Explain a command
+cybuddy explain "nmap -sV"
+
+# Get study tips
+cybuddy tip "SQL injection"
+
+# Troubleshoot issues
+cybuddy help "connection refused"
+
+# Practice reporting
+cybuddy report "Found XSS in login form"
+
+# Test your knowledge
+cybuddy quiz "Buffer overflow"
+
+# Get next steps
+cybuddy plan "found port 80 open"
+```
+
+### Interactive Mode
+```bash
+# Launch TUI (auto-detects terminal)
+cybuddy guide
+
+# Force TUI mode
+cybuddy guide --tui
+
+# Force CLI mode  
+cybuddy guide --cli
+```
+
+### Checklists
+```bash
+cybuddy checklist recon
+cybuddy checklist web
+cybuddy checklist crypto
+cybuddy checklist forensics
+```
 
 ## The 7 Commands You Need
 
-Once inside, you have exactly 7 simple commands:
+Once inside the interactive mode, you have exactly 7 simple commands:
 
 ### 1. **explain** - Learn what commands do
 ```
@@ -242,6 +308,20 @@ A: Check your rules. Built-in heuristics = usually OK. AI mode = maybe not.
 
 **Q: Is my data sent anywhere?**
 A: Only if you enable AI mode and use --send. Otherwise everything is local.
+
+**Q: How do I get started?**
+A: Just run `cybuddy guide --tui` and start exploring!
+
+**Q: What's the difference between TUI and CLI mode?**
+A: TUI mode provides a rich interactive interface with syntax highlighting and better navigation. CLI mode is a simple text interface that works in any terminal.
+
+## License
+
+MIT License - see LICENSE file for details.
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
 
 ---
 

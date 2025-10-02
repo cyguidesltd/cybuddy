@@ -12,6 +12,7 @@ from rich.text import Text
 from .core import FrameScheduler, HistoryBuffer, CybuddyEvent, TerminalController
 from .core.events import EventType, KeyEvent, PasteEvent
 from .overlays import Overlay, PagerOverlay
+from ..history import add_command, get_history_entries
 
 if TYPE_CHECKING:
     from cybuddy.handlers import GuideResponse
@@ -52,6 +53,9 @@ class CybuddyApp:
         self._scheduler: Optional[FrameScheduler] = None
         self._current_input: list[str] = []
         self._session = session
+        self._command_history = get_history_entries()
+        self._history_index = -1
+        self._current_line = ""
 
     async def run(self) -> None:
         async with self._terminal:
@@ -182,12 +186,28 @@ class CybuddyApp:
         if event.key == "f2":
             self._toggle_pager()
             return
+        
+        # History navigation
+        if event.key == "up" and not (event.ctrl or event.alt):
+            self._navigate_history(-1)
+            return
+        if event.key == "down" and not (event.ctrl or event.alt):
+            self._navigate_history(1)
+            return
+        
+        # Ctrl+R for reverse search (basic implementation)
+        if event.key == "r" and event.ctrl:
+            self._reverse_search()
+            return
+        
         if event.key in {"c-m", "enter"}:
             if self._current_input:
                 text = "".join(self._current_input).strip()
                 if text:
                     self._process_user_input(text)
                 self._current_input.clear()
+                self._history_index = -1
+                self._current_line = ""
                 self._request_frame()
             return
         if event.key in {"backspace"}:
@@ -202,10 +222,48 @@ class CybuddyApp:
             self._current_input.append(event.data)
             self._request_frame()
 
+    def _navigate_history(self, direction: int) -> None:
+        """Navigate through command history."""
+        if not self._command_history:
+            return
+        
+        if direction < 0:  # Up arrow - go to older commands
+            if self._history_index == -1:
+                # First time navigating up - save current input
+                self._current_line = "".join(self._current_input)
+                self._history_index = len(self._command_history) - 1
+            elif self._history_index > 0:
+                self._history_index -= 1
+        else:  # Down arrow - go to newer commands
+            if self._history_index == -1:
+                return
+            elif self._history_index < len(self._command_history) - 1:
+                self._history_index += 1
+            else:
+                # At newest - restore original input
+                self._history_index = -1
+                self._current_input = list(self._current_line)
+                self._request_frame()
+                return
+        
+        # Update input with history entry
+        if self._history_index >= 0:
+            self._current_input = list(self._command_history[self._history_index])
+        self._request_frame()
+    
+    def _reverse_search(self) -> None:
+        """Basic reverse search implementation."""
+        # For now, just show a message - full implementation would be more complex
+        self.history.append("(Reverse search not fully implemented yet)")
+        self._request_frame()
+
     def _process_user_input(self, text: str) -> None:
         """Process user input through CyBuddy handlers and render response."""
         # Add user input to history
         self.history.append(f"> {text}")
+        
+        # Add to command history
+        add_command(text)
 
         # Handle exit commands
         if text.lower() in {"exit", "quit"}:

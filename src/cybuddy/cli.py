@@ -128,6 +128,22 @@ def cmd_checklist(topic: Optional[str]) -> int:
 
 
 def cmd_guide(stdin: Iterable[str] = sys.stdin, session: Optional[str] = None) -> int:
+    # Setup readline for CLI history
+    import readline
+    from .history import add_command, get_history_entries
+    
+    # Load history into readline
+    histfile = os.path.expanduser("~/.local/share/cybuddy/history.txt")
+    try:
+        readline.read_history_file(histfile)
+        readline.set_history_length(1000)
+    except FileNotFoundError:
+        pass
+    
+    # Register cleanup
+    import atexit
+    atexit.register(readline.write_history_file, histfile)
+    
     # Print colored shield logo with gradient (green to cyan) and medical cross
     # Matches the SVG design: rgb(0,255,136) → rgb(0,255,255)
     print("\033[1;38;2;0;255;136m        ▄▀▀▀▄\033[0m")
@@ -139,6 +155,7 @@ def cmd_guide(stdin: Iterable[str] = sys.stdin, session: Optional[str] = None) -
     print("\033[1;38;2;0;255;245m         █ █\033[0m")
     print("\033[1;38;2;0;255;255m          ▀\033[0m\n")
     print("Type 'exit' to quit. Use /tip, /plan, /checklist <topic>, /todo add <..>, /run <tool> \"args\"")
+    print("Use ↑↓ arrows for command history, Ctrl+R for reverse search")
     while True:
         try:
             line = input("> ").strip()
@@ -151,6 +168,9 @@ def cmd_guide(stdin: Iterable[str] = sys.stdin, session: Optional[str] = None) -
         if line.lower() in {"exit", "quit"}:
             print("Good luck! Document your steps and be safe.")
             break
+
+        # Add to command history
+        add_command(line)
 
         # Slash commands
         if line.startswith("/"):
@@ -324,6 +344,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if cmd == "todo":
         return cmd_todo(args[1:])
     if cmd == "history":
+        from .commands.history import cmd_history
         return cmd_history(args[1:])
     if cmd == "config":
         return cmd_config()
@@ -483,35 +504,6 @@ def history_append(event: dict, session: Optional[str] = None) -> None:
         pass
 
 
-def cmd_history(args: List[str]) -> int:
-    if args and args[0] == "--clear":
-        try:
-            _history_file().unlink(missing_ok=True)
-            print("History cleared.")
-        except Exception as e:
-            print(f"Failed to clear history: {e}")
-            return 1
-        return 0
-
-    path = _history_file()
-    if not path.exists():
-        print("No history yet.")
-        return 0
-    count = 0
-    with path.open("r", encoding="utf-8") as f:
-        for line in f:
-            try:
-                obj = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            ts = obj.get("ts", "?")
-            kind = obj.get("type", "event")
-            data = obj.get("data")
-            print(f"[{ts}] {kind}: {data}")
-            count += 1
-    if count == 0:
-        print("No history yet.")
-    return 0
 
 
 def _todo_load(session: Optional[str] = None) -> List[dict]:

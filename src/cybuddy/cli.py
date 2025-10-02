@@ -118,9 +118,8 @@ def cmd_checklist(topic: Optional[str]) -> int:
     key = topic.lower()
     item = CHECKLISTS.get(key)
     if not item:
-        print(f"Unknown topic: {topic}")
-        print("Try one of: " + ", ".join(sorted(CHECKLISTS)))
-        return 1
+        from .errors import handle_unknown_topic
+        return handle_unknown_topic(topic, list(CHECKLISTS.keys()))
 
     print(f"{item.name} Checklist:")
     for i, step in enumerate(item.steps, start=1):
@@ -284,22 +283,40 @@ def main(argv: Optional[List[str]] = None) -> int:
         return cmd_guide(session=session)
 
     # Student helpers
-    if cmd == "explain" and len(args) > 1:
+    if cmd == "explain":
+        if len(args) < 2:
+            from .errors import handle_missing_argument
+            return handle_missing_argument("explain", "command", "cybuddy explain 'nmap -sV'")
         text, send = _extract_text_and_send(args[1:])
         return _maybe_json_print("explain", text, _maybe_ai(engine, "explain", text, send))
-    if cmd in {"assist", "help"} and len(args) > 1:
+    if cmd in {"assist", "help"}:
+        if len(args) < 2:
+            from .errors import handle_missing_argument
+            return handle_missing_argument(cmd, "issue", "cybuddy assist 'connection refused'")
         text, send = _extract_text_and_send(args[1:])
         return _maybe_json_print("assist", text, _maybe_ai(engine, "assist", text, send))
-    if cmd == "tip" and len(args) > 1:
+    if cmd == "tip":
+        if len(args) < 2:
+            from .errors import handle_missing_argument
+            return handle_missing_argument("tip", "topic", "cybuddy tip 'sql injection'")
         text, send = _extract_text_and_send(args[1:])
         return _maybe_json_print("tip", text, _maybe_ai(engine, "tip", text, send))
-    if cmd == "report" and len(args) > 1:
+    if cmd == "report":
+        if len(args) < 2:
+            from .errors import handle_missing_argument
+            return handle_missing_argument("report", "finding", "cybuddy report 'found XSS in login'")
         text, send = _extract_text_and_send(args[1:])
         return _maybe_json_print("report", text, _maybe_ai(engine, "report", text, send))
-    if cmd == "quiz" and len(args) > 1:
+    if cmd == "quiz":
+        if len(args) < 2:
+            from .errors import handle_missing_argument
+            return handle_missing_argument("quiz", "topic", "cybuddy quiz 'nmap'")
         text, send = _extract_text_and_send(args[1:])
         return _maybe_json_print("quiz", text, _maybe_ai(engine, "quiz", text, send))
-    if cmd == "plan" and len(args) > 1:
+    if cmd == "plan":
+        if len(args) < 2:
+            from .errors import handle_missing_argument
+            return handle_missing_argument("plan", "context", "cybuddy plan 'found open port 8080'")
         text, send = _extract_text_and_send(args[1:])
         return _maybe_json_print("plan", text, _maybe_ai(engine, "plan", text, send))
         
@@ -313,8 +330,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     if cmd == "run":
         return cmd_run(args[1:])
 
-    print(f"Unknown command: {cmd}")
-    return print_help()
+    # Unknown command - provide smart suggestions
+    from .errors import handle_unknown_command
+    available_commands = [
+        "guide", "explain", "tip", "assist", "help", "report",
+        "quiz", "plan", "checklist", "prompt", "todo", "history",
+        "config", "run"
+    ]
+    return handle_unknown_command(cmd, available_commands)
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -631,8 +654,8 @@ def _HeuristicProxy() -> AnswerEngine:
 
 def cmd_run(args: List[str]) -> int:
     if not args:
-        print("Usage: cybuddy run <tool> \"<args>\" [--exec]")
-        return 1
+        from .errors import handle_missing_argument
+        return handle_missing_argument("run", "tool", "cybuddy run nmap '-sV target.local'")
     tool = args[0]
     exec_flag = "--exec" in args
     joined = " ".join(a for a in args[1:] if a != "--exec").strip()

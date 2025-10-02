@@ -7,6 +7,6 @@ Supports:
 - Google Gemini (Gemini 1.5 Flash/Pro)
 """
 
-from .provider import get_provider, AIProvider
+from .provider import AIProvider, get_provider
 
 __all__ = ["get_provider", "AIProvider"]

@@ -3,12 +3,10 @@
 from __future__ import annotations
 
 import os
-import shutil
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
 
 import yaml
-
 
 # Default configuration - works for 99% of users
 DEFAULT_CONFIG = {
@@ -63,7 +61,7 @@ def _old_config_path() -> Path:
     return Path.home() / '.cybuddy' / 'config.toml'
 
 
-def _deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> None:
+def _deep_merge(base: dict[str, Any], override: dict[str, Any]) -> None:
     """Deep merge override dict into base dict."""
     for key, value in override.items():
         if key in base and isinstance(base[key], dict) and isinstance(value, dict):
@@ -89,7 +87,7 @@ def migrate_old_config() -> bool:
             
             # Parse old TOML config and convert to YAML
             old_config = {}
-            with open(old_path, 'r', encoding='utf-8') as f:
+            with open(old_path, encoding='utf-8') as f:
                 for line in f:
                     line = line.strip()
                     if not line or line.startswith("#"):
@@ -132,7 +130,7 @@ def migrate_old_config() -> bool:
     return False
 
 
-def load_config() -> Dict[str, Any]:
+def load_config() -> dict[str, Any]:
     """
     Load configuration with fallback to defaults.
 
@@ -154,7 +152,7 @@ def load_config() -> Dict[str, Any]:
     config_path = _config_path()
     if config_path.exists():
         try:
-            with open(config_path, 'r', encoding='utf-8') as f:
+            with open(config_path, encoding='utf-8') as f:
                 user_config = yaml.safe_load(f) or {}
                 # Merge user config with defaults
                 _deep_merge(config, user_config)
@@ -178,7 +176,7 @@ def load_config() -> Dict[str, Any]:
     return config
 
 
-def save_config(config: Dict[str, Any]) -> bool:
+def save_config(config: dict[str, Any]) -> bool:
     """
     Save configuration to file.
     

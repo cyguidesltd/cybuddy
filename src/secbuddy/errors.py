@@ -8,7 +8,7 @@ Provides clear, actionable error messages with:
 - Similar commands/tools suggestions
 """
 
-from typing import List, Optional
+
 from rich.console import Console
 
 console = Console()
@@ -20,10 +20,10 @@ class SmartError:
     def __init__(
         self,
         message: str,
-        reason: Optional[str] = None,
-        fix: Optional[str] = None,
-        suggestions: Optional[List[str]] = None,
-        browse_hint: Optional[str] = None
+        reason: str | None = None,
+        fix: str | None = None,
+        suggestions: list[str] | None = None,
+        browse_hint: str | None = None
     ):
         """
         Initialize a smart error.
@@ -68,7 +68,7 @@ class SmartError:
         console.print("\n[dim]📚 See all commands: [bold]cybuddy help[/bold][/dim]")
 
 
-def handle_unknown_tool(tool_name: str, available_tools: List[str]) -> SmartError:
+def handle_unknown_tool(tool_name: str, available_tools: list[str]) -> SmartError:
     """
     Handle unknown tool name error.
 

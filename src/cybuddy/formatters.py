@@ -1,10 +1,8 @@
 """Syntax highlighting and formatting utilities for CyBuddy output."""
 from __future__ import annotations
 
-from typing import Optional
+from rich.console import Console
 from rich.syntax import Syntax
-from rich.console import Console, ConsoleOptions, RenderResult
-from rich.text import Text
 
 
 def detect_language(text: str) -> str:
@@ -58,7 +56,7 @@ def detect_language(text: str) -> str:
 
 def create_syntax_highlight(
     code: str,
-    language: Optional[str] = None,
+    language: str | None = None,
     theme: str = "monokai",
     line_numbers: bool = False,
     word_wrap: bool = True
@@ -89,7 +87,7 @@ def create_syntax_highlight(
     )
 
 
-def highlight_command(command: str, console: Optional[Console] = None) -> None:
+def highlight_command(command: str, console: Console | None = None) -> None:
     """
     Print command with syntax highlighting to console.
 
@@ -106,8 +104,8 @@ def highlight_command(command: str, console: Optional[Console] = None) -> None:
 
 def highlight_code_block(
     code: str,
-    language: Optional[str] = None,
-    console: Optional[Console] = None
+    language: str | None = None,
+    console: Console | None = None
 ) -> None:
     """
     Print code block with syntax highlighting to console.

@@ -1,22 +1,18 @@
 """Simple TUI using prompt_toolkit's proper async API."""
 from __future__ import annotations
 
-import asyncio
-from typing import Optional
-
 from prompt_toolkit import PromptSession
 from prompt_toolkit.patch_stdout import patch_stdout
 from rich.console import Console
-from rich.panel import Panel
 
 from .cli import (
     explain_command,
-    quick_tip,
     help_troubleshoot,
+    history_append,
     micro_report,
+    quick_tip,
     quiz_flashcards,
     step_planner,
-    history_append,
 )
 
 
@@ -33,7 +29,7 @@ class SimpleTUI:
         "exit": "Exit CyBuddy",
     }
 
-    def __init__(self, session: Optional[str] = None) -> None:
+    def __init__(self, session: str | None = None) -> None:
         self.console = Console()
         self.session_name = session
         self.prompt_session = PromptSession()

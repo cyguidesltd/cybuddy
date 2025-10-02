@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -24,7 +23,7 @@ class SlashResponse:
     success: bool = True
 
 
-def handle_user_input(text: str, session: Optional[str] = None) -> GuideResponse:
+def handle_user_input(text: str, session: str | None = None) -> GuideResponse:
     """
     Process user input in guide mode and return structured response.
 
@@ -82,7 +81,7 @@ def _extract_first_step(plan_text: str) -> str:
     return "Document your findings and proceed methodically"
 
 
-def handle_slash_command(line: str, session: Optional[str] = None) -> SlashResponse:
+def handle_slash_command(line: str, session: str | None = None) -> SlashResponse:
     """
     Handle slash commands in guide mode.
 
@@ -95,10 +94,9 @@ def handle_slash_command(line: str, session: Optional[str] = None) -> SlashRespo
     """
     from .cli import (
         CHECKLISTS,
+        _now_iso,
         _todo_load,
         _todo_save,
-        _now_iso,
-        cmd_run,
         quick_tip,
         step_planner,
     )
@@ -201,7 +199,7 @@ def handle_slash_command(line: str, session: Optional[str] = None) -> SlashRespo
             return SlashResponse("Usage: /run <tool> \"<args>\"", success=False)
 
         from .cli import _safety_review
-        from .formatters import highlight_command, is_likely_code
+        from .formatters import is_likely_code
         tool = tokens[0]
         rest = tokens[1:]
         joined = " ".join(rest)

@@ -1,10 +1,9 @@
 """Smart suggestion system for command and topic recommendations."""
 
-from typing import List
 from difflib import get_close_matches
 
 
-def get_command_suggestions(unknown_cmd: str, available_commands: List[str], n: int = 3) -> List[str]:
+def get_command_suggestions(unknown_cmd: str, available_commands: list[str], n: int = 3) -> list[str]:
     """
     Get smart suggestions for unknown commands using fuzzy matching.
 
@@ -27,7 +26,7 @@ def get_command_suggestions(unknown_cmd: str, available_commands: List[str], n: 
     return [cmd_map[m] for m in matches]
 
 
-def get_topic_suggestions(unknown_topic: str, available_topics: List[str], n: int = 3) -> List[str]:
+def get_topic_suggestions(unknown_topic: str, available_topics: list[str], n: int = 3) -> list[str]:
     """
     Get smart suggestions for unknown topics using fuzzy matching.
 
@@ -50,7 +49,7 @@ def get_topic_suggestions(unknown_topic: str, available_topics: List[str], n: in
     return [topic_map[m] for m in matches]
 
 
-def get_tool_suggestions(unknown_tool: str, available_tools: List[str], n: int = 3) -> List[str]:
+def get_tool_suggestions(unknown_tool: str, available_tools: list[str], n: int = 3) -> list[str]:
     """
     Get smart suggestions for unknown tools using fuzzy matching.
 

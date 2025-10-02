@@ -4,17 +4,23 @@ import asyncio
 import contextlib
 import sys
 import time
+from collections.abc import AsyncIterator
 from contextlib import ExitStack
-from typing import AsyncIterator, Optional
 
 from prompt_toolkit.input.defaults import create_input
 from prompt_toolkit.key_binding import KeyPress
 from prompt_toolkit.keys import Keys
 from prompt_toolkit.output.defaults import create_output
-from rich.console import Console
-from rich.console import RenderableType
+from rich.console import Console, RenderableType
 
-from .events import DrawEvent, FocusEvent, KeyEvent, PasteEvent, ResizeEvent, CybuddyEvent
+from .events import (
+    CybuddyEvent,
+    DrawEvent,
+    FocusEvent,
+    KeyEvent,
+    PasteEvent,
+    ResizeEvent,
+)
 
 
 class TerminalController:
@@ -25,11 +31,11 @@ class TerminalController:
         self._output = create_output(stdout=sys.stdout)
         self.console = Console(force_terminal=True, highlight=False)
         self._event_queue: asyncio.Queue[CybuddyEvent] = asyncio.Queue()
-        self._reader_task: Optional[asyncio.Task[None]] = None
+        self._reader_task: asyncio.Task[None] | None = None
         self._exit_stack = ExitStack()
         self._alt_active = False
 
-    async def __aenter__(self) -> "TerminalController":
+    async def __aenter__(self) -> TerminalController:
         self._enter_terminal_modes()
         self._reader_task = asyncio.create_task(self._read_input(), name="cybuddy-tui-input")
         return self
@@ -112,7 +118,7 @@ class TerminalController:
         self._event_queue.put_nowait(event)
 
     @property
-    def event_queue(self) -> "asyncio.Queue[CybuddyEvent]":
+    def event_queue(self) -> asyncio.Queue[CybuddyEvent]:
         return self._event_queue
 
     def send_focus(self, gained: bool) -> None:

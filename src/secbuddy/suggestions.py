@@ -5,15 +5,14 @@ Provides intelligent suggestions for typos and similar commands/tools.
 """
 
 from difflib import get_close_matches
-from typing import List
 
 
 def get_tool_suggestions(
     tool_name: str,
-    available_tools: List[str],
+    available_tools: list[str],
     max_suggestions: int = 5,
     cutoff: float = 0.4
-) -> List[str]:
+) -> list[str]:
     """
     Get suggestions for a tool name using fuzzy matching.
 
@@ -59,10 +58,10 @@ def get_tool_suggestions(
 
 def get_command_suggestions(
     command: str,
-    valid_commands: List[str],
+    valid_commands: list[str],
     max_suggestions: int = 3,
     cutoff: float = 0.5
-) -> List[str]:
+) -> list[str]:
     """
     Get suggestions for a command using fuzzy matching.
 
@@ -101,10 +100,10 @@ def get_command_suggestions(
 
 def get_category_suggestions(
     query: str,
-    categories: List[str],
+    categories: list[str],
     max_suggestions: int = 3,
     cutoff: float = 0.4
-) -> List[str]:
+) -> list[str]:
     """
     Get suggestions for categories using fuzzy matching.
 
@@ -149,10 +148,10 @@ def get_category_suggestions(
 
 def get_technique_suggestions(
     query: str,
-    techniques: List[str],
+    techniques: list[str],
     max_suggestions: int = 5,
     cutoff: float = 0.3
-) -> List[str]:
+) -> list[str]:
     """
     Get suggestions for techniques using fuzzy matching.
 
@@ -197,9 +196,9 @@ def get_technique_suggestions(
 
 def find_partial_matches(
     query: str,
-    items: List[str],
+    items: list[str],
     max_results: int = 5
-) -> List[str]:
+) -> list[str]:
     """
     Find items that contain the query as a substring.
 
@@ -231,9 +230,9 @@ def find_partial_matches(
 
 
 def rank_suggestions_by_popularity(
-    suggestions: List[str],
+    suggestions: list[str],
     popularity_scores: dict
-) -> List[str]:
+) -> list[str]:
     """
     Rank suggestions by popularity/usage frequency.
 
@@ -262,9 +261,9 @@ def rank_suggestions_by_popularity(
 
 def get_smart_suggestions(
     query: str,
-    tools: List[str],
-    techniques: List[str],
-    categories: List[str]
+    tools: list[str],
+    techniques: list[str],
+    categories: list[str]
 ) -> dict:
     """
     Get comprehensive suggestions across all types.

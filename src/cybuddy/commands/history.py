@@ -1,12 +1,9 @@
 from __future__ import annotations
 
-import sys
-from typing import List
-
-from ..history import get_history_entries, search_history, clear_history
+from ..history import clear_history, get_history_entries, search_history
 
 
-def cmd_history(args: List[str]) -> int:
+def cmd_history(args: list[str]) -> int:
     """Handle the history command."""
     if not args:
         # Show recent history

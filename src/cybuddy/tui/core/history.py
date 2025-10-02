@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Iterable, List
 
 from rich.console import RenderableType
 from rich.panel import Panel
@@ -13,7 +13,7 @@ class HistoryBuffer:
     """Simple in-memory transcript mirroring the inline viewport concept."""
 
     max_items: int = 200
-    _entries: List[str] = field(default_factory=list)
+    _entries: list[str] = field(default_factory=list)
 
     def append(self, line: str) -> None:
         self._entries.append(line)
@@ -41,7 +41,7 @@ class HistoryBuffer:
                     body.append("\n")
         return Panel(body, title=title)
 
-    def snapshot(self) -> List[str]:
+    def snapshot(self) -> list[str]:
         return list(self._entries)
 
 __all__ = ["HistoryBuffer"]

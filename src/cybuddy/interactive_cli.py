@@ -1,24 +1,22 @@
 """Simple CLI with Rich formatting - no complex async TUI."""
 from __future__ import annotations
 
-from typing import Optional
-
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
 from .cli import (
     explain_command,
-    quick_tip,
     help_troubleshoot,
+    history_append,
     micro_report,
+    quick_tip,
     quiz_flashcards,
     step_planner,
-    history_append,
 )
 
 
-def run_simple_guide(session: Optional[str] = None) -> int:
+def run_simple_guide(session: str | None = None) -> int:
     """Run the simple guide with Rich formatting."""
     console = Console()
 

@@ -1,10 +1,14 @@
 """Smart error handling with helpful suggestions."""
 
-from typing import List
-from .suggestions import get_command_suggestions, get_topic_suggestions, get_tool_suggestions
+
+from .suggestions import (
+    get_command_suggestions,
+    get_tool_suggestions,
+    get_topic_suggestions,
+)
 
 
-def handle_unknown_command(cmd: str, available_commands: List[str]) -> int:
+def handle_unknown_command(cmd: str, available_commands: list[str]) -> int:
     """
     Handle unknown command errors with smart suggestions.
 
@@ -20,7 +24,7 @@ def handle_unknown_command(cmd: str, available_commands: List[str]) -> int:
     print(f"Unknown command: {cmd}")
 
     if suggestions:
-        print(f"\nDid you mean one of these?")
+        print("\nDid you mean one of these?")
         for suggestion in suggestions:
             print(f"  • {suggestion}")
     else:
@@ -30,7 +34,7 @@ def handle_unknown_command(cmd: str, available_commands: List[str]) -> int:
     return 1
 
 
-def handle_unknown_topic(topic: str, available_topics: List[str]) -> int:
+def handle_unknown_topic(topic: str, available_topics: list[str]) -> int:
     """
     Handle unknown topic errors with smart suggestions.
 
@@ -46,7 +50,7 @@ def handle_unknown_topic(topic: str, available_topics: List[str]) -> int:
     print(f"Unknown topic: {topic}")
 
     if suggestions:
-        print(f"\nDid you mean one of these?")
+        print("\nDid you mean one of these?")
         for suggestion in suggestions:
             print(f"  • {suggestion}")
     else:
@@ -55,7 +59,7 @@ def handle_unknown_topic(topic: str, available_topics: List[str]) -> int:
     return 1
 
 
-def handle_unknown_tool(tool: str, available_tools: List[str]) -> int:
+def handle_unknown_tool(tool: str, available_tools: list[str]) -> int:
     """
     Handle unknown tool errors with smart suggestions.
 
@@ -71,11 +75,11 @@ def handle_unknown_tool(tool: str, available_tools: List[str]) -> int:
     print(f"Unknown tool: {tool}")
 
     if suggestions:
-        print(f"\nDid you mean one of these?")
+        print("\nDid you mean one of these?")
         for suggestion in suggestions:
             print(f"  • {suggestion}")
     else:
-        print(f"\nRun 'cybuddy explain <tool>' to learn about security tools.")
+        print("\nRun 'cybuddy explain <tool>' to learn about security tools.")
 
     return 1
 
@@ -96,7 +100,7 @@ def handle_missing_argument(cmd: str, arg_name: str, example: str = "") -> int:
     print(f"\nUsage: cybuddy {cmd} <{arg_name}>")
 
     if example:
-        print(f"\nExample:")
+        print("\nExample:")
         print(f"  {example}")
 
     return 1

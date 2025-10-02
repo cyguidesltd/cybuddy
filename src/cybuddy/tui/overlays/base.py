@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from rich.console import Console, RenderableType
 
@@ -27,7 +26,7 @@ class Overlay(ABC):
     def render(self, console: Console, width: int) -> RenderableType:
         """Return the renderable for the overlay given the viewport width."""
 
-    def status_bar(self) -> Optional[RenderableType]:  # pragma: no cover - optional
+    def status_bar(self) -> RenderableType | None:  # pragma: no cover - optional
         return None
 
 __all__ = ["Overlay"]

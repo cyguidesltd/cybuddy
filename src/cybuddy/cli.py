@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-import sys
-from dataclasses import dataclass
-from typing import Iterable, List, Optional, Tuple
-from pathlib import Path
-from datetime import datetime
 import json
 import os
+import sys
+from collections.abc import Iterable
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
 
 from .history import add_command
 
@@ -14,7 +14,7 @@ from .history import add_command
 @dataclass(frozen=True)
 class ChecklistItem:
     name: str
-    steps: List[str]
+    steps: list[str]
 
 
 CHECKLISTS: dict[str, ChecklistItem] = {
@@ -110,7 +110,7 @@ def cmd_prompt() -> int:
     return 0
 
 
-def cmd_checklist(topic: Optional[str]) -> int:
+def cmd_checklist(topic: str | None) -> int:
     if not topic:
         print("Available topics:")
         for key in sorted(CHECKLISTS):
@@ -129,10 +129,11 @@ def cmd_checklist(topic: Optional[str]) -> int:
     return 0
 
 
-def cmd_guide(stdin: Iterable[str] = sys.stdin, session: Optional[str] = None) -> int:
+def cmd_guide(stdin: Iterable[str] = sys.stdin, session: str | None = None) -> int:
     # Setup readline for CLI history
     import readline
-    from .history import add_command, get_history_entries
+
+    from .history import add_command
     
     # Load history into readline
     histfile = os.path.expanduser("~/.local/share/cybuddy/history.txt")
@@ -180,8 +181,8 @@ def cmd_guide(stdin: Iterable[str] = sys.stdin, session: Optional[str] = None) -
             continue
 
         # Render codex-like sections using handlers
-        from .handlers import handle_user_input
         from .formatters import highlight_command, is_likely_code
+        from .handlers import handle_user_input
 
         response = handle_user_input(line, session=session)
         print("PLAN:")
@@ -200,14 +201,14 @@ def cmd_guide(stdin: Iterable[str] = sys.stdin, session: Optional[str] = None) -
     return 0
 
 
-def _guide_handle_slash(line: str, session: Optional[str] = None) -> str:
+def _guide_handle_slash(line: str, session: str | None = None) -> str:
     """Handle slash commands in guide mode (delegates to handlers)."""
     from .handlers import handle_slash_command
     response = handle_slash_command(line, session=session)
     return response.output
 
 
-def cmd_guide_tui(session: Optional[str] = None, simple: bool = True) -> int:
+def cmd_guide_tui(session: str | None = None, simple: bool = True) -> int:
     """
     Launch the interactive TUI for guide mode.
 
@@ -261,7 +262,7 @@ def suggest_next(user_text: str) -> str:
     )
 
 
-def main(argv: Optional[List[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
     if not args or args[0] in {"-h", "--help", "help"}:
         return print_help()
@@ -270,7 +271,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     
     # Check for natural language query (quoted string or multiple words)
     if len(args) == 1 and (' ' in args[0] or args[0].startswith('"') or args[0].startswith("'")):
-        from .nl_parser import parse_natural_query, is_natural_language
+        from .nl_parser import is_natural_language, parse_natural_query
         query = args[0].strip('"\'')
         if is_natural_language(query):
             cmd, parsed_query = parse_natural_query(query)
@@ -307,7 +308,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         # Auto-detect mode if not explicitly specified
         if not any(flag in args for flag in ["--tui", "--cli"]):
-            from .terminal_detection import select_mode, get_fallback_message
+            from .terminal_detection import get_fallback_message, select_mode
             mode = select_mode()
             if mode == 'cli':
                 print(get_fallback_message())
@@ -437,7 +438,7 @@ def _app_dir() -> Path:
     return Path(home) / ".cybuddy"
 
 
-def _history_file(session: Optional[str] = None) -> Path:
+def _history_file(session: str | None = None) -> Path:
     cfg = load_config()
     if session:
         base = _app_dir() / "sessions" / session
@@ -451,7 +452,7 @@ def _history_file(session: Optional[str] = None) -> Path:
     return path
 
 
-def _todo_file(session: Optional[str] = None) -> Path:
+def _todo_file(session: str | None = None) -> Path:
     cfg = load_config()
     if session:
         base = _app_dir() / "sessions" / session
@@ -511,7 +512,7 @@ def _now_iso() -> str:
     return datetime.utcnow().isoformat(timespec="seconds") + "Z"
 
 
-def history_append(event: dict, session: Optional[str] = None) -> None:
+def history_append(event: dict, session: str | None = None) -> None:
     cfg = load_config()
     if not cfg.get("history.enabled", True):
         return
@@ -530,7 +531,7 @@ def history_append(event: dict, session: Optional[str] = None) -> None:
 
 
 
-def _todo_load(session: Optional[str] = None) -> List[dict]:
+def _todo_load(session: str | None = None) -> list[dict]:
     path = _todo_file(session)
     if not path.exists():
         return []
@@ -540,11 +541,11 @@ def _todo_load(session: Optional[str] = None) -> List[dict]:
         return []
 
 
-def _todo_save(items: List[dict], session: Optional[str] = None) -> None:
+def _todo_save(items: list[dict], session: str | None = None) -> None:
     _todo_file(session).write_text(json.dumps(items, indent=2), encoding="utf-8")
 
 
-def cmd_todo(args: List[str]) -> int:
+def cmd_todo(args: list[str]) -> int:
     session = None
     if args[:2] == ["--session"] and len(args) > 2:
         session = args[2]
@@ -631,9 +632,9 @@ def _select_engine() -> AnswerEngine:
     )
 
 
-def _extract_text_and_send(args: List[str]) -> Tuple[str, bool]:
+def _extract_text_and_send(args: list[str]) -> tuple[str, bool]:
     send = False
-    cleaned: List[str] = []
+    cleaned: list[str] = []
     for a in args:
         if a == "--send":
             send = True
@@ -647,7 +648,7 @@ def _maybe_ai(engine: AnswerEngine, kind: str, text: str, send: bool) -> str:
     if not cfg.get("ai.enabled", False):
         return getattr(_HeuristicProxy(), kind)(text)
     if not cfg.get("approvals.ai_consent", False) and not send:
-        return f"[AI disabled without consent] Use --send or set approvals.ai_consent=true.\n" + getattr(_HeuristicProxy(), kind)(text)
+        return "[AI disabled without consent] Use --send or set approvals.ai_consent=true.\n" + getattr(_HeuristicProxy(), kind)(text)
     redacted_text, summary = redact(text) if cfg.get("ai.redact", True) else (text, "no redaction")
     history_append({"type": "ai:request", "data": {"kind": kind, "redaction": summary}})
     result = getattr(engine, kind)(text)
@@ -668,7 +669,7 @@ def _HeuristicProxy() -> AnswerEngine:
 
 # === Dry-run runner (approvals-like) ===
 
-def cmd_run(args: List[str]) -> int:
+def cmd_run(args: list[str]) -> int:
     if not args:
         from .errors import handle_missing_argument
         return handle_missing_argument("run", "tool", "cybuddy run nmap '-sV target.local'")
@@ -726,9 +727,9 @@ def _truncate_lines(s: str) -> str:
     return "\n".join(lines[:max_lines] + ["(truncated)"])
 
 
-def _safety_review(tool: str, argstr: str) -> Tuple[List[str], List[str]]:
-    notes: List[str] = []
-    tips: List[str] = []
+def _safety_review(tool: str, argstr: str) -> tuple[list[str], list[str]]:
+    notes: list[str] = []
+    tips: list[str] = []
     t = (tool + " " + argstr).lower()
     if tool == "nmap":
         if " -t5" in t or " -t4" in t:
@@ -756,9 +757,9 @@ def _safety_review(tool: str, argstr: str) -> Tuple[List[str], List[str]]:
     return notes, tips
 from .engine import (
     AnswerEngine,
-    HeuristicEngine,
-    OpenAIEngine,
     ClaudeEngine,
     GeminiEngine,
+    HeuristicEngine,
+    OpenAIEngine,
     redact,
 )

@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import re
-from typing import List, cast
+from typing import cast
 
 from rich.console import Console, RenderableType
 from rich.panel import Panel
 from rich.text import Text
 
-from cybuddy.tui.core.events import EventType, KeyEvent, PasteEvent, CybuddyEvent
+from cybuddy.tui.core.events import CybuddyEvent, EventType, KeyEvent, PasteEvent
 
 from .base import Overlay
 
@@ -17,12 +17,12 @@ class PagerOverlay(Overlay):
 
     name = "transcript"
 
-    def __init__(self, lines: List[str], *, page_size: int = 12) -> None:
+    def __init__(self, lines: list[str], *, page_size: int = 12) -> None:
         self._lines = lines
         self._page_size = max(page_size, 1)
         self._offset = max(len(lines) - self._page_size, 0)
         self._search_term: str | None = None
-        self._match_indices: List[int] = []
+        self._match_indices: list[int] = []
         self._active_match: int = 0
 
     def handle_event(self, event: CybuddyEvent) -> bool:

@@ -3,18 +3,17 @@ from __future__ import annotations
 import asyncio
 import contextlib
 from dataclasses import dataclass
-from typing import Optional
 
-from .events import DrawEvent, CybuddyEvent
+from .events import CybuddyEvent, DrawEvent
 
 
 @dataclass
 class FrameScheduler:
     """Coalesces frame requests into single draw events, similar to Codex."""
 
-    _queue: "asyncio.Queue[CybuddyEvent]"
-    _pending_deadline: Optional[float] = None
-    _task: Optional[asyncio.Task[None]] = None
+    _queue: asyncio.Queue[CybuddyEvent]
+    _pending_deadline: float | None = None
+    _task: asyncio.Task[None] | None = None
 
     def schedule_now(self) -> None:
         self.schedule_in(0.0)

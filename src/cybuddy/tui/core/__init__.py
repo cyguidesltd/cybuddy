@@ -2,12 +2,12 @@
 
 from .events import (
     BaseEvent,
+    CybuddyEvent,
     DrawEvent,
     FocusEvent,
     KeyEvent,
     PasteEvent,
     ResizeEvent,
-    CybuddyEvent,
 )
 from .history import HistoryBuffer
 from .scheduler import FrameScheduler

@@ -4,13 +4,12 @@ enabling realistic demonstrations without requiring AI API calls.
 """
 
 from __future__ import annotations
-from typing import Dict, List, Tuple
 
 # ============================================================================
 # EXPLAIN DATABASE - 60+ tools and commands
 # ============================================================================
 
-EXPLAIN_DB: Dict[str, Dict[str, str]] = {
+EXPLAIN_DB: dict[str, dict[str, str]] = {
     # Network Scanning
     "nmap": {
         "base": "Network Mapper - powerful port scanner and service detection tool",
@@ -1931,7 +1930,7 @@ EXPLAIN_DB: Dict[str, Dict[str, str]] = {
 # TIP DATABASE - 35+ security topics
 # ============================================================================
 
-TIP_DB: Dict[str, str] = {
+TIP_DB: dict[str, str] = {
     "sql injection": """• Look for ' or " in inputs to trigger SQL errors
 • Test with: ' OR '1'='1 -- (boolean bypass)
 • Use UNION SELECT to extract data: ' UNION SELECT null,username,password FROM users--
@@ -2205,7 +2204,7 @@ TIP_DB: Dict[str, str] = {
 # ASSIST/HELP DATABASE - 25+ common errors
 # ============================================================================
 
-ASSIST_DB: Dict[str, str] = {
+ASSIST_DB: dict[str, str] = {
     "connection refused": """• Target host/service may be down
 • Check IP address and port number (typos?)
 • Ensure you're on the correct network/VPN
@@ -2393,7 +2392,7 @@ ASSIST_DB: Dict[str, str] = {
 # REPORT DATABASE - 18+ vulnerability types
 # ============================================================================
 
-REPORT_DB: Dict[str, str] = {
+REPORT_DB: dict[str, str] = {
     "sql injection": """Vulnerability: SQL Injection in login form (username parameter)
 Impact: Attacker can bypass authentication, extract sensitive database contents including user credentials, modify/delete data, and potentially execute system commands
 Mitigation: Use prepared statements with parameterized queries, implement input validation, apply principle of least privilege to database accounts, use WAF as defense-in-depth""",
@@ -2488,7 +2487,7 @@ Mitigation: Implement generic error messages for users, log detailed errors serv
 # QUIZ DATABASE - 25+ security topics
 # ============================================================================
 
-QUIZ_DB: Dict[str, str] = {
+QUIZ_DB: dict[str, str] = {
     "sql injection": """Q: What does the SQL payload ' OR '1'='1'-- do?
 A: Bypasses authentication by making WHERE clause always true, comments out rest of query
 
@@ -2792,7 +2791,7 @@ A: Limiting user access to only what's necessary for their job function"""
 # PLAN DATABASE - 35+ contextual scenarios
 # ============================================================================
 
-PLAN_DB: Dict[str, str] = {
+PLAN_DB: dict[str, str] = {
     "found port 80 open": """1. Enumerate web service with nikto -h http://target or whatweb http://target
 2. Check robots.txt, sitemap.xml, and common endpoints (/admin, /api, /.git)
 3. Run directory brute-force with gobuster or ffuf using medium wordlist""",
@@ -2939,7 +2938,7 @@ PLAN_DB: Dict[str, str] = {
 # HELPER FUNCTIONS
 # ============================================================================
 
-def find_best_match(query: str, database: Dict[str, any]) -> Tuple[str, float]:
+def find_best_match(query: str, database: dict[str, any]) -> tuple[str, float]:
     """
     Find best matching entry in database based on keyword overlap.
     Returns (key, score) where score is percentage of query words found.

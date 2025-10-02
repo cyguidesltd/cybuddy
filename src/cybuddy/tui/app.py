@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Optional, cast, TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from rich.console import RenderableType
 from rich.layout import Layout
@@ -9,10 +9,10 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .core import FrameScheduler, HistoryBuffer, CybuddyEvent, TerminalController
+from ..history import add_command, get_history_entries
+from .core import CybuddyEvent, FrameScheduler, HistoryBuffer, TerminalController
 from .core.events import EventType, KeyEvent, PasteEvent
 from .overlays import Overlay, PagerOverlay
-from ..history import add_command, get_history_entries
 
 if TYPE_CHECKING:
     from cybuddy.handlers import GuideResponse
@@ -28,14 +28,14 @@ class OverlayStack:
         overlay.on_show()
         self._stack.append(overlay)
 
-    def pop(self) -> Optional[Overlay]:
+    def pop(self) -> Overlay | None:
         if not self._stack:
             return None
         overlay = self._stack.pop()
         overlay.on_hide()
         return overlay
 
-    def top(self) -> Optional[Overlay]:
+    def top(self) -> Overlay | None:
         return self._stack[-1] if self._stack else None
 
     def clear(self) -> None:
@@ -46,11 +46,11 @@ class OverlayStack:
 class CybuddyApp:
     """Main TUI orchestrator mirroring the Codex architecture."""
 
-    def __init__(self, *, terminal: Optional[TerminalController] = None, session: Optional[str] = None) -> None:
+    def __init__(self, *, terminal: TerminalController | None = None, session: str | None = None) -> None:
         self.history = HistoryBuffer()
         self._terminal = terminal or TerminalController()
         self._overlay_stack = OverlayStack()
-        self._scheduler: Optional[FrameScheduler] = None
+        self._scheduler: FrameScheduler | None = None
         self._current_input: list[str] = []
         self._session = session
         self._command_history = get_history_entries()
@@ -147,7 +147,7 @@ class CybuddyApp:
             prompt.append("Type security questions or /commands (try /tip, /checklist, /todo) · F2 for transcript", style="dim")
         return Panel(prompt, title="CyBuddy Guide", border_style="cyan")
 
-    def _render_shortcuts(self, overlay: Optional[Overlay]) -> RenderableType:
+    def _render_shortcuts(self, overlay: Overlay | None) -> RenderableType:
         table = Table.grid(expand=True)
         table.add_column(justify="left")
         table.add_column(justify="right")
@@ -278,8 +278,8 @@ class CybuddyApp:
             response = handle_slash_command(text, session=self._session)
             self._render_simple_response(response.output)
         else:
-            from cybuddy.handlers import handle_user_input
             from cybuddy.cli import history_append
+            from cybuddy.handlers import handle_user_input
             response = handle_user_input(text, session=self._session)
             self._render_structured_response(response)
             # Log to persistent history
@@ -293,7 +293,6 @@ class CybuddyApp:
 
     def _render_structured_response(self, response: GuideResponse) -> None:
         """Render structured PLAN/ACTION/CMD/OUT/NEXT response."""
-        from cybuddy.handlers import GuideResponse
         from ..formatters import create_syntax_highlight, is_likely_code
 
         self.history.append("")

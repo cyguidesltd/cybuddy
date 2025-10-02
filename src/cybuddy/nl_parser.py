@@ -10,10 +10,9 @@ Converts natural language queries into structured commands:
 from __future__ import annotations
 
 import re
-from typing import Tuple
 
 
-def parse_natural_query(text: str) -> Tuple[str, str]:
+def parse_natural_query(text: str) -> tuple[str, str]:
     """
     Parse natural language into (command, query).
 

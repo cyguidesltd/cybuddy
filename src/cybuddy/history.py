@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 
 class CommandHistory:
@@ -14,13 +13,13 @@ class CommandHistory:
         self.max_size = max_size
         self.history = self.load()
     
-    def load(self) -> List[str]:
+    def load(self) -> list[str]:
         """Load history from file."""
         if not self.history_file.exists():
             return []
         
         try:
-            with open(self.history_file, 'r') as f:
+            with open(self.history_file) as f:
                 data = json.load(f)
                 return data.get('commands', [])
         except (json.JSONDecodeError, FileNotFoundError):
@@ -51,17 +50,17 @@ class CommandHistory:
         if self.history_file.exists():
             self.history_file.unlink()
     
-    def get_history(self) -> List[str]:
+    def get_history(self) -> list[str]:
         """Get all history entries."""
         return self.history.copy()
     
-    def search(self, query: str) -> List[str]:
+    def search(self, query: str) -> list[str]:
         """Search history for commands containing query."""
         return [cmd for cmd in self.history if query.lower() in cmd.lower()]
 
 
 # Global history instance
-_history_instance: Optional[CommandHistory] = None
+_history_instance: CommandHistory | None = None
 
 
 def get_history() -> CommandHistory:
@@ -82,11 +81,11 @@ def clear_history() -> None:
     get_history().clear()
 
 
-def get_history_entries() -> List[str]:
+def get_history_entries() -> list[str]:
     """Get all history entries."""
     return get_history().get_history()
 
 
-def search_history(query: str) -> List[str]:
+def search_history(query: str) -> list[str]:
     """Search history for commands containing query."""
     return get_history().search(query)

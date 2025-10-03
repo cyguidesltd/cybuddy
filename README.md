@@ -1,164 +1,56 @@
 # CyBuddy 🛡️
 
-AI-powered cybersecurity learning assistant for students and professionals.
-
-## Features
-
-- 300+ cybersecurity tools explained
-- Attack techniques and methodologies  
-- Real-world scenarios and examples
-- Beautiful TUI interface
-- Zero configuration required
-
-## Installation
-
-```bash
-pip install cybuddy
-```
+**Your AI-powered cybersecurity learning companion** — Get instant answers about security tools, attack techniques, and CTF scenarios. No tabs, no confusion, just fast learning.
 
 ## Quick Start
 
 ```bash
-# Explain a tool
-cybuddy explain "nmap"
+# Install
+pip install cybuddy
 
-# Interactive TUI mode
+# Start learning
 cybuddy guide --tui
-
-# CLI mode
-cybuddy guide --cli
 ```
 
-## Commands
+That's it. You're ready to learn cybersecurity.
 
-- `cybuddy explain <tool>` - Get detailed tool explanation
-- `cybuddy tip <topic>` - Study guide for security topics
-- `cybuddy help <issue>` - Troubleshoot errors and issues
-- `cybuddy report <finding>` - Practice writing security reports
-- `cybuddy quiz <topic>` - Active recall with flashcards
-- `cybuddy plan <context>` - Get next steps guidance
-- `cybuddy checklist [topic]` - Show checklists (recon|web|crypto|forensics)
-- `cybuddy guide [--tui|--cli]` - Launch interactive learning interface
-- `cybuddy --help` - Show all available commands
+---
 
-## Examples
+## What is CyBuddy?
 
-### Basic Usage
-```bash
-# Explain a command
-cybuddy explain "nmap -sV"
+**The Problem:** Learning cybersecurity means juggling 50+ browser tabs, outdated blog posts, and tool docs that assume you already know everything. You're stuck at 2am during a CTF, Googling "how to enumerate port 8080" and getting overwhelmed.
 
-# Get study tips
-cybuddy tip "SQL injection"
+**The Solution:** CyBuddy gives you instant, focused answers through 7 simple commands. Ask about tools, techniques, or scenarios — get clear explanations with practical next steps. No browser needed.
 
-# Troubleshoot issues
-cybuddy help "connection refused"
+**Built for:** Students learning cyber security • CTF players • Lab learners (HTB, TryHackMe) • Anyone who needs quick security answers
 
-# Practice reporting
-cybuddy report "Found XSS in login form"
+---
 
-# Test your knowledge
-cybuddy quiz "Buffer overflow"
+## The 7 Commands
 
-# Get next steps
-cybuddy plan "found port 80 open"
-```
+Once you run `cybuddy guide`, you have exactly 7 commands:
 
-### Interactive Mode
-```bash
-# Launch TUI (auto-detects terminal)
-cybuddy guide
+| Command | Purpose | Example |
+|---------|---------|---------|
+| **explain** | Learn what commands/tools do | `explain 'nmap -sV'` |
+| **tip** | Quick study guide for topics | `tip 'SQL injection'` |
+| **help** | Troubleshoot errors | `help 'connection refused'` |
+| **report** | Practice writing security reports | `report 'Found SQLi in login'` |
+| **quiz** | Test your knowledge with flashcards | `quiz 'Buffer Overflow'` |
+| **plan** | Get unstuck with next steps | `plan 'found port 80 open'` |
+| **exit** | Leave the interactive mode | `exit` |
 
-# Force TUI mode
-cybuddy guide --tui
+**Why only 7?** Because 7 commands is all you need to learn effectively. More = confusion.
 
-# Force CLI mode  
-cybuddy guide --cli
-```
+---
 
-### Checklists
-```bash
-cybuddy checklist recon
-cybuddy checklist web
-cybuddy checklist crypto
-cybuddy checklist forensics
-```
+## Real-World Usage
 
-## The 7 Commands You Need
-
-Once inside the interactive mode, you have exactly 7 simple commands:
-
-### 1. **explain** - Learn what commands do
-```
-❯ explain 'nmap -sV target.local'
-→ Breaks down the flags, tells you when to use it, warns about IDS noise
-```
-
-### 2. **tip** - Quick study guide
-```
-❯ tip 'SQL injection'
-→ Common payloads, where to look, quick wins
-```
-
-### 3. **help** - Troubleshoot errors
-```
-❯ help 'connection refused'
-→ "Target might be down, check your IP, is Docker running?"
-```
-
-### 4. **report** - Practice writeups
-```
-❯ report 'Found SQLi on login'
-→ Gives you a 2-3 line template: Vulnerability, Impact, Mitigation
-```
-
-### 5. **quiz** - Test yourself
-```
-❯ quiz 'Buffer Overflow'
-→ Flashcard-style Q&A to check your understanding
-```
-
-### 6. **plan** - Get unstuck
-```
-❯ plan 'found port 80 open'
-→ Here are your next 3 steps...
-```
-
-### 7. **exit** - Leave
-```
-❯ exit
-→ Good luck! Document your steps and be safe.
-```
-
-## Why CyBuddy?
-
-### Problem
-You're doing a CTF. You find a weird service on port 8080. You Google "how to enumerate port 8080". You get 50 tabs of Stack Overflow, blog posts from 2015, and tool documentation that assumes you already know what you're doing.
-
-### Solution
-```bash
-❯ plan 'found unknown service on port 8080'
-→ 1. Check banner with nc
-→ 2. Try nmap service detection
-→ 3. Search exploit-db for the version
-```
-
-Clean. Fast. No 50 tabs.
-
-## Features
-
-✅ **Simple** - 7 commands. That's it.
-✅ **Fast** - No waiting. Type → Get answer.
-✅ **Offline-first** - Built-in heuristics work without internet.
-✅ **Session tracking** - Keeps history so you can review what you tried.
-✅ **Safe defaults** - Won't suggest dangerous commands without warnings.
-✅ **CTF-friendly** - Designed for the flow of CTF challenges.
-
-## Real Example
-
-You're stuck on a web challenge:
+### Scenario: Stuck on a Web CTF Challenge
 
 ```bash
+❯ cybuddy guide --tui
+
 ❯ explain 'gobuster dir -u http://target -w wordlist.txt'
 ─── Explanation ─────────────────────────────────────
   dir: directory brute-forcing mode
@@ -183,148 +75,143 @@ You're stuck on a web challenge:
 ─────────────────────────────────────────────────────
 ```
 
-You just went from stuck → understanding → action in 3 commands. No browser tabs needed.
+**Result:** You went from stuck → understanding → action in 3 commands. Zero browser tabs.
 
-## Additional Features
+---
 
-### Checklists for Common Tasks
+## Features
+
+✅ **300+ cybersecurity entries** — Tools, techniques, attack scenarios explained simply
+✅ **7 focused commands** — Everything you need, nothing you don't
+✅ **Beautiful TUI interface** — Clean, readable, distraction-free
+✅ **Zero configuration** — Works out of the box, no setup required
+✅ **Offline-first** — Built-in knowledge base works without internet
+✅ **Safe defaults** — Won't suggest dangerous commands without warnings
+✅ **Session tracking** — Review your learning history
+✅ **CTF-optimized** — Designed for the flow of challenges
+
+---
+
+## Command Line Usage (Outside Interactive Mode)
+
+Use CyBuddy commands directly from your terminal:
+
 ```bash
+# Tool explanations
+cybuddy explain "nmap -sV"
+
+# Study tips
+cybuddy tip "SQL injection"
+
+# Troubleshooting
+cybuddy help "connection refused"
+
+# Report writing practice
+cybuddy report "Found XSS in login form"
+
+# Test knowledge
+cybuddy quiz "Buffer overflow"
+
+# Next steps guidance
+cybuddy plan "found port 80 open"
+
+# Checklists for common tasks
 cybuddy checklist web
 cybuddy checklist recon
 cybuddy checklist crypto
 cybuddy checklist forensics
 ```
 
-### TODO Tracking
+---
+
+## Optional: AI Mode (Advanced)
+
+Want deeper, context-aware answers? Enable AI with your own API key:
+
 ```bash
-cybuddy todo add "Enumerate SMB shares"
-cybuddy todo list
-cybuddy todo done 1
+# Set your API key (OpenAI, Claude, or Gemini)
+export CYBUDDY_API_KEY="sk-..."
+
+# Use --send flag for AI responses
+cybuddy explain "nmap -A target" --send
 ```
 
-### Command History
-```bash
-cybuddy history
-cybuddy history --clear
-```
+**Default mode:** Built-in knowledge base (no API needed)
+**AI mode:** Enhanced explanations using your API key (BYOK — Bring Your Own Key)
 
-### Dry-run Tool Execution
-```bash
-cybuddy run nmap "-sV target.local"
-# Shows safety warnings + what the command does
-# Add --exec to actually run it
-```
+Create `~/.config/cybuddy/config.yaml` for persistent AI settings:
 
-## Optional: AI Mode
-
-Want smarter answers? Enable AI (requires API key):
-
-```bash
-# Create ~/.config/cybuddy/config.yaml (optional)
-tui:
-  theme: default
-  show_tips: true
-
-cli:
-  color: true
-  verbose: false
-
+```yaml
 ai:
   enabled: true
-  provider: openai
+  provider: openai  # or 'anthropic' or 'google'
   api_key: sk-...
   model: gpt-4o-mini
 ```
 
-Then use `--send` flag:
-```bash
-cybuddy explain "nmap -A target" --send
-```
+---
 
-**Default:** Built-in heuristics (no API needed)
-**With AI:** More detailed, context-aware responses
+## Configuration (Optional)
 
-## Configuration
-
-CyBuddy works out of the box with no configuration needed. All settings have sensible defaults.
-
-For advanced users, create `~/.config/cybuddy/config.yaml`:
+CyBuddy works perfectly with **zero configuration**. For advanced customization:
 
 ```yaml
+# ~/.config/cybuddy/config.yaml
 tui:
-  theme: default  # or 'dark', 'light'
+  theme: default  # 'dark', 'light', 'default'
   show_tips: true
 
 cli:
   color: true
   verbose: false
 
-data:
-  mock_mode: true  # v1.0 is always mock
-
 ai:
-  enabled: false
+  enabled: false  # Set to true for AI mode
   provider: openai
   redact: true
   max_tokens: 300
 ```
 
-## Why CyBuddy?
-
-Most security tools are:
-- **Complex** - 100 flags, 50 modes, steep learning curve
-- **Fragmented** - Different tool for every task
-- **Overwhelming** - Too many options when you just want an answer
-
-CyBuddy is:
-- **Simple** - 7 commands, one interface
-- **Focused** - Built for learning, not production pentesting
-- **Helpful** - Like a mentor who explains things clearly
-
-## Who Is This For?
-
-✅ Students learning cyber security
-✅ CTF players who want quick hints
-✅ Lab learners (HTB, TryHackMe, PentesterLab)
-✅ Anyone who Googles "how does X work" while hacking
-
-❌ Production penetration testers (use real tools)
-❌ People who want automated exploitation (that's not the point)
-
+---
 
 ## FAQ
 
-**Q: Is this better than just using nmap/gobuster/etc directly?**
-A: No. This is a *learning tool*. Use real tools for real work.
+**Q: Is this better than using real security tools?**
+A: No. CyBuddy is a *learning tool* to help you understand and use real tools effectively.
 
-**Q: Does it replace Google?**
-A: For quick hints and common tasks, yes. For deep dives, no.
-
-**Q: Why only 7 commands?**
-A: Because 7 commands is all you need to learn. More = confusion.
+**Q: Does it replace Google/Stack Overflow?**
+A: For quick hints and common tasks, yes. For deep technical dives, no.
 
 **Q: Can I use this during exams/CTFs?**
-A: Check your rules. Built-in heuristics = usually OK. AI mode = maybe not.
+A: Check your specific rules. Built-in knowledge base is usually OK. AI mode may have restrictions.
 
 **Q: Is my data sent anywhere?**
-A: Only if you enable AI mode and use --send. Otherwise everything is local.
-
-**Q: How do I get started?**
-A: Just run `cybuddy guide --tui` and start exploring!
+A: Only if you enable AI mode with `--send`. Otherwise, everything is local.
 
 **Q: What's the difference between TUI and CLI mode?**
-A: TUI mode provides a rich interactive interface with syntax highlighting and better navigation. CLI mode is a simple text interface that works in any terminal.
+A: TUI mode (`--tui`) provides a rich interactive interface. CLI mode (`--cli`) is simple text for any terminal.
+
+**Q: Why is it called CyBuddy?**
+A: It's your cybersecurity buddy — always ready to help you learn, no judgment, no confusion.
+
+---
+
+## Contributing
+
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+**Built by learners, for learners.** Someone who remembers being stuck at 2am during a CTF wanted to make learning easier.
+
+---
 
 ## License
 
 MIT License - see LICENSE file for details.
 
-## Contributing
-
-We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for details.
-
 ---
 
-**Built for learners. By someone who remembers being stuck at 2am during a CTF.**
-
-Start learning: `cybuddy guide --tui`
+**Start learning now:**
+```bash
+pip install cybuddy
+cybuddy guide --tui
+```

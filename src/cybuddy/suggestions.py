@@ -1,72 +1,284 @@
-"""Smart suggestion system for command and topic recommendations."""
+"""
+Fuzzy matching and suggestion system for CyBuddy.
+
+Provides intelligent suggestions for typos and similar commands/tools.
+"""
 
 from difflib import get_close_matches
 
 
-def get_command_suggestions(unknown_cmd: str, available_commands: list[str], n: int = 3) -> list[str]:
+def get_tool_suggestions(
+    tool_name: str,
+    available_tools: list[str],
+    max_suggestions: int = 5,
+    cutoff: float = 0.4
+) -> list[str]:
     """
-    Get smart suggestions for unknown commands using fuzzy matching.
+    Get suggestions for a tool name using fuzzy matching.
 
     Args:
-        unknown_cmd: The command that wasn't recognized
-        available_commands: List of valid commands
-        n: Number of suggestions to return (default: 3)
+        tool_name: The tool name to match
+        available_tools: List of available tool names
+        max_suggestions: Maximum number of suggestions to return
+        cutoff: Similarity threshold (0.0 to 1.0)
 
     Returns:
-        List of suggested commands, sorted by similarity
+        List of suggested tool names
+
+    Examples:
+        >>> tools = ["nmap", "netcat", "nikto"]
+        >>> get_tool_suggestions("nmpa", tools)
+        ['nmap']
+        >>> get_tool_suggestions("netct", tools)
+        ['netcat']
     """
-    # Use difflib for fuzzy matching (60% similarity threshold)
-    matches = get_close_matches(unknown_cmd.lower(),
-                                [c.lower() for c in available_commands],
-                                n=n,
-                                cutoff=0.6)
+    # Normalize for better matching
+    tool_name_lower = tool_name.lower().strip()
+    available_tools_lower = [tool.lower() for tool in available_tools]
 
-    # Map back to original case
-    cmd_map = {c.lower(): c for c in available_commands}
-    return [cmd_map[m] for m in matches]
+    # Get close matches
+    matches = get_close_matches(
+        tool_name_lower,
+        available_tools_lower,
+        n=max_suggestions,
+        cutoff=cutoff
+    )
+
+    # Return original case versions
+    suggestions = []
+    for match in matches:
+        # Find original case version
+        for original in available_tools:
+            if original.lower() == match:
+                suggestions.append(original)
+                break
+
+    return suggestions
 
 
-def get_topic_suggestions(unknown_topic: str, available_topics: list[str], n: int = 3) -> list[str]:
+def get_command_suggestions(
+    command: str,
+    valid_commands: list[str],
+    max_suggestions: int = 3,
+    cutoff: float = 0.5
+) -> list[str]:
     """
-    Get smart suggestions for unknown topics using fuzzy matching.
+    Get suggestions for a command using fuzzy matching.
 
     Args:
-        unknown_topic: The topic that wasn't found
-        available_topics: List of valid topics
-        n: Number of suggestions to return (default: 3)
+        command: The command to match
+        valid_commands: List of valid commands
+        max_suggestions: Maximum number of suggestions to return
+        cutoff: Similarity threshold (0.0 to 1.0)
 
     Returns:
-        List of suggested topics, sorted by similarity
+        List of suggested commands
+
+    Examples:
+        >>> commands = ["explain", "tip", "plan", "assist"]
+        >>> get_command_suggestions("explian", commands)
+        ['explain']
+        >>> get_command_suggestions("tipp", commands)
+        ['tip']
     """
-    # Use difflib for fuzzy matching (50% similarity threshold for topics)
-    matches = get_close_matches(unknown_topic.lower(),
-                                [t.lower() for t in available_topics],
-                                n=n,
-                                cutoff=0.5)
+    # Normalize for better matching
+    command_lower = command.lower().strip()
 
-    # Map back to original case
-    topic_map = {t.lower(): t for t in available_topics}
-    return [topic_map[m] for m in matches]
+    # Get close matches
+    matches = get_close_matches(
+        command_lower,
+        valid_commands,
+        n=max_suggestions,
+        cutoff=cutoff
+    )
+
+    # Format as command examples
+    suggestions = [f'cybuddy {cmd} "topic"' for cmd in matches]
+
+    return suggestions
 
 
-def get_tool_suggestions(unknown_tool: str, available_tools: list[str], n: int = 3) -> list[str]:
+def get_category_suggestions(
+    query: str,
+    categories: list[str],
+    max_suggestions: int = 3,
+    cutoff: float = 0.4
+) -> list[str]:
     """
-    Get smart suggestions for unknown tools using fuzzy matching.
+    Get suggestions for categories using fuzzy matching.
 
     Args:
-        unknown_tool: The tool name that wasn't found
-        available_tools: List of valid tool names
-        n: Number of suggestions to return (default: 3)
+        query: The query to match against categories
+        categories: List of available categories
+        max_suggestions: Maximum number of suggestions to return
+        cutoff: Similarity threshold (0.0 to 1.0)
 
     Returns:
-        List of suggested tools, sorted by similarity
-    """
-    # Use difflib for fuzzy matching (55% similarity threshold)
-    matches = get_close_matches(unknown_tool.lower(),
-                                [t.lower() for t in available_tools],
-                                n=n,
-                                cutoff=0.55)
+        List of suggested categories
 
-    # Map back to original case
-    tool_map = {t.lower(): t for t in available_tools}
-    return [tool_map[m] for m in matches]
+    Examples:
+        >>> categories = ["web_attack", "network_scan", "forensics"]
+        >>> get_category_suggestions("web", categories)
+        ['web_attack']
+        >>> get_category_suggestions("net", categories)
+        ['network_scan']
+    """
+    # Normalize for better matching
+    query_lower = query.lower().strip()
+    categories_lower = [cat.lower() for cat in categories]
+
+    # Get close matches
+    matches = get_close_matches(
+        query_lower,
+        categories_lower,
+        n=max_suggestions,
+        cutoff=cutoff
+    )
+
+    # Return original case versions
+    suggestions = []
+    for match in matches:
+        for original in categories:
+            if original.lower() == match:
+                suggestions.append(original)
+                break
+
+    return suggestions
+
+
+def get_technique_suggestions(
+    query: str,
+    techniques: list[str],
+    max_suggestions: int = 5,
+    cutoff: float = 0.3
+) -> list[str]:
+    """
+    Get suggestions for techniques using fuzzy matching.
+
+    Args:
+        query: The query to match against techniques
+        techniques: List of available techniques
+        max_suggestions: Maximum number of suggestions to return
+        cutoff: Similarity threshold (0.0 to 1.0)
+
+    Returns:
+        List of suggested techniques
+
+    Examples:
+        >>> techniques = ["SQL Injection", "XSS", "CSRF"]
+        >>> get_technique_suggestions("sql", techniques)
+        ['SQL Injection']
+        >>> get_technique_suggestions("cross site", techniques)
+        ['XSS', 'CSRF']
+    """
+    # Normalize for better matching
+    query_lower = query.lower().strip()
+    techniques_lower = [tech.lower() for tech in techniques]
+
+    # Get close matches
+    matches = get_close_matches(
+        query_lower,
+        techniques_lower,
+        n=max_suggestions,
+        cutoff=cutoff
+    )
+
+    # Return original case versions
+    suggestions = []
+    for match in matches:
+        for original in techniques:
+            if original.lower() == match:
+                suggestions.append(original)
+                break
+
+    return suggestions
+
+
+def find_partial_matches(
+    query: str,
+    items: list[str],
+    max_results: int = 5
+) -> list[str]:
+    """
+    Find items that contain the query as a substring.
+
+    Args:
+        query: The search query
+        items: List of items to search
+        max_results: Maximum number of results to return
+
+    Returns:
+        List of matching items
+
+    Examples:
+        >>> items = ["nmap", "nmap scripts", "zenmap"]
+        >>> find_partial_matches("nmap", items)
+        ['nmap', 'nmap scripts', 'zenmap']
+        >>> find_partial_matches("script", items)
+        ['nmap scripts']
+    """
+    query_lower = query.lower().strip()
+    matches = []
+
+    for item in items:
+        if query_lower in item.lower():
+            matches.append(item)
+            if len(matches) >= max_results:
+                break
+
+    return matches
+
+
+def rank_suggestions_by_popularity(
+    suggestions: list[str],
+    popularity_scores: dict
+) -> list[str]:
+    """
+    Rank suggestions by popularity/usage frequency.
+
+    Args:
+        suggestions: List of suggestions to rank
+        popularity_scores: Dictionary mapping items to popularity scores
+
+    Returns:
+        Ranked list of suggestions
+
+    Examples:
+        >>> suggestions = ["metasploit", "nmap", "burp"]
+        >>> scores = {"nmap": 100, "burp": 80, "metasploit": 90}
+        >>> rank_suggestions_by_popularity(suggestions, scores)
+        ['nmap', 'metasploit', 'burp']
+    """
+    # Sort by popularity score (higher is better)
+    ranked = sorted(
+        suggestions,
+        key=lambda x: popularity_scores.get(x, 0),
+        reverse=True
+    )
+
+    return ranked
+
+
+def get_smart_suggestions(
+    query: str,
+    tools: list[str],
+    techniques: list[str],
+    categories: list[str]
+) -> dict:
+    """
+    Get comprehensive suggestions across all types.
+
+    Args:
+        query: The search query
+        tools: List of available tools
+        techniques: List of available techniques
+        categories: List of available categories
+
+    Returns:
+        Dictionary with suggestions by type
+    """
+    return {
+        'tools': get_tool_suggestions(query, tools, max_suggestions=3),
+        'techniques': get_technique_suggestions(query, techniques, max_suggestions=3),
+        'categories': get_category_suggestions(query, categories, max_suggestions=2)
+    }

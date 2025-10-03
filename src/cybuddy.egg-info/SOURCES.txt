@@ -37,8 +37,6 @@ src/cybuddy/tui/core/terminal.py
 src/cybuddy/tui/overlays/__init__.py
 src/cybuddy/tui/overlays/base.py
 src/cybuddy/tui/overlays/pager.py
-src/secbuddy/errors.py
-src/secbuddy/suggestions.py
 tests/test_errors.py
 tests/test_nl_parser.py
 tests/test_terminal_detection.py

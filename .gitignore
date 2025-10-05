@@ -84,6 +84,12 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# Deployment artifacts
+*.whl
+*.tar.gz
+src/*.egg-info/
+
 # Claude Flow
 .claude-flow/
 .swarm/

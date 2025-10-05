@@ -111,13 +111,22 @@ class SimpleTUI:
 
     def _process_command(self, text: str) -> None:
         """Process user command."""
-        # Parse command
-        parts = text.split(maxsplit=1)
+        import shlex
+
+        # Parse command using shlex for proper shell-like parsing
+        try:
+            parts = shlex.split(text)
+        except ValueError:
+            # Fallback for unclosed quotes
+            parts = text.split()
+
         if not parts:
             return
 
         cmd = parts[0].lower()
-        arg = parts[1].strip('"\'') if len(parts) > 1 else ""
+        # Join all remaining parts as the argument
+        # This preserves the original behavior but handles quotes properly
+        arg = " ".join(parts[1:]) if len(parts) > 1 else ""
 
         # Route to handler
         self.console.print()
@@ -178,7 +187,7 @@ class SimpleTUI:
 
     def _print_response(self, title: str, content: str) -> None:
         """Print formatted response with README-style borders and syntax highlighting."""
-        from .formatters import create_syntax_highlight, is_likely_code
+        from ..formatters import create_syntax_highlight, is_likely_code
 
         # Top border with title
         border_len = 50 - len(title)

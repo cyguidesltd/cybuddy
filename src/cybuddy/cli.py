@@ -181,7 +181,6 @@ def cmd_guide(stdin: Iterable[str] = sys.stdin, session: str | None = None) -> i
             continue
 
         # Render codex-like sections using handlers
-        from .formatters import highlight_command, is_likely_code
         from .handlers import handle_user_input
 
         response = handle_user_input(line, session=session)
@@ -190,11 +189,7 @@ def cmd_guide(stdin: Iterable[str] = sys.stdin, session: str | None = None) -> i
         print("ACTION:\n- " + response.action)
         if response.cmd:
             print("CMD:")
-            # Apply syntax highlighting to commands in CLI mode
-            if is_likely_code(response.cmd):
-                highlight_command(response.cmd)
-            else:
-                print(response.cmd)
+            print(response.cmd)
         print("OUT:\n" + response.output)
         print("NEXT:\n- " + response.next_step)
         history_append({"type": "guide", "data": {"input": line, "plan": response.plan}}, session=session)
@@ -685,12 +680,7 @@ def cmd_run(args: list[str]) -> int:
     for tip in notes:
         print(f"- TIP: {tip}")
     print("CMD:")
-    # Apply syntax highlighting to the command
-    from .formatters import highlight_command, is_likely_code
-    if is_likely_code(command or tool):
-        highlight_command(command or tool)
-    else:
-        print(command or tool)
+    print(command or tool)
 
     if not exec_flag and load_config().get("approvals.require_exec", True):
         print("NOT RUN (dry-run). Pass --exec to execute.")

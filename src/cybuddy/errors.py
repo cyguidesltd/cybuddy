@@ -1,5 +1,5 @@
 """
-Smart error handling system for CyBuddy.
+Smart error handling system for Cybuddy.
 
 Provides clear, actionable error messages with:
 - Description of what went wrong
@@ -112,7 +112,7 @@ def handle_unknown_command(command: str) -> SmartError:
 
     return SmartError(
         message=f'Unknown command: "{command}"',
-        reason=f'"{command}" is not a valid CyBuddy command.',
+        reason=f'"{command}" is not a valid Cybuddy command.',
         fix='Use one of the available commands listed below.',
         suggestions=suggestions
     )

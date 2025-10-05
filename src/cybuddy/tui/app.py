@@ -145,7 +145,7 @@ class CybuddyApp:
             prompt.append("".join(self._current_input))
         else:
             prompt.append("Type security questions or /commands (try /tip, /checklist, /todo) · F2 for transcript", style="dim")
-        return Panel(prompt, title="CyBuddy Guide", border_style="cyan")
+        return Panel(prompt, title="Cybuddy Guide", border_style="cyan")
 
     def _render_shortcuts(self, overlay: Overlay | None) -> RenderableType:
         table = Table.grid(expand=True)
@@ -258,7 +258,7 @@ class CybuddyApp:
         self._request_frame()
 
     def _process_user_input(self, text: str) -> None:
-        """Process user input through CyBuddy handlers and render response."""
+        """Process user input through Cybuddy handlers and render response."""
         # Add user input to history
         self.history.append(f"> {text}")
         

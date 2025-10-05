@@ -23,7 +23,7 @@ def run_simple_guide(session: str | None = None) -> int:
     # Show welcome
     console.print()
     console.print(Panel.fit(
-        "[bold cyan]CyBuddy - Simple Security Learning Helper[/bold cyan]",
+        "[bold cyan]Cybuddy - Simple Security Learning Helper[/bold cyan]",
         border_style="cyan"
     ))
     console.print()
@@ -36,7 +36,7 @@ def run_simple_guide(session: str | None = None) -> int:
         "report": "Practice write-ups (e.g., report 'Found SQLi')",
         "quiz": "Active recall (e.g., quiz 'SQL Injection')",
         "plan": "Next steps (e.g., plan 'found port 80 open')",
-        "exit": "Exit CyBuddy",
+        "exit": "Exit Cybuddy",
     }
 
     for cmd, desc in commands.items():

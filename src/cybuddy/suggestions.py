@@ -1,5 +1,5 @@
 """
-Fuzzy matching and suggestion system for CyBuddy.
+Fuzzy matching and suggestion system for Cybuddy.
 
 Provides intelligent suggestions for typos and similar commands/tools.
 """

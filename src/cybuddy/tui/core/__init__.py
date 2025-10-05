@@ -1,4 +1,4 @@
-"""Core event loop primitives for the CyBuddy TUI."""
+"""Core event loop primitives for the Cybuddy TUI."""
 
 from .events import (
     BaseEvent,

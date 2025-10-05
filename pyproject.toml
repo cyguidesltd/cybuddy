@@ -9,7 +9,7 @@ description = "Smart Cybersecurity learning assistant"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-authors = [{ name = "CyBuddy Team" }]
+authors = [{ name = "Cybuddy Team" }]
 keywords = ["cybersecurity", "learning", "pentesting", "security", "cli", "tui"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -39,10 +39,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/cybuddy/cybuddy"
-Documentation = "https://github.com/cybuddy/cybuddy#readme"
-Issues = "https://github.com/cybuddy/cybuddy/issues"
-Source = "https://github.com/cybuddy/cybuddy"
+Homepage = "https://github.com/cyguidesltd/cybuddy"
+Documentation = "https://github.com/cyguidesltd/cybuddy#readme"
+Issues = "https://github.com/cyguidesltd/cybuddy/issues"
+Source = "https://github.com/cyguidesltd/cybuddy"
 
 [project.scripts]
 cybuddy = "cybuddy.cli:main"

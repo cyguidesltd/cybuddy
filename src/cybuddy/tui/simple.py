@@ -119,7 +119,7 @@ class SimpleTUI:
         "plan": "Next steps (e.g., plan 'found port 80 open')",
         "history": "View command history and analytics",
         "clear": "Clear the terminal screen",
-        "exit": "Exit CyBuddy",
+        "exit": "Exit Cybuddy",
     }
 
     def __init__(self, session: str | None = None) -> None:

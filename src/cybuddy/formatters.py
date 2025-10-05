@@ -1,4 +1,4 @@
-"""Syntax highlighting and formatting utilities for CyBuddy output."""
+"""Syntax highlighting and formatting utilities for Cybuddy output."""
 from __future__ import annotations
 
 from rich.console import Console

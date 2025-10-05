@@ -1,4 +1,4 @@
-"""Business logic handlers for CyBuddy commands, shared between CLI and TUI."""
+"""Business logic handlers for Cybuddy commands, shared between CLI and TUI."""
 from __future__ import annotations
 
 from dataclasses import dataclass

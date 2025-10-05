@@ -50,18 +50,6 @@ Once you run `cybuddy`, you have exactly 8 commands with smart features:
 | **clear** | Clear the terminal screen | `clear` | - |
 | **exit** | Leave the interactive mode | `exit` | - |
 
-### 🆕 Enhanced History Command
-
-The `history` command now includes powerful analytics and smart features:
-
-```bash
-❯ history                    # Show recent commands + smart suggestions
-❯ history --stats           # View learning analytics and patterns  
-❯ history --search "nmap"   # Search your command history
-❯ history --suggest "sql"   # Get smart suggestions for partial input
-❯ history --clear           # Clear your command history
-```
-
 ### Example Usage
 
 ```bash

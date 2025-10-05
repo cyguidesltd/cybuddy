@@ -29,7 +29,7 @@ class SmartCompleter(Completer):
     
     def get_completions(self, document, complete_event):
         """Provide smart completions based on context and history."""
-        text = document.text_before_cursor.lower()
+        text = document.text_before_cursor
         words = text.split()
         
         # If no words, suggest base commands
@@ -39,14 +39,16 @@ class SmartCompleter(Completer):
             return
         
         # If first word is a command, suggest smart completions
-        if words[0] in self.base_commands:
+        if words[0].lower() in self.base_commands:
             if len(words) == 1:
                 # Suggest common queries for this command
-                suggestions = self._get_command_suggestions(words[0])
+                suggestions = self._get_command_suggestions(words[0].lower())
                 for suggestion in suggestions:
+                    # Calculate start position to replace the entire current text
+                    start_pos = -len(text)
                     yield Completion(
                         f"{words[0]} '{suggestion}'", 
-                        start_position=0,
+                        start_position=start_pos,
                         display=suggestion,
                         style="class:completion"
                     )
@@ -55,17 +57,22 @@ class SmartCompleter(Completer):
                 partial = " ".join(words[1:])
                 suggestions = self.history.get_smart_suggestions(partial, limit=5)
                 for suggestion in suggestions:
+                    # Calculate start position to replace the entire current text
+                    start_pos = -len(text)
                     yield Completion(
                         f"{words[0]} '{suggestion}'",
-                        start_position=0,
+                        start_position=start_pos,
                         display=suggestion,
                         style="class:completion"
                     )
         else:
-            # Suggest base commands
+            # Suggest base commands - replace only the current word
+            current_word = words[0]
             for cmd in self.base_commands:
-                if cmd.startswith(words[0]):
-                    yield Completion(cmd, start_position=0, display=cmd, style="class:completion")
+                if cmd.startswith(current_word.lower()):
+                    # Calculate start position to replace only the current word
+                    start_pos = -len(current_word)
+                    yield Completion(cmd, start_position=start_pos, display=cmd, style="class:completion")
     
     def _get_command_suggestions(self, command: str) -> list[str]:
         """Get common suggestions for specific commands."""

@@ -39,10 +39,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/cybuddy/cybuddy"
-Documentation = "https://github.com/cybuddy/cybuddy#readme"
-Issues = "https://github.com/cybuddy/cybuddy/issues"
-Source = "https://github.com/cybuddy/cybuddy"
+Homepage = "https://github.com/cyguidesltd/cybuddy"
+Documentation = "https://github.com/cyguidesltd/cybuddy#readme"
+Issues = "https://github.com/cyguidesltd/cybuddy/issues"
+Source = "https://github.com/cyguidesltd/cybuddy"
 
 [project.scripts]
 cybuddy = "cybuddy.cli:main"

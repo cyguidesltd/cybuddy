@@ -792,6 +792,19 @@ EXPLAIN_DB: dict[str, dict[str, str]] = {
         "caution": "Real exploitation! Ensure authorization. Can crash services"
     },
 
+    "msfconsole": {
+        "base": "Metasploit console - main interface for exploitation framework",
+        "-q": "Quiet mode: suppress banner and reduce output",
+        "search": "Search for exploits/modules",
+        "use": "Select a module",
+        "show options": "Display module options",
+        "set": "Set option value",
+        "exploit": "Run the exploit",
+        "sessions": "List active sessions",
+        "usage": "Use for: Exploitation, post-exploitation, payload generation",
+        "caution": "Real exploitation! Ensure authorization. Can crash services"
+    },
+
     "msfvenom": {
         "base": "Metasploit payload generator (replaces msfpayload and msfencode)",
         "-p": "Payload (e.g., windows/meterpreter/reverse_tcp)",
@@ -2968,10 +2981,10 @@ def find_best_match(query: str, database: dict[str, any]) -> tuple[str, float]:
 
 def smart_explain(command: str) -> str:
     """Enhanced explain with comprehensive command database."""
-    cmd = command.strip().lower()
+    cmd = command.strip()
 
-    # Extract base command
-    base_cmd = cmd.split()[0] if cmd else ""
+    # Extract base command (keep original case for matching)
+    base_cmd = cmd.split()[0].lower() if cmd else ""
 
     # Check for exact matches first
     if base_cmd in EXPLAIN_DB:
@@ -2982,6 +2995,7 @@ def smart_explain(command: str) -> str:
         for flag, desc in entry.items():
             if flag in ["base", "usage", "caution"]:
                 continue
+            # Check for flag in original command (case-sensitive)
             if flag in cmd:
                 parts.append(f"{flag}: {desc}")
 

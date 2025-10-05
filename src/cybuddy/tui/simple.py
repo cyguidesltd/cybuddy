@@ -321,7 +321,7 @@ class SimpleTUI:
             self.console.print(syntax)
 
         # Bottom border
-        self.console.print("[bold yellow]{'─' * 60}[/bold yellow]")
+        self.console.print("[bold yellow]" + "─" * 60 + "[/bold yellow]")
 
     def _handle_history_command(self, arg: str) -> None:
         """Handle history command with smart suggestions."""

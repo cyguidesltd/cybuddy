@@ -225,7 +225,7 @@ class SimpleTUI:
             self.console.print(syntax)
 
         # Bottom border
-        self.console.print("[bold yellow]{'─' * 60}[/bold yellow]")
+        self.console.print("[bold yellow]" + "─" * 60 + "[/bold yellow]")
 
 
 __all__ = ["SimpleTUI"]

@@ -1,5 +1,5 @@
 """
-Intelligent Natural Language Query Parser for CyBuddy.
+Intelligent Natural Language Query Parser for Cybuddy.
 
 Enhanced parser with context-aware understanding, cybersecurity domain knowledge,
 and intelligent ambiguity resolution. Handles varied user phrasing and understands

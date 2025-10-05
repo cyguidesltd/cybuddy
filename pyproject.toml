@@ -9,7 +9,7 @@ description = "Smart Cybersecurity learning assistant"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
-authors = [{ name = "CyBuddy Team" }]
+authors = [{ name = "Cybuddy Team" }]
 keywords = ["cybersecurity", "learning", "pentesting", "security", "cli", "tui"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Release script for CyBuddy
+Release script for Cybuddy
 Automatically bumps version and creates git tags for PyPI deployment
 """
 

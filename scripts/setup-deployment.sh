@@ -1,7 +1,7 @@
 #!/bin/bash
-# Setup script for CyBuddy PyPI deployment
+# Setup script for Cybuddy PyPI deployment
 
-echo "🚀 CyBuddy Deployment Setup"
+echo "🚀 Cybuddy Deployment Setup"
 echo "============================"
 echo ""
 

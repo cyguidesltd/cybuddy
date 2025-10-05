@@ -1,1 +1,1 @@
-# Commands module for CyBuddy
+# Commands module for Cybuddy

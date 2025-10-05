@@ -1,4 +1,4 @@
-"""Configuration management for CyBuddy with sensible defaults."""
+"""Configuration management for Cybuddy with sensible defaults."""
 
 from __future__ import annotations
 

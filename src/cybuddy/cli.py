@@ -10,7 +10,7 @@ from pathlib import Path
 from .history import add_command
 
 STARTER_PROMPT = (
-    "You are CyBuddy, a helpful cybersecurity study companion. "
+    "You are Cybuddy, a helpful cybersecurity study companion. "
     "You explain steps simply, provide safe defaults, and always suggest next actions. "
     "You avoid running destructive commands and emphasize documenting findings."
 )
@@ -19,7 +19,7 @@ STARTER_PROMPT = (
 def print_help() -> int:
     print(
         """
-CyBuddy - beginner-friendly cybersecurity helper
+Cybuddy - beginner-friendly cybersecurity helper
 
 Usage:
   cybuddy                    Launch interactive learning interface (TUI)

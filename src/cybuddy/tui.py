@@ -26,7 +26,7 @@ class SimpleTUI:
         "report": "Practice write-ups (e.g., report 'Found SQLi')",
         "quiz": "Active recall (e.g., quiz 'SQL Injection')",
         "plan": "Next steps (e.g., plan 'found port 80 open')",
-        "exit": "Exit CyBuddy",
+        "exit": "Exit Cybuddy",
     }
 
     def __init__(self, session: str | None = None) -> None:

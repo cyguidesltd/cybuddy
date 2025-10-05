@@ -1,31 +1,762 @@
 """
-Natural Language Query Parser for CyBuddy.
+Intelligent Natural Language Query Parser for CyBuddy.
 
-Converts natural language queries into structured commands:
-- "how do I scan ports?" → ("explain", "nmap")
+Enhanced parser with context-aware understanding, cybersecurity domain knowledge,
+and intelligent ambiguity resolution. Handles varied user phrasing and understands
+relationships between cybersecurity concepts.
+
+Examples:
+- "how do I scan ports?" → ("explain", "port scanning")
 - "tips on sql injection" → ("tip", "sql injection")
-- "what should I do after getting a shell?" → ("plan", "got shell")
+- "what should I do after getting a shell?" → ("plan", "post-exploitation")
+- "i'm stuck on this nmap thing" → ("plan", "nmap troubleshooting")
+- "help me understand burp suite" → ("explain", "burp suite")
 """
 
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple, Any
+from enum import Enum
+import json
+from pathlib import Path
+
+
+# ============================================================================
+# Enhanced Data Structures for Intelligent Parsing
+# ============================================================================
+
+class IntentType(Enum):
+    """Supported intent types."""
+    EXPLAIN = "explain"
+    TIP = "tip"
+    PLAN = "plan"
+    ASSIST = "assist"
+    REPORT = "report"
+    QUIZ = "quiz"
+    CLARIFY = "clarify"
+
+
+class EntityType(Enum):
+    """Types of cybersecurity entities."""
+    TOOL = "tool"
+    TECHNIQUE = "technique"
+    VULNERABILITY = "vulnerability"
+    PROTOCOL = "protocol"
+    PLATFORM = "platform"
+    CONCEPT = "concept"
+
+
+@dataclass
+class Entity:
+    """Represents a cybersecurity entity."""
+    name: str
+    entity_type: EntityType
+    aliases: List[str]
+    related_entities: List[str]
+    confidence: float = 1.0
+
+
+@dataclass
+class IntentResult:
+    """Result of intent classification."""
+    intent: IntentType
+    confidence: float
+    entities: List[Entity]
+    context: Dict[str, Any]
+    clarification_needed: bool = False
+    clarification_question: Optional[str] = None
+
+
+@dataclass
+class UnderstandingResult:
+    """Complete understanding of user query."""
+    intent: IntentType
+    entities: List[Entity]
+    parameters: Dict[str, Any]
+    confidence: float
+    original_query: str
+    processed_query: str
+    clarification_needed: bool = False
+    clarification_question: Optional[str] = None
+
+
+# ============================================================================
+# High-Performance Data-Driven Cybersecurity Knowledge Base
+# ============================================================================
+
+from typing import Dict, List, Optional, Set, Tuple, Any
 from functools import lru_cache
-from typing import Dict, List, Tuple, Pattern
+import time
+from collections import defaultdict
+import re
 
+class TrieNode:
+    """Trie node for efficient prefix matching."""
+    def __init__(self):
+        """Initialize a trie node with empty children, entities, and end flag."""
+        self.children: Dict[str, 'TrieNode'] = {}
+        self.entities: List[Entity] = []
+        self.is_end: bool = False
 
-class NLParser:
-    """Optimized Natural Language Parser with compiled patterns and caching."""
+class FuzzyMatcher:
+    """Efficient fuzzy matching using trie and precomputed scores."""
     
     def __init__(self):
-        # Compile regex patterns once for better performance
-        self._compiled_patterns = self._compile_patterns()
-        self._keyword_sets = self._build_keyword_sets()
+        """Initialize fuzzy matcher with empty trie root and scores."""
+        self.trie_root = TrieNode()
+        self.entity_scores: Dict[str, float] = {}
+        self._built = False
     
-    def _compile_patterns(self) -> Dict[str, List[Pattern[str]]]:
-        """Compile all regex patterns once for better performance."""
-        intents = {
-            'explain': [
+    def build_trie(self, entities: Dict[str, Entity]) -> None:
+        """Build trie from entities for fast prefix matching."""
+        for name, entity in entities.items():
+            self._insert_entity(name.lower(), entity)
+            # Insert aliases
+            for alias in entity.aliases:
+                self._insert_entity(alias.lower(), entity)
+        self._built = True
+    
+    def _insert_entity(self, text: str, entity: Entity) -> None:
+        """Insert entity into trie."""
+        node = self.trie_root
+        for char in text:
+            if char not in node.children:
+                node.children[char] = TrieNode()
+            node = node.children[char]
+        node.entities.append(entity)
+        node.is_end = True
+    
+    def find_matches(self, query: str, max_results: int = 5) -> List[Tuple[Entity, float]]:
+        """Find fuzzy matches using trie traversal."""
+        if not self._built:
+            return []
+        
+        query_lower = query.lower()
+        matches = []
+        
+        # Try exact prefix match first
+        node = self.trie_root
+        for char in query_lower:
+            if char not in node.children:
+                break
+            node = node.children[char]
+            if node.is_end:
+                for entity in node.entities:
+                    score = self._calculate_score(query_lower, entity.name.lower())
+                    matches.append((entity, score))
+        
+        # Sort by score and return top matches
+        matches.sort(key=lambda x: x[1], reverse=True)
+        return matches[:max_results]
+    
+    def _calculate_score(self, query: str, entity_name: str) -> float:
+        """Calculate similarity score between query and entity name."""
+        if query == entity_name:
+            return 1.0
+        
+        if query in entity_name:
+            return 0.8
+        
+        if entity_name in query:
+            return 0.6
+        
+        # Simple character overlap scoring
+        query_chars = set(query)
+        entity_chars = set(entity_name)
+        overlap = len(query_chars & entity_chars)
+        total = len(query_chars | entity_chars)
+        
+        return overlap / total if total > 0 else 0.0
+
+class PerformanceMonitor:
+    """Monitor performance metrics for optimization."""
+    
+    def __init__(self):
+        """Initialize performance monitor with empty metrics."""
+        self.timings: Dict[str, List[float]] = defaultdict(list)
+        self.cache_hits = 0
+        self.cache_misses = 0
+        self.entity_lookups = 0
+    
+    def time_operation(self, operation_name: str):
+        """Decorator to time operations."""
+        def decorator(func):
+            def wrapper(*args, **kwargs):
+                start_time = time.perf_counter()
+                result = func(*args, **kwargs)
+                end_time = time.perf_counter()
+                self.timings[operation_name].append(end_time - start_time)
+                return result
+            return wrapper
+        return decorator
+    
+    def get_stats(self) -> Dict[str, Any]:
+        """Get performance statistics."""
+        stats = {}
+        for operation, times in self.timings.items():
+            if times:
+                stats[operation] = {
+                    'count': len(times),
+                    'total_time': sum(times),
+                    'avg_time': sum(times) / len(times),
+                    'min_time': min(times),
+                    'max_time': max(times)
+                }
+        
+        stats['cache'] = {
+            'hits': self.cache_hits,
+            'misses': self.cache_misses,
+            'hit_rate': self.cache_hits / max(1, self.cache_hits + self.cache_misses)
+        }
+        
+        stats['entity_lookups'] = self.entity_lookups
+        return stats
+
+class DataDrivenKnowledgeBase:
+    """High-performance cybersecurity knowledge base using data.py."""
+    
+    def __init__(self, enable_monitoring: bool = False):
+        """Initialize data-driven knowledge base with lazy loading.
+        
+        Args:
+            enable_monitoring: Whether to enable performance monitoring.
+        """
+        self.enable_monitoring = enable_monitoring
+        self.monitor = PerformanceMonitor() if enable_monitoring else None
+        
+        # Lazy loading flags
+        self._data_loaded = False
+        self._indexes_built = False
+        
+        # High-performance indexes
+        self._tool_index: Dict[str, Entity] = {}
+        self._technique_index: Dict[str, Entity] = {}
+        self._vulnerability_index: Dict[str, Entity] = {}
+        self._protocol_index: Dict[str, Entity] = {}
+        self._platform_index: Dict[str, Entity] = {}
+        
+        # Fast lookup structures
+        self._alias_index: Dict[str, Entity] = {}
+        self._fuzzy_matcher = FuzzyMatcher()
+        self._entity_cache: Dict[str, Optional[Entity]] = {}
+        
+        # Data.py integration
+        self._explain_db: Optional[Dict] = None
+        self._tip_db: Optional[Dict] = None
+        self._assist_db: Optional[Dict] = None
+        self._report_db: Optional[Dict] = None
+        self._quiz_db: Optional[Dict] = None
+        self._plan_db: Optional[Dict] = None
+    
+    def _lazy_load_data(self) -> None:
+        """Lazy load data.py only when needed."""
+        if self._data_loaded:
+            return
+        
+        try:
+            # Import data.py modules
+            from . import data
+            
+            self._explain_db = data.EXPLAIN_DB
+            self._tip_db = data.TIP_DB
+            self._assist_db = data.ASSIST_DB
+            self._report_db = data.REPORT_DB
+            self._quiz_db = data.QUIZ_DB
+            self._plan_db = data.PLAN_DB
+            
+            self._data_loaded = True
+            
+        except ImportError:
+            # Fallback to embedded knowledge if data.py not available
+            self._load_fallback_knowledge()
+            self._data_loaded = True
+    
+    def _load_fallback_knowledge(self) -> None:
+        """Load fallback knowledge base (original implementation)."""
+        # Network Scanning Tools
+        self._tool_index.update({
+            "nmap": Entity("nmap", EntityType.TOOL, ["network mapper", "port scanner"], ["masscan", "rustscan"]),
+            "masscan": Entity("masscan", EntityType.TOOL, ["fast scanner"], ["nmap", "rustscan"]),
+            "rustscan": Entity("rustscan", EntityType.TOOL, ["rust scanner"], ["nmap", "masscan"]),
+            "burp": Entity("burp", EntityType.TOOL, ["burp suite", "burpsuite"], ["zaproxy", "owasp zap"]),
+            "sqlmap": Entity("sqlmap", EntityType.TOOL, ["sql mapper"], ["burp", "havij"]),
+            "gobuster": Entity("gobuster", EntityType.TOOL, ["directory buster"], ["dirb", "dirbuster", "ffuf"]),
+            "ffuf": Entity("ffuf", EntityType.TOOL, ["fuzz faster u fool"], ["gobuster", "wfuzz"]),
+            "nikto": Entity("nikto", EntityType.TOOL, ["web scanner"], ["nmap", "openvas"]),
+            "hydra": Entity("hydra", EntityType.TOOL, ["password cracker"], ["john", "hashcat"]),
+            "john": Entity("john", EntityType.TOOL, ["john the ripper"], ["hashcat", "hydra"]),
+            "hashcat": Entity("hashcat", EntityType.TOOL, ["hash cracker"], ["john", "hydra"]),
+            "metasploit": Entity("metasploit", EntityType.TOOL, ["msf", "framework"], ["exploit-db", "searchsploit"]),
+            "wireshark": Entity("wireshark", EntityType.TOOL, ["packet analyzer"], ["tcpdump", "tshark"]),
+            "tcpdump": Entity("tcpdump", EntityType.TOOL, ["packet capture"], ["wireshark", "tshark"]),
+            "tshark": Entity("tshark", EntityType.TOOL, ["wireshark cli"], ["wireshark", "tcpdump"]),
+            "netcat": Entity("netcat", EntityType.TOOL, ["nc", "swiss army knife"], ["ncat", "socat"]),
+            "nc": Entity("nc", EntityType.TOOL, ["netcat"], ["netcat", "ncat"]),
+        })
+        
+        # Techniques
+        self._technique_index.update({
+            "sql injection": Entity("sql injection", EntityType.TECHNIQUE, ["sqli", "sql"], ["xss", "csrf"]),
+            "xss": Entity("xss", EntityType.TECHNIQUE, ["cross-site scripting"], ["csrf", "sql injection"]),
+            "csrf": Entity("csrf", EntityType.TECHNIQUE, ["cross-site request forgery"], ["xss", "sql injection"]),
+            "ssrf": Entity("ssrf", EntityType.TECHNIQUE, ["server-side request forgery"], ["xxe", "rce"]),
+            "xxe": Entity("xxe", EntityType.TECHNIQUE, ["xml external entity"], ["ssrf", "rce"]),
+            "rce": Entity("rce", EntityType.TECHNIQUE, ["remote code execution"], ["xxe", "ssrf"]),
+            "lfi": Entity("lfi", EntityType.TECHNIQUE, ["local file inclusion"], ["rfi", "path traversal"]),
+            "rfi": Entity("rfi", EntityType.TECHNIQUE, ["remote file inclusion"], ["lfi", "rce"]),
+            "ssti": Entity("ssti", EntityType.TECHNIQUE, ["server-side template injection"], ["rce", "xss"]),
+            "privilege escalation": Entity("privilege escalation", EntityType.TECHNIQUE, ["privesc", "escalation"], ["buffer overflow", "kernel exploit"]),
+            "buffer overflow": Entity("buffer overflow", EntityType.TECHNIQUE, ["bof", "overflow"], ["format string", "heap spray"]),
+            "port scanning": Entity("port scanning", EntityType.TECHNIQUE, ["port scan", "scanning"], ["service enumeration", "reconnaissance"]),
+            "service enumeration": Entity("service enumeration", EntityType.TECHNIQUE, ["service enum", "enumeration"], ["port scanning", "vulnerability scanning"]),
+            "post-exploitation": Entity("post-exploitation", EntityType.TECHNIQUE, ["post-exploit", "post"], ["privilege escalation", "lateral movement"]),
+            "lateral movement": Entity("lateral movement", EntityType.TECHNIQUE, ["lateral", "movement"], ["post-exploitation", "credential reuse"]),
+        })
+        
+        # Vulnerabilities
+        self._vulnerability_index.update({
+            "cve": Entity("cve", EntityType.VULNERABILITY, ["common vulnerabilities"], ["exploit", "patch"]),
+            "exploit": Entity("exploit", EntityType.VULNERABILITY, ["exploitation"], ["payload", "shellcode"]),
+            "payload": Entity("payload", EntityType.VULNERABILITY, ["malicious code"], ["exploit", "shellcode"]),
+            "shellcode": Entity("shellcode", EntityType.VULNERABILITY, ["executable code"], ["payload", "exploit"]),
+            "vulnerability": Entity("vulnerability", EntityType.VULNERABILITY, ["vuln", "security issue"], ["exploit", "patch"]),
+            "security flaw": Entity("security flaw", EntityType.VULNERABILITY, ["flaw", "weakness"], ["vulnerability", "exploit"]),
+        })
+        
+        # Protocols
+        self._protocol_index.update({
+            "http": Entity("http", EntityType.PROTOCOL, ["hypertext transfer"], ["https", "web"]),
+            "https": Entity("https", EntityType.PROTOCOL, ["secure http"], ["http", "ssl", "tls"]),
+            "ssh": Entity("ssh", EntityType.PROTOCOL, ["secure shell"], ["telnet", "rlogin"]),
+            "ftp": Entity("ftp", EntityType.PROTOCOL, ["file transfer"], ["sftp", "tftp"]),
+            "smb": Entity("smb", EntityType.PROTOCOL, ["server message block"], ["cifs", "netbios"]),
+            "ldap": Entity("ldap", EntityType.PROTOCOL, ["lightweight directory"], ["active directory", "kerberos"]),
+            "dns": Entity("dns", EntityType.PROTOCOL, ["domain name system"], ["domain", "subdomain"]),
+        })
+        
+        # Platforms
+        self._platform_index.update({
+            "linux": Entity("linux", EntityType.PLATFORM, ["unix", "gnu/linux"], ["ubuntu", "centos", "debian"]),
+            "windows": Entity("windows", EntityType.PLATFORM, ["microsoft windows"], ["win", "microsoft"]),
+            "macos": Entity("macos", EntityType.PLATFORM, ["mac os", "apple"], ["mac", "osx"]),
+            "android": Entity("android", EntityType.PLATFORM, ["google android"], ["mobile", "phone"]),
+            "ios": Entity("ios", EntityType.PLATFORM, ["apple ios"], ["iphone", "ipad"]),
+        })
+    
+    def _build_indexes(self) -> None:
+        """Build high-performance indexes from loaded data."""
+        if self._indexes_built:
+            return
+        
+        self._lazy_load_data()
+        
+        # Build indexes from data.py if available
+        if self._explain_db:
+            self._build_indexes_from_data()
+        else:
+            # Use fallback data - ensure it's loaded
+            if not self._tool_index:
+                self._load_fallback_knowledge()
+        
+        # Build alias index
+        self._build_alias_index()
+        
+        # Build fuzzy matcher
+        all_entities = self._get_all_entities()
+        self._fuzzy_matcher.build_trie(all_entities)
+        
+        self._indexes_built = True
+    
+    def _build_indexes_from_data(self) -> None:
+        """Build indexes from data.py content."""
+        if not self._explain_db:
+            return
+        
+        # Extract entities from EXPLAIN_DB (tools)
+        self._extract_entities_from_explain_db()
+        
+        # Extract entities from other databases (techniques)
+        self._extract_entities_from_other_dbs()
+        
+        # Add fallback entities for missing categories
+        self._add_fallback_entities()
+    
+    def _extract_entities_from_explain_db(self) -> None:
+        """Extract entities from EXPLAIN_DB."""
+        for tool_name in self._explain_db.keys():
+            if not self._entity_exists_in_any_index(tool_name):
+                entity = self._create_entity_from_name(tool_name)
+                self._store_entity_in_index(entity)
+    
+    def _extract_entities_from_other_dbs(self) -> None:
+        """Extract entities from other databases (tip, assist, report, quiz, plan)."""
+        databases = [
+            ("tip", self._tip_db),
+            ("assist", self._assist_db),
+            ("report", self._report_db),
+            ("quiz", self._quiz_db),
+            ("plan", self._plan_db)
+        ]
+        
+        for db_name, db_content in databases:
+            if db_content:
+                for technique_name in db_content.keys():
+                    if not self._entity_exists_in_any_index(technique_name):
+                        entity = self._create_entity_from_name(technique_name, EntityType.TECHNIQUE)
+                        self._technique_index[technique_name] = entity
+    
+    def _entity_exists_in_any_index(self, name: str) -> bool:
+        """Check if entity exists in any index."""
+        return (name in self._tool_index or 
+                name in self._technique_index or
+                name in self._vulnerability_index or
+                name in self._protocol_index or
+                name in self._platform_index)
+    
+    def _create_entity_from_name(self, name: str, entity_type: Optional[EntityType] = None) -> Entity:
+        """Create entity from name with classification and relationships."""
+        if entity_type is None:
+            entity_type = self._classify_entity_type(name)
+        
+        aliases = self._extract_aliases(name)
+        related = self._extract_related_entities(name)
+        
+        return Entity(name, entity_type, aliases, related)
+    
+    def _store_entity_in_index(self, entity: Entity) -> None:
+        """Store entity in appropriate index based on type."""
+        index_map = {
+            EntityType.TOOL: self._tool_index,
+            EntityType.TECHNIQUE: self._technique_index,
+            EntityType.VULNERABILITY: self._vulnerability_index,
+            EntityType.PROTOCOL: self._protocol_index,
+            EntityType.PLATFORM: self._platform_index,
+        }
+        
+        target_index = index_map.get(entity.entity_type)
+        if target_index is not None:
+            target_index[entity.name] = entity
+    
+    def _add_fallback_entities(self) -> None:
+        """Add fallback entities for categories not covered by data.py."""
+        # Add vulnerabilities if none exist
+        if not self._vulnerability_index:
+            self._vulnerability_index.update({
+                "cve": Entity("cve", EntityType.VULNERABILITY, ["common vulnerabilities"], ["exploit", "patch"]),
+                "exploit": Entity("exploit", EntityType.VULNERABILITY, ["exploitation"], ["payload", "shellcode"]),
+                "payload": Entity("payload", EntityType.VULNERABILITY, ["malicious code"], ["exploit", "shellcode"]),
+                "shellcode": Entity("shellcode", EntityType.VULNERABILITY, ["executable code"], ["payload", "exploit"]),
+                "vulnerability": Entity("vulnerability", EntityType.VULNERABILITY, ["vuln", "security issue"], ["exploit", "patch"]),
+                "security flaw": Entity("security flaw", EntityType.VULNERABILITY, ["flaw", "weakness"], ["vulnerability", "exploit"]),
+            })
+        
+        # Add protocols if none exist
+        if not self._protocol_index:
+            self._protocol_index.update({
+                "http": Entity("http", EntityType.PROTOCOL, ["hypertext transfer"], ["https", "web"]),
+                "https": Entity("https", EntityType.PROTOCOL, ["secure http"], ["http", "ssl", "tls"]),
+                "ssh": Entity("ssh", EntityType.PROTOCOL, ["secure shell"], ["telnet", "rlogin"]),
+                "ftp": Entity("ftp", EntityType.PROTOCOL, ["file transfer"], ["sftp", "tftp"]),
+                "smb": Entity("smb", EntityType.PROTOCOL, ["server message block"], ["cifs", "netbios"]),
+                "ldap": Entity("ldap", EntityType.PROTOCOL, ["lightweight directory"], ["active directory", "kerberos"]),
+                "dns": Entity("dns", EntityType.PROTOCOL, ["domain name system"], ["domain", "subdomain"]),
+            })
+        
+        # Add platforms if none exist
+        if not self._platform_index:
+            self._platform_index.update({
+                "linux": Entity("linux", EntityType.PLATFORM, ["unix", "gnu/linux"], ["ubuntu", "centos", "debian"]),
+                "windows": Entity("windows", EntityType.PLATFORM, ["microsoft windows"], ["win", "microsoft"]),
+                "macos": Entity("macos", EntityType.PLATFORM, ["mac os", "apple"], ["mac", "osx"]),
+                "android": Entity("android", EntityType.PLATFORM, ["google android"], ["mobile", "phone"]),
+                "ios": Entity("ios", EntityType.PLATFORM, ["apple ios"], ["iphone", "ipad"]),
+            })
+    
+    def _classify_entity_type(self, name: str) -> EntityType:
+        """Classify entity type based on name patterns."""
+        name_lower = name.lower()
+        
+        # Known tools from data.py (most common first)
+        known_tools = {
+            'nmap', 'masscan', 'rustscan', 'wireshark', 'tcpdump', 'tshark', 'termshark',
+            'unicornscan', 'naabu', 'netcat', 'ncat', 'socat', 'proxychains', 'dig',
+            'dnsenum', 'fierce', 'ettercap', 'bettercap', 'arpspoof', 'responder',
+            'volatility', 'rekall', 'lime', 'autopsy', 'sleuthkit', 'ftk', 'dd',
+            'binwalk', 'exiftool', 'strings', 'foremost', 'networkminer', 'xplico',
+            'andriller', 'aleapp', 'ghidra', 'ida', 'radare2', 'binaryninja', 'gdb',
+            'pwndbg', 'x64dbg', 'edb', 'objdump', 'readelf', 'nm', 'file', 'ltrace',
+            'strace', 'frida', 'burp', 'gobuster', 'ffuf', 'nikto', 'dirb', 'wpscan',
+            'sqlmap', 'metasploit', 'msfvenom', 'john', 'hashcat', 'hydra', 'aircrack-ng',
+            'hashid', 'hash-identifier', 'openssl', 'linpeas', 'winpeas', 'sudo'
+        }
+        
+        if name_lower in known_tools:
+            return EntityType.TOOL
+        
+        # Known techniques
+        known_techniques = {
+            'kerberoasting', 'pass-the-hash', 'pass-the-ticket', 'golden-ticket',
+            'dcsync', 'ssrf', 'xxe', 'deserialization', 'ssti', 'http-smuggling',
+            'suid-exploitation', 'sudo-misconfig', 'kernel-exploits', 'token-impersonation',
+            'dll-hijacking', 'arp-spoofing', 'dns-spoofing', 'vlan-hopping', 'ipv6-mitm',
+            'smb-relay', 'sql injection', 'xss', 'csrf', 'lfi', 'rfi', 'rce',
+            'privilege escalation', 'buffer overflow', 'format string', 'port scanning',
+            'service enumeration', 'vulnerability scanning', 'post-exploitation',
+            'lateral movement', 'credential reuse'
+        }
+        
+        if name_lower in known_techniques:
+            return EntityType.TECHNIQUE
+        
+        # Tool patterns (fallback)
+        if any(pattern in name_lower for pattern in ['scan', 'map', 'dump', 'cat', 'walk', 'enum']):
+            return EntityType.TOOL
+        
+        # Technique patterns (fallback)
+        if any(pattern in name_lower for pattern in ['injection', 'overflow', 'escalation', 'movement', 'spoofing']):
+            return EntityType.TECHNIQUE
+        
+        # Vulnerability patterns
+        if any(pattern in name_lower for pattern in ['cve', 'exploit', 'vulnerability']):
+            return EntityType.VULNERABILITY
+        
+        # Protocol patterns
+        if any(pattern in name_lower for pattern in ['http', 'ssh', 'ftp', 'smb', 'ldap', 'dns']):
+            return EntityType.PROTOCOL
+        
+        # Platform patterns
+        if any(pattern in name_lower for pattern in ['linux', 'windows', 'macos', 'android', 'ios']):
+            return EntityType.PLATFORM
+        
+        # Default to tool
+        return EntityType.TOOL
+    
+    def _extract_aliases(self, name: str) -> List[str]:
+        """Extract aliases for an entity."""
+        aliases = []
+        name_lower = name.lower()
+        
+        # Common alias patterns
+        if name_lower == 'nmap':
+            aliases.extend(['network mapper', 'port scanner'])
+        elif name_lower == 'burp':
+            aliases.extend(['burp suite', 'burpsuite'])
+        elif name_lower == 'sqlmap':
+            aliases.extend(['sql mapper'])
+        elif name_lower == 'metasploit':
+            aliases.extend(['msf', 'framework'])
+        elif name_lower == 'wireshark':
+            aliases.extend(['packet analyzer'])
+        elif name_lower == 'netcat':
+            aliases.extend(['nc', 'swiss army knife'])
+        elif 'sql injection' in name_lower:
+            aliases.extend(['sqli', 'sql'])
+        elif 'cross-site scripting' in name_lower or name_lower == 'xss':
+            aliases.extend(['cross-site scripting'])
+        elif 'privilege escalation' in name_lower:
+            aliases.extend(['privesc', 'escalation'])
+        
+        return aliases
+    
+    def _extract_related_entities(self, name: str) -> List[str]:
+        """Extract related entities for an entity."""
+        name_lower = name.lower()
+        
+        # Check tool relationships first
+        tool_relations = self._get_tool_relationships(name_lower)
+        if tool_relations:
+            return tool_relations
+        
+        # Check technique relationships
+        technique_relations = self._get_technique_relationships(name_lower)
+        if technique_relations:
+            return technique_relations
+        
+        return []
+    
+    def _get_tool_relationships(self, name_lower: str) -> List[str]:
+        """Get tool-specific relationships."""
+        tool_relations = {
+            'nmap': ['masscan', 'rustscan'],
+            'burp': ['zaproxy', 'owasp zap'],
+            'sqlmap': ['burp', 'havij'],
+            'gobuster': ['dirb', 'dirbuster', 'ffuf'],
+            'hydra': ['john', 'hashcat'],
+            'metasploit': ['exploit-db', 'searchsploit'],
+            'wireshark': ['tcpdump', 'tshark'],
+        }
+        
+        return tool_relations.get(name_lower, [])
+    
+    def _get_technique_relationships(self, name_lower: str) -> List[str]:
+        """Get technique-specific relationships."""
+        # Check for specific technique patterns
+        if 'sql injection' in name_lower:
+            return ['xss', 'csrf']
+        elif name_lower == 'xss':
+            return ['csrf', 'sql injection']
+        elif name_lower == 'csrf':
+            return ['xss', 'sql injection']
+        elif name_lower == 'ssrf':
+            return ['xxe', 'rce']
+        elif name_lower == 'xxe':
+            return ['ssrf', 'rce']
+        elif name_lower == 'rce':
+            return ['xxe', 'ssrf']
+        
+        return []
+    
+    def _build_alias_index(self) -> None:
+        """Build fast alias lookup index."""
+        all_entities = self._get_all_entities()
+        
+        for entity in all_entities.values():
+            # Add entity name
+            self._alias_index[entity.name.lower()] = entity
+            
+            # Add aliases
+            for alias in entity.aliases:
+                self._alias_index[alias.lower()] = entity
+    
+    def _get_all_entities(self) -> Dict[str, Entity]:
+        """Get all entities from all indexes."""
+        all_entities = {}
+        all_entities.update(self._tool_index)
+        all_entities.update(self._technique_index)
+        all_entities.update(self._vulnerability_index)
+        all_entities.update(self._protocol_index)
+        all_entities.update(self._platform_index)
+        return all_entities
+    
+    @lru_cache(maxsize=1000)
+    def resolve_entity(self, text: str) -> Optional[Entity]:
+        """High-performance entity resolution with caching."""
+        if self.monitor:
+            self.monitor.entity_lookups += 1
+        
+        # Ensure indexes are built
+        self._build_indexes()
+        
+        text_lower = text.lower().strip()
+        
+        # Check cache first
+        if text_lower in self._entity_cache:
+            if self.monitor:
+                self.monitor.cache_hits += 1
+            return self._entity_cache[text_lower]
+        
+        if self.monitor:
+            self.monitor.cache_misses += 1
+        
+        # Fast hash lookup
+        entity = self._alias_index.get(text_lower)
+        if entity:
+            self._entity_cache[text_lower] = entity
+            return entity
+        
+        # Fuzzy matching for partial matches
+        fuzzy_matches = self._fuzzy_matcher.find_matches(text_lower, max_results=1)
+        if fuzzy_matches:
+            entity = fuzzy_matches[0][0]
+            self._entity_cache[text_lower] = entity
+            return entity
+        
+        # Cache miss
+        self._entity_cache[text_lower] = None
+        return None
+    
+    def get_related_entities(self, entity: Entity) -> List[Entity]:
+        """Get entities related to the given entity."""
+        related = []
+        for related_name in entity.related_entities:
+            related_entity = self.resolve_entity(related_name)
+            if related_entity:
+                related.append(related_entity)
+        return related
+    
+    def get_performance_stats(self) -> Dict[str, Any]:
+        """Get performance statistics."""
+        if not self.monitor:
+            return {"monitoring_disabled": True}
+        
+        stats = self.monitor.get_stats()
+        stats.update({
+            "entities_loaded": len(self._get_all_entities()),
+            "alias_index_size": len(self._alias_index),
+            "cache_size": len(self._entity_cache),
+            "data_loaded": self._data_loaded,
+            "indexes_built": self._indexes_built
+        })
+        return stats
+    
+    def clear_cache(self) -> None:
+        """Clear entity resolution cache."""
+        self._entity_cache.clear()
+        self.resolve_entity.cache_clear()
+    
+    # Legacy compatibility properties
+    @property
+    def tools(self) -> Dict[str, Entity]:
+        """Legacy compatibility: tools property."""
+        self._build_indexes()
+        return self._tool_index
+    
+    @property
+    def techniques(self) -> Dict[str, Entity]:
+        """Legacy compatibility: techniques property."""
+        self._build_indexes()
+        return self._technique_index
+    
+    @property
+    def vulnerabilities(self) -> Dict[str, Entity]:
+        """Legacy compatibility: vulnerabilities property."""
+        self._build_indexes()
+        return self._vulnerability_index
+    
+    @property
+    def protocols(self) -> Dict[str, Entity]:
+        """Legacy compatibility: protocols property."""
+        self._build_indexes()
+        return self._protocol_index
+    
+    @property
+    def platforms(self) -> Dict[str, Entity]:
+        """Legacy compatibility: platforms property."""
+        self._build_indexes()
+        return self._platform_index
+    
+    @property
+    def all_entities(self) -> Dict[str, Entity]:
+        """Legacy compatibility: all_entities property."""
+        self._build_indexes()
+        return self._get_all_entities()
+
+# Legacy compatibility
+CybersecurityKnowledgeBase = DataDrivenKnowledgeBase
+
+
+# ============================================================================
+# Enhanced Intent Classification
+# ============================================================================
+
+class IntentClassifier:
+    """Multi-layered intent classification with cybersecurity domain knowledge."""
+    
+    def __init__(self, enable_monitoring: bool = False):
+        """Initialize intent classifier with data-driven knowledge base.
+        
+        Args:
+            enable_monitoring: Whether to enable performance monitoring.
+        """
+        self.knowledge_base = DataDrivenKnowledgeBase(enable_monitoring=enable_monitoring)
+        self.confidence_threshold = 0.7
+        self.enable_monitoring = enable_monitoring
+        
+        # Enhanced intent patterns with cybersecurity context
+        self.intent_patterns = {
+            IntentType.EXPLAIN: [
                 r'how (?:do|can) i (.*)',
                 r'how to (.*)',
                 r'explain (.*)',
@@ -34,137 +765,650 @@ class NLParser:
                 r'tell me about (.*)',
                 r'describe (.*)',
                 r'show me (.*)',
+                r'help me understand (.*)',
+                r'learn about (.*)',
+                r'teach me (.*)',
+                r'what does (.*) do',
+                r'how does (.*) work',
             ],
-            'plan': [
-                r'what should i do (?:after|when|if) (.*)',
-                r'what(?:\'s| is) (?:the )?next (?:step|after) (.*)',
-                r'next steps (?:for|after) (.*)',
-                r'i (?:found|got|have|see) (.*)',
-                r'what to do (?:with|about) (.*)',
-                r'help (?:me )?(?:with|plan) (.*)',
-            ],
-            'tip': [
+            IntentType.TIP: [
                 r'tips? (?:on|for|about) (.*)',
                 r'guide (?:for|to|on) (.*)',
                 r'(?:how to )?learn (?:about )?(.*)',
                 r'techniques? (?:for|on) (.*)',
                 r'best practices? (?:for )?(.*)',
+                r'methods? (?:for|to) (.*)',
+                r'approaches? (?:for|to) (.*)',
+                r'strategies? (?:for|to) (.*)',
             ],
-            'assist': [
+            IntentType.PLAN: [
+                r'what should i do (?:after|when|if) (.*)',
+                r'what(?:\'s| is) (?:the )?next (?:step|after) (.*)',
+                r'next steps (?:for|after) (.*)',
+                r'i (?:found|got|have|see|discovered) (.*)',
+                r'what to do (?:with|about) (.*)',
+                r'help (?:me )?(?:with|plan) (.*)',
+                r'i\'m stuck (?:on|with) (.*)',
+                r'stuck (?:on|with) (.*)',
+                r'need help (?:with|on) (.*)',
+                r'what\'s next (?:for|after) (.*)',
+                r'after (.*) what (?:should|do)',
+            ],
+            IntentType.ASSIST: [
                 r'i\'?m getting (?:an? )?(.*)',
                 r'(?:error|problem|issue):? (.*)',
                 r'why (?:is|does|am|can\'t) (.*)',
                 r'(?:how to )?fix (.*)',
                 r'troubleshoot (.*)',
+                r'debug (.*)',
+                r'help (?:me )?(?:fix|solve) (.*)',
+                r'not working (.*)',
+                r'failing (.*)',
+                r'broken (.*)',
             ],
-            'report': [
+            IntentType.REPORT: [
                 r'document (.*)',
                 r'write (?:a )?(?:up |report (?:for|on) )?(.*)',
                 r'report (.*)',
                 r'create (?:a )?report (?:for )?(.*)',
+                r'summarize (.*)',
+                r'write up (.*)',
             ],
-            'quiz': [
+            IntentType.QUIZ: [
                 r'test me (?:on )?(.*)',
                 r'quiz (?:me )?(?:on |about )?(.*)',
                 r'question(?:s)? (?:on |about )?(.*)',
                 r'practice (.*)',
+                r'exam (?:on )?(.*)',
+                r'challenge (?:me )?(?:on )?(.*)',
             ],
         }
-        
-        return {
-            command: [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
-            for command, patterns in intents.items()
-        }
     
-    def _build_keyword_sets(self) -> Dict[str, set]:
-        """Build keyword sets for faster lookup."""
-        return {
-            'tools': {
-                'nmap', 'burp', 'sqlmap', 'metasploit', 'wireshark',
-                'hydra', 'john', 'hashcat', 'gobuster', 'ffuf',
-                'nikto', 'dirb', 'wfuzz', 'netcat', 'nc', 'ssh',
-                'tcpdump', 'masscan', 'enum4linux', 'smbclient'
-            },
-            'attacks': {
-                'xss', 'sqli', 'sql injection', 'csrf', 'ssrf', 'xxe',
-                'rce', 'lfi', 'rfi', 'ssti', 'deserialization',
-                'privilege escalation', 'privesc', 'buffer overflow',
-                'format string', 'race condition', 'injection'
-            },
-            'scenarios': {
-                'found', 'got', 'have', 'discovered', 'see', 'seeing',
-                'stuck', 'after', 'next', 'shell', 'port', 'vulnerability',
-                'target', 'enumeration', 'foothold'
-            }
-        }
+    def classify_intent(self, query: str) -> IntentResult:
+        """Classify user intent with confidence scoring."""
+        query_lower = query.lower().strip()
+        
+        # Layer 1: Fast pattern-based classification
+        primary_intent = self._fast_classify(query_lower)
+        
+        # Layer 2: Entity-based classification if confidence is low
+        if primary_intent.confidence < self.confidence_threshold:
+            entity_intent = self._entity_based_classify(query_lower)
+            if entity_intent.confidence > primary_intent.confidence:
+                primary_intent = entity_intent
+        
+        # Layer 3: Context-aware refinement
+        refined_intent = self._context_refine(query_lower, primary_intent)
+        
+        return refined_intent
     
-    def parse(self, text: str) -> Tuple[str, str]:
-        """
-        Parse natural language into (command, query).
-
-        Examples:
-            "how do I scan for open ports?" → ("explain", "port scanning")
-            "what is burp suite?" → ("explain", "burp suite")
-            "tips on privilege escalation" → ("tip", "privilege escalation")
-            "I found an open port 8080" → ("plan", "found open port 8080")
-
-        Returns:
-            Tuple of (command_name, extracted_query)
-        """
-        if not text or not text.strip():
-            return 'explain', ''
+    def _fast_classify(self, query: str) -> IntentResult:
+        """Fast pattern-based intent classification."""
+        best_intent = IntentType.EXPLAIN
+        best_confidence = 0.0
+        entities = []
         
-        text_lower = text.lower().strip()
-        
-        # Check for direct command usage first (but only if it's a standalone command)
-        # This prevents "help me plan" from being treated as "help" command
-        direct_commands = ['explain', 'tip', 'report', 'quiz', 'plan']
-        for cmd in direct_commands:
-            if text_lower == cmd or text_lower.startswith(cmd + ' '):
-                query = text[len(cmd):].strip()
-                return cmd, query
-
-        # Intent detection patterns (order matters - more specific first)
-        for command, patterns in self._compiled_patterns.items():
+        for intent_type, patterns in self.intent_patterns.items():
             for pattern in patterns:
-                match = pattern.match(text_lower)
+                match = re.match(pattern, query)
                 if match:
-                    query = match.group(1).strip()
-                    # Clean up common filler words
-                    query = self._clean_query(query)
-                    return command, query
+                    confidence = 0.9  # High confidence for pattern matches
+                    entities = self._extract_entities(query)
+                    return IntentResult(
+                        intent=intent_type,
+                        confidence=confidence,
+                        entities=entities,
+                        context={"pattern": pattern, "match": match.group(1)}
+                    )
+        
+        # Default to explain with lower confidence
+        entities = self._extract_entities(query)
+        return IntentResult(
+            intent=IntentType.EXPLAIN,
+            confidence=0.3,
+            entities=entities,
+            context={"method": "default"}
+        )
+    
+    def _entity_based_classify(self, query: str) -> IntentResult:
+        """Classify intent based on detected entities."""
+        entities = self._extract_entities(query)
+        
+        if not entities:
+            return IntentResult(
+                intent=IntentType.EXPLAIN,
+                confidence=0.2,
+                entities=[],
+                context={"method": "no_entities"}
+            )
+        
+        # Analyze entity types to infer intent
+        tool_count = sum(1 for e in entities if e.entity_type == EntityType.TOOL)
+        technique_count = sum(1 for e in entities if e.entity_type == EntityType.TECHNIQUE)
+        
+        if tool_count > 0:
+            # Tools usually indicate explain intent
+            return IntentResult(
+                intent=IntentType.EXPLAIN,
+                confidence=0.7,
+                entities=entities,
+                context={"method": "tool_detection", "tool_count": tool_count}
+            )
+        elif technique_count > 0:
+            # Techniques usually indicate tip intent
+            return IntentResult(
+                intent=IntentType.TIP,
+                confidence=0.7,
+                entities=entities,
+                context={"method": "technique_detection", "technique_count": technique_count}
+            )
+        
+        return IntentResult(
+            intent=IntentType.EXPLAIN,
+            confidence=0.5,
+            entities=entities,
+            context={"method": "entity_fallback"}
+        )
+    
+    def _context_refine(self, query: str, intent_result: IntentResult) -> IntentResult:
+        """Refine intent based on additional context clues."""
+        # Check for scenario indicators that suggest plan intent
+        scenario_keywords = [
+            'found', 'got', 'have', 'discovered', 'see', 'seeing',
+            'stuck', 'after', 'next', 'shell', 'port', 'vulnerability',
+            'target', 'enumeration', 'foothold', 'access', 'compromised'
+        ]
+        
+        if any(keyword in query for keyword in scenario_keywords):
+            if intent_result.intent != IntentType.PLAN:
+                return IntentResult(
+                    intent=IntentType.PLAN,
+                    confidence=0.8,
+                    entities=intent_result.entities,
+                    context={**intent_result.context, "refined": "scenario_detection"}
+                )
+        
+        # Check for error/problem indicators that suggest assist intent
+        problem_keywords = [
+            'error', 'problem', 'issue', 'not working', 'failing',
+            'broken', 'trouble', 'stuck', 'help', 'fix', 'debug'
+        ]
+        
+        if any(keyword in query for keyword in problem_keywords):
+            if intent_result.intent != IntentType.ASSIST:
+                return IntentResult(
+                    intent=IntentType.ASSIST,
+                    confidence=0.8,
+                    entities=intent_result.entities,
+                    context={**intent_result.context, "refined": "problem_detection"}
+                )
+        
+        return intent_result
+    
+    def _extract_entities(self, query: str) -> List[Entity]:
+        """Extract cybersecurity entities from query."""
+        entities = []
+        words = query.split()
+        
+        # Check for multi-word entities first
+        for i in range(len(words)):
+            for j in range(i + 1, min(i + 4, len(words) + 1)):  # Check up to 3-word phrases
+                phrase = ' '.join(words[i:j])
+                entity = self.knowledge_base.resolve_entity(phrase)
+                if entity and entity not in entities:
+                    entities.append(entity)
+        
+        # Check for single-word entities
+        for word in words:
+            entity = self.knowledge_base.resolve_entity(word)
+            if entity and entity not in entities:
+                entities.append(entity)
+        
+        return entities
 
-        # Keyword detection fallback
-        return self._keyword_fallback(text_lower, text)
+
+# ============================================================================
+# Context Extraction and Understanding
+# ============================================================================
+
+class ContextExtractor:
+    """Extract and analyze context from user queries."""
     
-    def _keyword_fallback(self, text_lower: str, original_text: str) -> Tuple[str, str]:
-        """Fallback to keyword-based detection."""
-        # Check for tool keywords first (most specific)
-        if any(tool in text_lower for tool in self._keyword_sets['tools']):
-            return 'explain', original_text
+    def __init__(self, enable_monitoring: bool = False):
+        """Initialize context extractor with data-driven knowledge base.
         
-        # Check for attack technique keywords
-        if any(keyword in text_lower for keyword in self._keyword_sets['attacks']):
-            return 'tip', original_text
-        
-        # Check for scenario keywords
-        if any(keyword in text_lower for keyword in self._keyword_sets['scenarios']):
-            return 'plan', original_text
-        
-        # Default: treat as "explain" query
-        return 'explain', original_text
+        Args:
+            enable_monitoring: Whether to enable performance monitoring.
+        """
+        self.knowledge_base = DataDrivenKnowledgeBase(enable_monitoring=enable_monitoring)
+        self.enable_monitoring = enable_monitoring
     
-    @staticmethod
-    def _clean_query(query: str) -> str:
-        """Remove filler words and clean up the extracted query."""
-        if not query:
-            return query
-            
+    def extract_context(self, query: str, session_history: List[str] = None) -> Dict[str, Any]:
+        """Extract comprehensive context information."""
+        context = {
+            "temporal": self._analyze_temporal_context(query, session_history),
+            "domain": self._analyze_domain_context(query),
+            "skill_level": self._infer_skill_level(query),
+            "tools_mentioned": self._extract_tools(query),
+            "techniques_mentioned": self._extract_techniques(query),
+            "scenario": self._analyze_scenario(query),
+            "urgency": self._analyze_urgency(query),
+        }
+        return context
+    
+    def _analyze_temporal_context(self, query: str, session_history: List[str]) -> Dict[str, Any]:
+        """Analyze temporal context (when in the workflow)."""
+        if not session_history:
+            return {"stage": "unknown", "previous_commands": []}
+        
+        # Analyze recent commands to understand workflow stage
+        recent_commands = session_history[-5:] if len(session_history) > 5 else session_history
+        
+        # Look for workflow indicators
+        if any("scan" in cmd.lower() for cmd in recent_commands):
+            return {"stage": "reconnaissance", "previous_commands": recent_commands}
+        elif any("exploit" in cmd.lower() or "payload" in cmd.lower() for cmd in recent_commands):
+            return {"stage": "exploitation", "previous_commands": recent_commands}
+        elif any("shell" in cmd.lower() or "access" in cmd.lower() for cmd in recent_commands):
+            return {"stage": "post-exploitation", "previous_commands": recent_commands}
+        
+        return {"stage": "unknown", "previous_commands": recent_commands}
+    
+    def _analyze_domain_context(self, query: str) -> Dict[str, Any]:
+        """Analyze domain context (what cybersecurity area)."""
+        query_lower = query.lower()
+        
+        domains = {
+            "web": ["web", "http", "https", "xss", "sqli", "csrf", "burp", "nikto", "gobuster"],
+            "network": ["network", "port", "scan", "nmap", "masscan", "wireshark", "tcpdump"],
+            "forensics": ["forensic", "memory", "disk", "image", "pcap", "timeline"],
+            "crypto": ["crypto", "hash", "encrypt", "decrypt", "john", "hashcat"],
+            "mobile": ["mobile", "android", "ios", "app", "apk", "ipa"],
+            "wireless": ["wireless", "wifi", "bluetooth", "aircrack", "reaver"],
+            "reversing": ["reverse", "malware", "binary", "disassembly", "ida", "ghidra"],
+        }
+        
+        detected_domains = []
+        for domain, keywords in domains.items():
+            if any(keyword in query_lower for keyword in keywords):
+                detected_domains.append(domain)
+        
+        return {
+            "domains": detected_domains,
+            "primary_domain": detected_domains[0] if detected_domains else "general"
+        }
+    
+    def _infer_skill_level(self, query: str) -> str:
+        """Infer user skill level from query language."""
+        query_lower = query.lower()
+        
+        # Beginner indicators
+        beginner_indicators = [
+            "how do i", "how to", "what is", "explain", "learn", "beginner",
+            "new to", "starting", "basics", "simple", "easy"
+        ]
+        
+        # Advanced indicators
+        advanced_indicators = [
+            "advanced", "expert", "complex", "sophisticated", "optimize",
+            "custom", "bypass", "evasion", "polymorphic", "obfuscation"
+        ]
+        
+        if any(indicator in query_lower for indicator in beginner_indicators):
+            return "beginner"
+        elif any(indicator in query_lower for indicator in advanced_indicators):
+            return "advanced"
+        else:
+            return "intermediate"
+    
+    def _extract_tools(self, query: str) -> List[str]:
+        """Extract mentioned tools."""
+        tools = []
+        for tool_name, entity in self.knowledge_base.tools.items():
+            if tool_name in query.lower() or any(alias in query.lower() for alias in entity.aliases):
+                tools.append(tool_name)
+        return tools
+    
+    def _extract_techniques(self, query: str) -> List[str]:
+        """Extract mentioned techniques."""
+        techniques = []
+        for tech_name, entity in self.knowledge_base.techniques.items():
+            if tech_name in query.lower() or any(alias in query.lower() for alias in entity.aliases):
+                techniques.append(tech_name)
+        return techniques
+    
+    def _analyze_scenario(self, query: str) -> Dict[str, Any]:
+        """Analyze the scenario/situation described."""
+        query_lower = query.lower()
+        
+        scenarios = {
+            "discovery": ["found", "discovered", "see", "detected"],
+            "troubleshooting": ["not working", "error", "problem", "stuck", "failing"],
+            "learning": ["learn", "understand", "explain", "teach"],
+            "planning": ["next", "after", "should", "plan", "strategy"],
+            "reporting": ["document", "report", "write", "summarize"],
+        }
+        
+        detected_scenarios = []
+        for scenario, keywords in scenarios.items():
+            if any(keyword in query_lower for keyword in keywords):
+                detected_scenarios.append(scenario)
+        
+        return {
+            "scenarios": detected_scenarios,
+            "primary_scenario": detected_scenarios[0] if detected_scenarios else "general"
+        }
+    
+    def _analyze_urgency(self, query: str) -> str:
+        """Analyze urgency level of the query."""
+        query_lower = query.lower()
+        
+        urgent_indicators = ["urgent", "asap", "quickly", "immediately", "emergency", "critical"]
+        if any(indicator in query_lower for indicator in urgent_indicators):
+            return "high"
+        
+        moderate_indicators = ["soon", "today", "important", "priority"]
+        if any(indicator in query_lower for indicator in moderate_indicators):
+            return "medium"
+        
+        return "low"
+
+
+# ============================================================================
+# Ambiguity Resolution System
+# ============================================================================
+
+class AmbiguityResolver:
+    """Resolve ambiguities in user queries."""
+    
+    def __init__(self, enable_monitoring: bool = False):
+        """Initialize ambiguity resolver with data-driven knowledge base.
+        
+        Args:
+            enable_monitoring: Whether to enable performance monitoring.
+        """
+        self.knowledge_base = DataDrivenKnowledgeBase(enable_monitoring=enable_monitoring)
+        self.enable_monitoring = enable_monitoring
+    
+    def detect_ambiguities(self, query: str, entities: List[Entity]) -> List[Dict[str, Any]]:
+        """Detect potential ambiguities in the query."""
+        ambiguities = []
+        
+        # Check for multiple possible intents
+        if self._has_multiple_intents(query):
+            ambiguities.append({
+                "type": "multiple_intents",
+                "description": "Query could be interpreted multiple ways",
+                "options": self._get_intent_options(query)
+            })
+        
+        # Check for ambiguous entities
+        for entity in entities:
+            if self._is_ambiguous_entity(entity):
+                ambiguities.append({
+                    "type": "ambiguous_entity",
+                    "entity": entity.name,
+                    "description": f"'{entity.name}' could refer to multiple concepts",
+                    "options": self._get_entity_options(entity)
+                })
+        
+        return ambiguities
+    
+    def _has_multiple_intents(self, query: str) -> bool:
+        """Check if query could have multiple intents."""
+        query_lower = query.lower()
+        
+        # Check for conflicting intent indicators
+        explain_indicators = ["what is", "how does", "explain"]
+        tip_indicators = ["tips", "techniques", "methods"]
+        plan_indicators = ["what should", "next step", "after"]
+        
+        explain_count = sum(1 for indicator in explain_indicators if indicator in query_lower)
+        tip_count = sum(1 for indicator in tip_indicators if indicator in query_lower)
+        plan_count = sum(1 for indicator in plan_indicators if indicator in query_lower)
+        
+        # If multiple intent types are present, it's ambiguous
+        intent_counts = [explain_count, tip_count, plan_count]
+        return sum(1 for count in intent_counts if count > 0) > 1
+    
+    def _get_intent_options(self, query: str) -> List[str]:
+        """Get possible intent interpretations."""
+        return [
+            "Explain what it is and how it works",
+            "Provide tips and techniques",
+            "Create a step-by-step plan"
+        ]
+    
+    def _is_ambiguous_entity(self, entity: Entity) -> bool:
+        """Check if entity is ambiguous."""
+        # Entities with many aliases or related entities are more likely to be ambiguous
+        return len(entity.aliases) > 2 or len(entity.related_entities) > 3
+    
+    def _get_entity_options(self, entity: Entity) -> List[str]:
+        """Get possible entity interpretations."""
+        options = [entity.name]
+        options.extend(entity.aliases[:2])  # Limit to 2 aliases
+        return options
+    
+    def generate_clarification(self, query: str, ambiguities: List[Dict[str, Any]]) -> Optional[str]:
+        """Generate intelligent clarification questions."""
+        if not ambiguities:
+            return None
+        
+        # Prioritize ambiguities by impact
+        primary_ambiguity = ambiguities[0]  # Take first ambiguity
+        
+        if primary_ambiguity["type"] == "multiple_intents":
+            return f"I can help you with: {', '.join(primary_ambiguity['options'])}. Which one do you need?"
+        
+        elif primary_ambiguity["type"] == "ambiguous_entity":
+            return f"When you say '{primary_ambiguity['entity']}', do you mean: {', '.join(primary_ambiguity['options'])}?"
+        
+        return None
+
+
+# ============================================================================
+# Performance Optimization and Caching
+# ============================================================================
+
+class ParserCache:
+    """Cache for parser results to improve performance."""
+    
+    def __init__(self, max_size: int = 1000):
+        """Initialize parser cache with specified maximum size.
+        
+        Args:
+            max_size: Maximum number of cached results.
+        """
+        self.cache: Dict[str, UnderstandingResult] = {}
+        self.max_size = max_size
+        self.access_count: Dict[str, int] = {}
+    
+    def get(self, query: str) -> Optional[UnderstandingResult]:
+        """Get cached result for query."""
+        query_key = self._normalize_query(query)
+        if query_key in self.cache:
+            self.access_count[query_key] = self.access_count.get(query_key, 0) + 1
+            return self.cache[query_key]
+        return None
+    
+    def put(self, query: str, result: UnderstandingResult) -> None:
+        """Cache result for query."""
+        query_key = self._normalize_query(query)
+        
+        # Evict least recently used if cache is full
+        if len(self.cache) >= self.max_size:
+            self._evict_lru()
+        
+        self.cache[query_key] = result
+        self.access_count[query_key] = 1
+    
+    def _normalize_query(self, query: str) -> str:
+        """Normalize query for consistent caching."""
+        return query.lower().strip()
+    
+    def _evict_lru(self) -> None:
+        """Evict least recently used entry."""
+        if not self.cache:
+            return
+        
+        # Find entry with lowest access count
+        lru_key = min(self.access_count.keys(), key=lambda k: self.access_count[k])
+        del self.cache[lru_key]
+        del self.access_count[lru_key]
+    
+    def clear(self) -> None:
+        """Clear all cached entries."""
+        self.cache.clear()
+        self.access_count.clear()
+    
+    def stats(self) -> Dict[str, Any]:
+        """Get cache statistics."""
+        return {
+            "size": len(self.cache),
+            "max_size": self.max_size,
+            "hit_rate": len(self.cache) / max(1, sum(self.access_count.values())),
+            "most_accessed": max(self.access_count.items(), key=lambda x: x[1]) if self.access_count else None
+        }
+
+
+class QueryPreprocessor:
+    """Preprocess queries for better parsing performance."""
+    
+    def __init__(self):
+        """Initialize query preprocessor with common stopwords."""
+        self.stopwords = {
+            'the', 'a', 'an', 'to', 'for', 'with', 'about', 'on',
+            'in', 'at', 'by', 'from', 'of', 'and', 'or', 'but',
+            'is', 'are', 'was', 'were', 'be', 'been', 'being',
+            'have', 'has', 'had', 'do', 'does', 'did', 'will',
+            'would', 'could', 'should', 'may', 'might', 'can'
+        }
+    
+    def preprocess(self, query: str) -> str:
+        """Preprocess query for better parsing."""
+        # Normalize whitespace
+        query = re.sub(r'\s+', ' ', query.strip())
+        
+        # Remove excessive punctuation
+        query = re.sub(r'[!]{2,}', '!', query)
+        query = re.sub(r'[?]{2,}', '?', query)
+        
+        # Normalize case for better matching
+        query = query.lower()
+        
+        return query
+    
+    def extract_keywords(self, query: str) -> List[str]:
+        """Extract meaningful keywords from query."""
+        words = query.split()
+        keywords = []
+        
+        for word in words:
+            # Remove punctuation
+            word = re.sub(r'[^\w]', '', word)
+            if word and word not in self.stopwords and len(word) > 2:
+                keywords.append(word)
+        
+        return keywords
+
+
+# ============================================================================
+# Main Enhanced Parser
+# ============================================================================
+
+class IntelligentNLParser:
+    """Enhanced natural language parser with context awareness and performance optimization."""
+    
+    def __init__(self, enable_caching: bool = True, cache_size: int = 1000, enable_monitoring: bool = False):
+        """Initialize intelligent NL parser with all components.
+        
+        Args:
+            enable_caching: Whether to enable result caching.
+            cache_size: Maximum cache size for results.
+            enable_monitoring: Whether to enable performance monitoring.
+        """
+        self.enable_monitoring = enable_monitoring
+        self.intent_classifier = IntentClassifier(enable_monitoring=enable_monitoring)
+        self.context_extractor = ContextExtractor(enable_monitoring=enable_monitoring)
+        self.ambiguity_resolver = AmbiguityResolver(enable_monitoring=enable_monitoring)
+        self.preprocessor = QueryPreprocessor()
+        
+        # Performance optimizations
+        self.enable_caching = enable_caching
+        self.cache = ParserCache(cache_size) if enable_caching else None
+        
+        # Pre-compiled regex patterns for better performance
+        self._compile_patterns()
+    
+    def _compile_patterns(self) -> None:
+        """Pre-compile regex patterns for better performance."""
+        # This could be expanded to cache compiled patterns
+        pass
+    
+    def parse_query(self, query: str, session_history: List[str] = None) -> UnderstandingResult:
+        """Parse query with comprehensive understanding and performance optimization."""
+        # Check cache first
+        if self.cache:
+            cached_result = self.cache.get(query)
+            if cached_result:
+                return cached_result
+        
+        # Preprocess query for better performance
+        preprocessed_query = self.preprocessor.preprocess(query)
+        
+        # Extract entities and relationships
+        entities = self.intent_classifier._extract_entities(preprocessed_query)
+        
+        # Classify intent
+        intent_result = self.intent_classifier.classify_intent(preprocessed_query)
+        
+        # Extract context
+        context = self.context_extractor.extract_context(preprocessed_query, session_history)
+        
+        # Check for ambiguities
+        ambiguities = self.ambiguity_resolver.detect_ambiguities(preprocessed_query, entities)
+        
+        # Generate clarification if needed
+        clarification_question = None
+        if ambiguities:
+            clarification_question = self.ambiguity_resolver.generate_clarification(preprocessed_query, ambiguities)
+        
+        # Build parameters
+        parameters = {
+            "entities": [e.name for e in entities],
+            "context": context,
+            "ambiguities": ambiguities,
+            "keywords": self.preprocessor.extract_keywords(preprocessed_query),
+        }
+        
+        # Clean and process query
+        processed_query = self._clean_query(preprocessed_query)
+        
+        result = UnderstandingResult(
+            intent=intent_result.intent,
+            entities=entities,
+            parameters=parameters,
+            confidence=intent_result.confidence,
+            original_query=query,
+            processed_query=processed_query,
+            clarification_needed=len(ambiguities) > 0,
+            clarification_question=clarification_question
+        )
+        
+        # Cache result if caching is enabled
+        if self.cache:
+            self.cache.put(query, result)
+        
+        return result
+    
+    def _clean_query(self, query: str) -> str:
+        """Clean and normalize the query for better processing."""
         # Remove leading articles and common filler words
-        stopwords = {
+        stopwords = [
             'the', 'a', 'an', 'to', 'for', 'with', 'about', 'on',
             'in', 'at', 'by', 'from', 'of', 'and', 'or'
-        }
+        ]
 
         words = query.split()
         # Remove stopwords from the beginning only
@@ -173,59 +1417,129 @@ class NLParser:
 
         cleaned = ' '.join(words)
         return cleaned if cleaned else query
+    
+    def get_cache_stats(self) -> Dict[str, Any]:
+        """Get parser cache statistics."""
+        if self.cache:
+            return self.cache.stats()
+        return {"caching_enabled": False}
+    
+    def get_performance_stats(self) -> Dict[str, Any]:
+        """Get comprehensive performance statistics."""
+        stats = {
+            "cache_stats": self.get_cache_stats(),
+            "monitoring_enabled": self.enable_monitoring
+        }
+        
+        if self.enable_monitoring:
+            # Get stats from all components
+            stats.update({
+                "intent_classifier": self.intent_classifier.knowledge_base.get_performance_stats(),
+                "context_extractor": self.context_extractor.knowledge_base.get_performance_stats(),
+                "ambiguity_resolver": self.ambiguity_resolver.knowledge_base.get_performance_stats(),
+            })
+        
+        return stats
+    
+    def clear_cache(self) -> None:
+        """Clear parser cache."""
+        if self.cache:
+            self.cache.clear()
+        
+        # Clear knowledge base caches
+        self.intent_classifier.knowledge_base.clear_cache()
+        self.context_extractor.knowledge_base.clear_cache()
+        self.ambiguity_resolver.knowledge_base.clear_cache()
+    
+    def parse_query_debug(self, query: str, session_history: List[str] = None) -> Dict[str, Any]:
+        """Parse query with detailed debug information."""
+        result = self.parse_query(query, session_history)
+        
+        return {
+            "original_query": query,
+            "preprocessed_query": self.preprocessor.preprocess(query),
+            "intent": result.intent.value,
+            "confidence": result.confidence,
+            "entities": [{"name": e.name, "type": e.entity_type.value, "aliases": e.aliases} for e in result.entities],
+            "parameters": result.parameters,
+            "processed_query": result.processed_query,
+            "clarification_needed": result.clarification_needed,
+            "clarification_question": result.clarification_question,
+            "cache_stats": self.get_cache_stats()
+        }
 
 
-# Global parser instance for performance
-_parser = NLParser()
+# ============================================================================
+# Legacy Compatibility Functions
+# ============================================================================
 
-
-def parse_natural_query(text: str) -> Tuple[str, str]:
+def parse_natural_query(text: str) -> tuple[str, str]:
     """
-    Parse natural language into (command, query).
+    Parse natural language into (command, query) using enhanced intelligent parser.
 
     Examples:
         "how do I scan for open ports?" → ("explain", "port scanning")
         "what is burp suite?" → ("explain", "burp suite")
-        "tips on privilege escalation" → ("tip", "privilege escalation")
-        "I found an open port 8080" → ("plan", "found open port 8080")
+        "tips on sql injection" → ("tip", "sql injection")
+        "I found an open port 8080" → ("plan", "post-exploitation")
+        "i'm stuck on this nmap thing" → ("plan", "nmap troubleshooting")
 
     Returns:
         Tuple of (command_name, extracted_query)
     """
-    return _parser.parse(text)
+    # Use the enhanced parser
+    parser = IntelligentNLParser()
+    result = parser.parse_query(text)
+    
+    # If clarification is needed, return a special response
+    if result.clarification_needed and result.clarification_question:
+        return "clarify", result.clarification_question
+    
+    # Convert intent to string and get processed query
+    command = result.intent.value
+    query = result.processed_query
+    
+    return command, query
 
 
-# Legacy function for backward compatibility
 def _clean_query(query: str) -> str:
     """Remove filler words and clean up the extracted query."""
-    return NLParser._clean_query(query)
+    # Remove leading articles and common filler words
+    stopwords = [
+        'the', 'a', 'an', 'to', 'for', 'with', 'about', 'on',
+        'in', 'at', 'by', 'from', 'of', 'and', 'or'
+    ]
+
+    words = query.split()
+    # Remove stopwords from the beginning only
+    while words and words[0] in stopwords:
+        words.pop(0)
+
+    cleaned = ' '.join(words)
+    return cleaned if cleaned else query
 
 
-@lru_cache(maxsize=128)
 def extract_topic(text: str) -> str:
     """
     Extract main topic/keywords from natural language query.
 
     Useful for fuzzy matching against knowledge base.
     """
-    if not text or not text.strip():
-        return ''
-    
-    # Compile patterns once for better performance
+    # Remove question words and common phrases
     question_patterns = [
-        re.compile(r'^how (?:do|can) i\s+', re.IGNORECASE),
-        re.compile(r'^how to\s+', re.IGNORECASE),
-        re.compile(r'^what is\s+', re.IGNORECASE),
-        re.compile(r'^what\'s\s+', re.IGNORECASE),
-        re.compile(r'^tell me about\s+', re.IGNORECASE),
-        re.compile(r'^explain\s+', re.IGNORECASE),
-        re.compile(r'^tips? on\s+', re.IGNORECASE),
-        re.compile(r'^help me\s+', re.IGNORECASE),
+        r'^how (?:do|can) i\s+',
+        r'^how to\s+',
+        r'^what is\s+',
+        r'^what\'s\s+',
+        r'^tell me about\s+',
+        r'^explain\s+',
+        r'^tips? on\s+',
+        r'^help me\s+',
     ]
 
     text_lower = text.lower()
     for pattern in question_patterns:
-        text_lower = pattern.sub('', text_lower)
+        text_lower = re.sub(pattern, '', text_lower)
 
     # Remove trailing question marks and punctuation
     text_lower = re.sub(r'[?.!]+$', '', text_lower)
@@ -235,62 +1549,81 @@ def extract_topic(text: str) -> str:
 
 def is_natural_language(text: str) -> bool:
     """
-    Determine if input looks like natural language vs direct command.
+    Determine if text is a natural language query vs a direct command using enhanced detection.
 
-    Natural language indicators:
-    - Contains question marks
-    - Has question words (how, what, why, etc.)
-    - Has multiple words (3+)
-    - Contains verbs like "do", "can", "should"
-    - Starts with command words like "explain", "tip", "help", etc.
+    Examples:
+        "how do I scan ports?" → True
+        "explain nmap" → False (direct command)
+        "nmap -sV target" → False (direct command)
+        "i'm stuck on this nmap thing" → True
+        "what should I do after getting a shell?" → True
     """
-    if not text or not text.strip():
-        return False
-        
-    text_lower = text.lower()
-    words = text_lower.split()
+    text_lower = text.lower().strip()
     
-    # Single word commands are typically not natural language
-    if len(words) == 1:
-        # Only consider single words as natural language if they're question words
-        question_words = {'how', 'what', 'why', 'when', 'where', 'who', 'which'}
-        return words[0] in question_words
-
-    # Explicit question
-    if '?' in text:
-        return True
-
-    # Question words
-    question_words = {'how', 'what', 'why', 'when', 'where', 'who', 'which'}
-    first_word = words[0] if words else ''
-    if first_word in question_words:
-        return True
-
-    # Command words that indicate natural language intent (but only if followed by content)
-    command_words = {'explain', 'tip', 'help', 'report', 'quiz', 'plan'}
-    if first_word in command_words and len(words) > 1:
-        return True
-
-    # Common natural language patterns (compiled for performance)
-    nl_patterns = [
-        re.compile(r'i (?:found|got|have|see|need|want)', re.IGNORECASE),
-        re.compile(r'tips? (?:on|for)', re.IGNORECASE),
-        re.compile(r'tell me', re.IGNORECASE),
-        re.compile(r'show me', re.IGNORECASE),
-        re.compile(r'help me', re.IGNORECASE),
-        re.compile(r'can you', re.IGNORECASE),
-        re.compile(r'should i', re.IGNORECASE),
+    # Direct commands start with known command words
+    command_words = ['explain', 'tip', 'help', 'report', 'quiz', 'plan', 'assist']
+    if any(text_lower.startswith(cmd + ' ') for cmd in command_words):
+        return False
+    
+    # Direct tool usage (tool name followed by flags/args)
+    tool_keywords = [
+        'nmap', 'burp', 'sqlmap', 'metasploit', 'wireshark',
+        'hydra', 'john', 'hashcat', 'gobuster', 'ffuf',
+        'nikto', 'dirb', 'wfuzz', 'netcat', 'nc', 'ssh',
+        'tcpdump', 'masscan', 'enum4linux', 'smbclient'
     ]
-
-    if any(pattern.search(text_lower) for pattern in nl_patterns):
+    
+    words = text_lower.split()
+    if words and words[0] in tool_keywords:
+        return False
+    
+    # Enhanced natural language indicators
+    question_words = ['how', 'what', 'why', 'when', 'where', 'which']
+    if any(text_lower.startswith(word) for word in question_words):
         return True
-
-    # Multiple words might indicate natural language (reduced threshold)
-    word_count = len(words)
-    if word_count >= 3:
+    
+    # Contains question words anywhere
+    if any(word in text_lower for word in question_words):
         return True
-
-    return False
+    
+    # Enhanced natural language patterns
+    natural_patterns = [
+        'tell me', 'show me', 'help me', 'i need', 'i want',
+        'can you', 'could you', 'would you', 'please',
+        'tips on', 'guide for', 'learn about', 'best practices',
+        'i\'m stuck', 'i\'m getting', 'not working', 'failing',
+        'what should i do', 'next step', 'after i', 'when i',
+        'how to', 'how do i', 'how can i', 'explain to me',
+        'teach me', 'describe', 'understand', 'figure out'
+    ]
+    
+    if any(pattern in text_lower for pattern in natural_patterns):
+        return True
+    
+    # Enhanced scenario/situation language
+    scenario_words = [
+        'found', 'got', 'have', 'discovered', 'see', 'stuck',
+        'after', 'next', 'shell', 'port', 'vulnerability',
+        'target', 'enumeration', 'foothold', 'access',
+        'compromised', 'exploited', 'injected', 'bypassed'
+    ]
+    
+    if any(word in text_lower for word in scenario_words):
+        return True
+    
+    # Check for conversational language
+    conversational_indicators = [
+        'i think', 'i believe', 'i guess', 'maybe', 'perhaps',
+        'i wonder', 'i\'m confused', 'i don\'t understand',
+        'this is', 'that is', 'it seems', 'looks like'
+    ]
+    
+    if any(indicator in text_lower for indicator in conversational_indicators):
+        return True
+    
+    # Default: treat as natural language if it contains multiple words
+    # and doesn't look like a direct command
+    return len(words) > 1
 
 
 def suggest_command_format(command: str, query: str) -> str:
@@ -305,7 +1638,17 @@ def suggest_command_format(command: str, query: str) -> str:
 
 # Convenience function for testing
 def demo():
-    """Demo the natural language parser."""
+    """Demo the enhanced natural language parser."""
+    import logging
+    
+    # Configure logging for demo
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(message)s',
+        handlers=[logging.StreamHandler()]
+    )
+    logger = logging.getLogger(__name__)
+    
     test_queries = [
         "how do I scan for open ports?",
         "what is burp suite?",
@@ -316,16 +1659,47 @@ def demo():
         "test me on buffer overflow",
         "why is my scan not working?",
         "how to learn metasploit",
+        "i'm stuck on this nmap thing",
+        "help me understand privilege escalation",
+        "what's the next step after finding XSS?",
+        "explain nmap -sV",
+        "nmap -sV target.local",
     ]
 
-    print("Natural Language Parser Demo")
-    print("=" * 50)
-
+    logger.info("Enhanced Natural Language Parser Demo")
+    logger.info("=" * 60)
+    
+    # Create parser instance with monitoring enabled
+    parser = IntelligentNLParser(enable_monitoring=True)
+    
     for query in test_queries:
-        command, extracted = parse_natural_query(query)
-        suggestion = suggest_command_format(command, extracted)
-        print(f"\nQuery: {query}")
-        print(f"  → {suggestion}")
+        logger.info(f"\nQuery: {query}")
+        
+        # Test natural language detection
+        is_nl = is_natural_language(query)
+        logger.info(f"  Natural Language: {is_nl}")
+        
+        if is_nl:
+            # Parse with enhanced parser
+            result = parser.parse_query(query)
+            logger.info(f"  Intent: {result.intent.value}")
+            logger.info(f"  Confidence: {result.confidence:.2f}")
+            logger.info(f"  Entities: {[e.name for e in result.entities]}")
+            logger.info(f"  Processed Query: {result.processed_query}")
+            
+            if result.clarification_needed:
+                logger.info(f"  Clarification: {result.clarification_question}")
+        else:
+            # Direct command
+            command, extracted = parse_natural_query(query)
+            suggestion = suggest_command_format(command, extracted)
+            logger.info(f"  → {suggestion}")
+    
+    # Show performance stats
+    logger.info(f"\nPerformance Statistics:")
+    stats = parser.get_performance_stats()
+    for key, value in stats.items():
+        logger.info(f"  {key}: {value}")
 
 
 if __name__ == "__main__":

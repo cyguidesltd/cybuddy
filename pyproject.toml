@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "cybuddy"
 version = "1.0.0"
-description = "AI-powered cybersecurity learning assistant"
+description = "Smart Cybersecurity learning assistant"
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"

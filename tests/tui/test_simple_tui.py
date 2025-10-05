@@ -27,10 +27,10 @@ class StubTerminal:
         return self._queue
 
 
-def test_simple_tui_has_7_commands() -> None:
-    """Test that SimpleTUI defines exactly 7 commands."""
+def test_simple_tui_has_8_commands() -> None:
+    """Test that SimpleTUI defines exactly 8 commands."""
     app = SimpleTUI()
-    assert len(app.COMMANDS) == 7
+    assert len(app.COMMANDS) == 8
     assert "explain" in app.COMMANDS
     assert "tip" in app.COMMANDS
     assert "help" in app.COMMANDS

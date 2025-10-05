@@ -186,12 +186,14 @@ def suggest_next(user_text: str) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
-    if not args or args[0] in {"-h", "--help", "help"}:
-        return print_help()
-
+    
     # If no arguments, launch TUI directly
     if not args:
         return cmd_guide_tui()
+    
+    # Check for help flags
+    if args[0] in {"-h", "--help", "help"}:
+        return print_help()
 
     # Check for natural language query (quoted string or multiple words)
     if len(args) == 1 and (' ' in args[0] or args[0].startswith('"') or args[0].startswith("'")):
@@ -212,42 +214,42 @@ def main(argv: list[str] | None = None) -> int:
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("explain", "command", "cybuddy explain 'nmap -sV'")
-        text, send = _extract_text_and_send(args[1:])
+        text = _extract_text(args[1:])
         add_command(f"explain {text}")
         return _maybe_json_print("explain", text, explain_command(text))
     if cmd in {"assist", "help"}:
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument(cmd, "issue", "cybuddy assist 'connection refused'")
-        text, send = _extract_text_and_send(args[1:])
+        text = _extract_text(args[1:])
         add_command(f"{cmd} {text}")
         return _maybe_json_print("assist", text, help_troubleshoot(text))
     if cmd == "tip":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("tip", "topic", "cybuddy tip 'sql injection'")
-        text, send = _extract_text_and_send(args[1:])
+        text = _extract_text(args[1:])
         add_command(f"tip {text}")
         return _maybe_json_print("tip", text, quick_tip(text))
     if cmd == "report":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("report", "finding", "cybuddy report 'found XSS in login'")
-        text, send = _extract_text_and_send(args[1:])
+        text = _extract_text(args[1:])
         add_command(f"report {text}")
         return _maybe_json_print("report", text, micro_report(text))
     if cmd == "quiz":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("quiz", "topic", "cybuddy quiz 'nmap'")
-        text, send = _extract_text_and_send(args[1:])
+        text = _extract_text(args[1:])
         add_command(f"quiz {text}")
         return _maybe_json_print("quiz", text, quiz_flashcards(text))
     if cmd == "plan":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("plan", "context", "cybuddy plan 'found open port 8080'")
-        text, send = _extract_text_and_send(args[1:])
+        text = _extract_text(args[1:])
         add_command(f"plan {text}")
         return _maybe_json_print("plan", text, step_planner(text))
         
@@ -258,11 +260,7 @@ def main(argv: list[str] | None = None) -> int:
 
     # Unknown command - provide smart suggestions
     from .errors import handle_unknown_command
-    available_commands = [
-        "explain", "tip", "assist", "help", "report",
-        "quiz", "plan", "history"
-    ]
-    return handle_unknown_command(cmd, available_commands)
+    return handle_unknown_command(cmd)
 
 
 if __name__ == "__main__":  # pragma: no cover
@@ -368,11 +366,6 @@ def history_append(event: dict, session: str | None = None) -> None:
         return
     try:
         payload = {"ts": _now_iso(), **event}
-        if event.get("type", "").startswith("ai:") and not load_config().get("history.verbatim", False):
-            data = event.get("data")
-            if isinstance(data, dict):
-                data = {k: v for k, v in data.items() if k in {"kind", "redaction", "len"}}
-            payload["data"] = data
         with _history_file(session).open("a", encoding="utf-8") as f:
             f.write(json.dumps(payload) + "\n")
     except Exception:
@@ -389,15 +382,9 @@ def history_append(event: dict, session: str | None = None) -> None:
 
 
 
-def _extract_text_and_send(args: list[str]) -> tuple[str, bool]:
-    send = False
-    cleaned: list[str] = []
-    for a in args:
-        if a == "--send":
-            send = True
-        else:
-            cleaned.append(a)
-    return " ".join(cleaned).strip("\""), send
+def _extract_text(args: list[str]) -> str:
+    """Extract text from command arguments."""
+    return " ".join(args).strip("\"")
 
 
 

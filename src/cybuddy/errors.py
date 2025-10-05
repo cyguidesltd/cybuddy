@@ -217,50 +217,8 @@ def handle_no_results(query: str) -> SmartError:
     )
 
 
-def handle_api_key_missing() -> SmartError:
-    """
-    Handle missing API key error for AI features.
-
-    Returns:
-        SmartError with setup instructions
-    """
-    return SmartError(
-        message='API key not configured',
-        reason='AI features require an API key from OpenAI, Anthropic, or Google.',
-        fix='Set your API key as an environment variable.',
-        suggestions=[
-            'export CYBUDDY_API_KEY="your-key-here"',
-            'export CYBUDDY_AI_PROVIDER="openai"  # or "anthropic", "google"',
-            'Then retry with: cybuddy explain "topic" --send'
-        ],
-        browse_hint='Get API keys: OpenAI (platform.openai.com) | Anthropic (console.anthropic.com) | Google (makersuite.google.com)'
-    )
 
 
-def handle_api_error(provider: str, error_message: str) -> SmartError:
-    """
-    Handle AI API error.
-
-    Args:
-        provider: The AI provider name
-        error_message: The error message from the API
-
-    Returns:
-        SmartError with troubleshooting steps
-    """
-    suggestions = [
-        'Check your API key is valid',
-        'Verify you have API credits/quota remaining',
-        'Check your internet connection',
-        'Try again in a few moments'
-    ]
-
-    return SmartError(
-        message=f'{provider} API error',
-        reason=error_message,
-        fix='Verify your API configuration and try again.',
-        suggestions=suggestions
-    )
 
 
 def handle_network_error() -> SmartError:

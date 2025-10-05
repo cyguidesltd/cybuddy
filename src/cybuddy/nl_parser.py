@@ -10,9 +10,176 @@ Converts natural language queries into structured commands:
 from __future__ import annotations
 
 import re
+from functools import lru_cache
+from typing import Dict, List, Tuple, Pattern
 
 
-def parse_natural_query(text: str) -> tuple[str, str]:
+class NLParser:
+    """Optimized Natural Language Parser with compiled patterns and caching."""
+    
+    def __init__(self):
+        # Compile regex patterns once for better performance
+        self._compiled_patterns = self._compile_patterns()
+        self._keyword_sets = self._build_keyword_sets()
+    
+    def _compile_patterns(self) -> Dict[str, List[Pattern[str]]]:
+        """Compile all regex patterns once for better performance."""
+        intents = {
+            'explain': [
+                r'how (?:do|can) i (.*)',
+                r'how to (.*)',
+                r'explain (.*)',
+                r'what is (.*)',
+                r'what\'s (.*)',
+                r'tell me about (.*)',
+                r'describe (.*)',
+                r'show me (.*)',
+            ],
+            'plan': [
+                r'what should i do (?:after|when|if) (.*)',
+                r'what(?:\'s| is) (?:the )?next (?:step|after) (.*)',
+                r'next steps (?:for|after) (.*)',
+                r'i (?:found|got|have|see) (.*)',
+                r'what to do (?:with|about) (.*)',
+                r'help (?:me )?(?:with|plan) (.*)',
+            ],
+            'tip': [
+                r'tips? (?:on|for|about) (.*)',
+                r'guide (?:for|to|on) (.*)',
+                r'(?:how to )?learn (?:about )?(.*)',
+                r'techniques? (?:for|on) (.*)',
+                r'best practices? (?:for )?(.*)',
+            ],
+            'assist': [
+                r'i\'?m getting (?:an? )?(.*)',
+                r'(?:error|problem|issue):? (.*)',
+                r'why (?:is|does|am|can\'t) (.*)',
+                r'(?:how to )?fix (.*)',
+                r'troubleshoot (.*)',
+            ],
+            'report': [
+                r'document (.*)',
+                r'write (?:a )?(?:up |report (?:for|on) )?(.*)',
+                r'report (.*)',
+                r'create (?:a )?report (?:for )?(.*)',
+            ],
+            'quiz': [
+                r'test me (?:on )?(.*)',
+                r'quiz (?:me )?(?:on |about )?(.*)',
+                r'question(?:s)? (?:on |about )?(.*)',
+                r'practice (.*)',
+            ],
+        }
+        
+        return {
+            command: [re.compile(pattern, re.IGNORECASE) for pattern in patterns]
+            for command, patterns in intents.items()
+        }
+    
+    def _build_keyword_sets(self) -> Dict[str, set]:
+        """Build keyword sets for faster lookup."""
+        return {
+            'tools': {
+                'nmap', 'burp', 'sqlmap', 'metasploit', 'wireshark',
+                'hydra', 'john', 'hashcat', 'gobuster', 'ffuf',
+                'nikto', 'dirb', 'wfuzz', 'netcat', 'nc', 'ssh',
+                'tcpdump', 'masscan', 'enum4linux', 'smbclient'
+            },
+            'attacks': {
+                'xss', 'sqli', 'sql injection', 'csrf', 'ssrf', 'xxe',
+                'rce', 'lfi', 'rfi', 'ssti', 'deserialization',
+                'privilege escalation', 'privesc', 'buffer overflow',
+                'format string', 'race condition', 'injection'
+            },
+            'scenarios': {
+                'found', 'got', 'have', 'discovered', 'see', 'seeing',
+                'stuck', 'after', 'next', 'shell', 'port', 'vulnerability',
+                'target', 'enumeration', 'foothold'
+            }
+        }
+    
+    def parse(self, text: str) -> Tuple[str, str]:
+        """
+        Parse natural language into (command, query).
+
+        Examples:
+            "how do I scan for open ports?" → ("explain", "port scanning")
+            "what is burp suite?" → ("explain", "burp suite")
+            "tips on privilege escalation" → ("tip", "privilege escalation")
+            "I found an open port 8080" → ("plan", "found open port 8080")
+
+        Returns:
+            Tuple of (command_name, extracted_query)
+        """
+        if not text or not text.strip():
+            return 'explain', ''
+        
+        text_lower = text.lower().strip()
+        
+        # Check for direct command usage first (but only if it's a standalone command)
+        # This prevents "help me plan" from being treated as "help" command
+        direct_commands = ['explain', 'tip', 'report', 'quiz', 'plan']
+        for cmd in direct_commands:
+            if text_lower == cmd or text_lower.startswith(cmd + ' '):
+                query = text[len(cmd):].strip()
+                return cmd, query
+
+        # Intent detection patterns (order matters - more specific first)
+        for command, patterns in self._compiled_patterns.items():
+            for pattern in patterns:
+                match = pattern.match(text_lower)
+                if match:
+                    query = match.group(1).strip()
+                    # Clean up common filler words
+                    query = self._clean_query(query)
+                    return command, query
+
+        # Keyword detection fallback
+        return self._keyword_fallback(text_lower, text)
+    
+    def _keyword_fallback(self, text_lower: str, original_text: str) -> Tuple[str, str]:
+        """Fallback to keyword-based detection."""
+        # Check for tool keywords first (most specific)
+        if any(tool in text_lower for tool in self._keyword_sets['tools']):
+            return 'explain', original_text
+        
+        # Check for attack technique keywords
+        if any(keyword in text_lower for keyword in self._keyword_sets['attacks']):
+            return 'tip', original_text
+        
+        # Check for scenario keywords
+        if any(keyword in text_lower for keyword in self._keyword_sets['scenarios']):
+            return 'plan', original_text
+        
+        # Default: treat as "explain" query
+        return 'explain', original_text
+    
+    @staticmethod
+    def _clean_query(query: str) -> str:
+        """Remove filler words and clean up the extracted query."""
+        if not query:
+            return query
+            
+        # Remove leading articles and common filler words
+        stopwords = {
+            'the', 'a', 'an', 'to', 'for', 'with', 'about', 'on',
+            'in', 'at', 'by', 'from', 'of', 'and', 'or'
+        }
+
+        words = query.split()
+        # Remove stopwords from the beginning only
+        while words and words[0].lower() in stopwords:
+            words.pop(0)
+
+        cleaned = ' '.join(words)
+        return cleaned if cleaned else query
+
+
+# Global parser instance for performance
+_parser = NLParser()
+
+
+def parse_natural_query(text: str) -> Tuple[str, str]:
     """
     Parse natural language into (command, query).
 
@@ -25,148 +192,40 @@ def parse_natural_query(text: str) -> tuple[str, str]:
     Returns:
         Tuple of (command_name, extracted_query)
     """
-    text_lower = text.lower().strip()
-    
-    # Handle direct command usage (e.g., "explain nmap -Pn")
-    command_words = ['explain', 'tip', 'help', 'report', 'quiz', 'plan']
-    for cmd in command_words:
-        if text_lower.startswith(cmd + ' '):
-            query = text[len(cmd):].strip()
-            return cmd, query
-
-    # Intent detection patterns (order matters - more specific first)
-    intents = {
-        'explain': [
-            r'how (?:do|can) i (.*)',
-            r'how to (.*)',
-            r'explain (.*)',
-            r'what is (.*)',
-            r'what\'s (.*)',
-            r'tell me about (.*)',
-            r'describe (.*)',
-            r'show me (.*)',
-        ],
-        'plan': [
-            r'what should i do (?:after|when|if) (.*)',
-            r'what(?:\'s| is) (?:the )?next (?:step|after) (.*)',
-            r'next steps (?:for|after) (.*)',
-            r'i (?:found|got|have|see) (.*)',
-            r'what to do (?:with|about) (.*)',
-            r'help (?:me )?(?:with|plan) (.*)',
-        ],
-        'tip': [
-            r'tips? (?:on|for|about) (.*)',
-            r'guide (?:for|to|on) (.*)',
-            r'(?:how to )?learn (?:about )?(.*)',
-            r'techniques? (?:for|on) (.*)',
-            r'best practices? (?:for )?(.*)',
-        ],
-        'assist': [
-            r'i\'?m getting (?:an? )?(.*)',
-            r'(?:error|problem|issue):? (.*)',
-            r'why (?:is|does|am|can\'t) (.*)',
-            r'(?:how to )?fix (.*)',
-            r'troubleshoot (.*)',
-        ],
-        'report': [
-            r'document (.*)',
-            r'write (?:a )?(?:up |report (?:for|on) )?(.*)',
-            r'report (.*)',
-            r'create (?:a )?report (?:for )?(.*)',
-        ],
-        'quiz': [
-            r'test me (?:on )?(.*)',
-            r'quiz (?:me )?(?:on |about )?(.*)',
-            r'question(?:s)? (?:on |about )?(.*)',
-            r'practice (.*)',
-        ],
-    }
-
-    # Try to match intent patterns
-    for command, patterns in intents.items():
-        for pattern in patterns:
-            match = re.match(pattern, text_lower)
-            if match:
-                query = match.group(1).strip()
-                # Clean up common filler words
-                query = _clean_query(query)
-                return command, query
-
-    # Keyword detection fallback
-    # If the query contains tool names, assume "explain"
-    tool_keywords = [
-        'nmap', 'burp', 'sqlmap', 'metasploit', 'wireshark',
-        'hydra', 'john', 'hashcat', 'gobuster', 'ffuf',
-        'nikto', 'dirb', 'wfuzz', 'netcat', 'nc', 'ssh',
-        'tcpdump', 'masscan', 'enum4linux', 'smbclient'
-    ]
-
-    if any(tool in text_lower for tool in tool_keywords):
-        return 'explain', text
-
-    # Attack technique keywords → tip
-    attack_keywords = [
-        'xss', 'sqli', 'sql injection', 'csrf', 'ssrf', 'xxe',
-        'rce', 'lfi', 'rfi', 'ssti', 'deserialization',
-        'privilege escalation', 'privesc', 'buffer overflow',
-        'format string', 'race condition', 'injection'
-    ]
-
-    if any(keyword in text_lower for keyword in attack_keywords):
-        return 'tip', text
-
-    # Scenario/situation keywords → plan
-    scenario_keywords = [
-        'found', 'got', 'have', 'discovered', 'see', 'seeing',
-        'stuck', 'after', 'next', 'shell', 'port', 'vulnerability',
-        'target', 'enumeration', 'foothold'
-    ]
-
-    if any(keyword in text_lower for keyword in scenario_keywords):
-        return 'plan', text
-
-    # Default: treat as "explain" query
-    return 'explain', text
+    return _parser.parse(text)
 
 
+# Legacy function for backward compatibility
 def _clean_query(query: str) -> str:
     """Remove filler words and clean up the extracted query."""
-    # Remove leading articles and common filler words
-    stopwords = [
-        'the', 'a', 'an', 'to', 'for', 'with', 'about', 'on',
-        'in', 'at', 'by', 'from', 'of', 'and', 'or'
-    ]
-
-    words = query.split()
-    # Remove stopwords from the beginning only
-    while words and words[0] in stopwords:
-        words.pop(0)
-
-    cleaned = ' '.join(words)
-    return cleaned if cleaned else query
+    return NLParser._clean_query(query)
 
 
+@lru_cache(maxsize=128)
 def extract_topic(text: str) -> str:
     """
     Extract main topic/keywords from natural language query.
 
     Useful for fuzzy matching against knowledge base.
     """
-    # Remove question words and common phrases
+    if not text or not text.strip():
+        return ''
+    
+    # Compile patterns once for better performance
     question_patterns = [
-        r'^how (?:do|can) i\s+',
-        r'^how to\s+',
-        r'^what is\s+',
-        r'^what\'s\s+',
-        r'^tell me about\s+',
-        r'^explain\s+',
-        r'^tips? on\s+',
-        r'^help me\s+',
+        re.compile(r'^how (?:do|can) i\s+', re.IGNORECASE),
+        re.compile(r'^how to\s+', re.IGNORECASE),
+        re.compile(r'^what is\s+', re.IGNORECASE),
+        re.compile(r'^what\'s\s+', re.IGNORECASE),
+        re.compile(r'^tell me about\s+', re.IGNORECASE),
+        re.compile(r'^explain\s+', re.IGNORECASE),
+        re.compile(r'^tips? on\s+', re.IGNORECASE),
+        re.compile(r'^help me\s+', re.IGNORECASE),
     ]
 
     text_lower = text.lower()
     for pattern in question_patterns:
-        text_lower = re.sub(pattern, '', text_lower)
+        text_lower = pattern.sub('', text_lower)
 
     # Remove trailing question marks and punctuation
     text_lower = re.sub(r'[?.!]+$', '', text_lower)
@@ -185,38 +244,49 @@ def is_natural_language(text: str) -> bool:
     - Contains verbs like "do", "can", "should"
     - Starts with command words like "explain", "tip", "help", etc.
     """
+    if not text or not text.strip():
+        return False
+        
     text_lower = text.lower()
+    words = text_lower.split()
+    
+    # Single word commands are typically not natural language
+    if len(words) == 1:
+        # Only consider single words as natural language if they're question words
+        question_words = {'how', 'what', 'why', 'when', 'where', 'who', 'which'}
+        return words[0] in question_words
 
     # Explicit question
     if '?' in text:
         return True
 
     # Question words
-    question_words = ['how', 'what', 'why', 'when', 'where', 'who', 'which']
-    if any(text_lower.startswith(word + ' ') for word in question_words):
+    question_words = {'how', 'what', 'why', 'when', 'where', 'who', 'which'}
+    first_word = words[0] if words else ''
+    if first_word in question_words:
         return True
 
-    # Command words that indicate natural language intent
-    command_words = ['explain', 'tip', 'help', 'report', 'quiz', 'plan']
-    if any(text_lower.startswith(word + ' ') for word in command_words):
+    # Command words that indicate natural language intent (but only if followed by content)
+    command_words = {'explain', 'tip', 'help', 'report', 'quiz', 'plan'}
+    if first_word in command_words and len(words) > 1:
         return True
 
-    # Common natural language patterns
+    # Common natural language patterns (compiled for performance)
     nl_patterns = [
-        r'i (?:found|got|have|see|need|want)',
-        r'tips? (?:on|for)',
-        r'tell me',
-        r'show me',
-        r'help me',
-        r'can you',
-        r'should i',
+        re.compile(r'i (?:found|got|have|see|need|want)', re.IGNORECASE),
+        re.compile(r'tips? (?:on|for)', re.IGNORECASE),
+        re.compile(r'tell me', re.IGNORECASE),
+        re.compile(r'show me', re.IGNORECASE),
+        re.compile(r'help me', re.IGNORECASE),
+        re.compile(r'can you', re.IGNORECASE),
+        re.compile(r'should i', re.IGNORECASE),
     ]
 
-    if any(re.search(pattern, text_lower) for pattern in nl_patterns):
+    if any(pattern.search(text_lower) for pattern in nl_patterns):
         return True
 
     # Multiple words might indicate natural language (reduced threshold)
-    word_count = len(text.split())
+    word_count = len(words)
     if word_count >= 3:
         return True
 

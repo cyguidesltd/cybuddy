@@ -201,8 +201,7 @@ def main(argv: list[str] | None = None) -> int:
         query = args[0].strip('"\'')
         if is_natural_language(query):
             cmd, parsed_query = parse_natural_query(query)
-            print(f"🤔 I think you mean: {cmd} \"{parsed_query}\"")
-            # Execute the parsed command
+            # Execute the parsed command directly
             args = [cmd, parsed_query]
         else:
             cmd = args[0]

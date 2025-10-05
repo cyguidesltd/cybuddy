@@ -24,7 +24,7 @@ class SmartCompleter(Completer):
     def __init__(self):
         self.history = get_history()
         self.base_commands = [
-            "explain", "tip", "help", "report", "quiz", "plan", "history", "exit"
+            "explain", "tip", "help", "assist", "report", "quiz", "plan", "history", "exit"
         ]
     
     def get_completions(self, document, complete_event):
@@ -112,6 +112,7 @@ class SimpleTUI:
         "explain": "Learn commands (e.g., explain 'nmap -sV')",
         "tip": "Study guide (e.g., tip 'SQL injection')",
         "help": "Troubleshoot (e.g., help 'connection refused')",
+        "assist": "Troubleshoot (alias for help)",
         "report": "Practice write-ups (e.g., report 'Found SQLi')",
         "quiz": "Active recall (e.g., quiz 'SQL Injection')",
         "plan": "Next steps (e.g., plan 'found port 80 open')",
@@ -213,15 +214,8 @@ class SimpleTUI:
 
         # Check if input is natural language first
         if is_natural_language(text):
-            self.console.print()
-            self.console.print("[cyan]🤔 Detected natural language input[/cyan]")
-            
             # Parse the natural language query
             cmd, parsed_query = parse_natural_query(text)
-            
-            # Show what we understood
-            self.console.print(f"[dim]I think you mean: {cmd} '{parsed_query}'[/dim]")
-            self.console.print()
             
             # Process as the parsed command
             if cmd == "clarify":
@@ -263,7 +257,7 @@ class SimpleTUI:
                 result = quick_tip(arg)
                 self._print_response("Tip", result)
 
-        elif cmd == "help":
+        elif cmd in {"help", "assist"}:
             if not arg:
                 self.console.print("[red]⚠[/red] Usage: help '<error message>'")
             else:

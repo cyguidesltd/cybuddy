@@ -788,9 +788,6 @@ class IntentClassifier:
                 r'i (?:found|got|have|see|discovered) (.*)',
                 r'what to do (?:with|about) (.*)',
                 r'help (?:me )?(?:with|plan) (.*)',
-                r'i\'m stuck (?:on|with) (.*)',
-                r'stuck (?:on|with) (.*)',
-                r'need help (?:with|on) (.*)',
                 r'what\'s next (?:for|after) (.*)',
                 r'after (.*) what (?:should|do)',
             ],
@@ -805,6 +802,13 @@ class IntentClassifier:
                 r'not working (.*)',
                 r'failing (.*)',
                 r'broken (.*)',
+                r'i\'m stuck(?: on| with)? (.*)',
+                r'i am stuck(?: on| with)? (.*)',
+                r'stuck(?: on| with)? (.*)',
+                r'i am having (?:issues|problems|trouble) (?:with|in) (.*)',
+                r'having (?:issues|problems|trouble) (?:with|in) (.*)',
+                r'network error(?: with| in)? (.*)',
+                r'connection (?:refused|failed|error)(?: with| in)? (.*)',
             ],
             IntentType.REPORT: [
                 r'document (.*)',
@@ -1404,14 +1408,19 @@ class IntelligentNLParser:
     
     def _clean_query(self, query: str) -> str:
         """Clean and normalize the query for better processing."""
-        # Remove leading articles and common filler words
-        stopwords = [
-            'the', 'a', 'an', 'to', 'for', 'with', 'about', 'on',
-            'in', 'at', 'by', 'from', 'of', 'and', 'or'
-        ]
-
+        # For cybersecurity queries, preserve technical flags and parameters
+        # Only remove very basic filler words that don't affect meaning
+        
+        # Preserve technical content - don't modify anything that looks like flags/parameters
+        if any(char in query for char in ['-', '/', '\\', ':', '=']):
+            # Contains technical syntax, preserve as-is
+            return query
+        
+        # Only remove leading articles for simple queries
+        stopwords = ['the', 'a', 'an']
         words = query.split()
-        # Remove stopwords from the beginning only
+        
+        # Remove only leading articles, not technical terms
         while words and words[0].lower() in stopwords:
             words.pop(0)
 
@@ -1504,15 +1513,20 @@ def parse_natural_query(text: str) -> tuple[str, str]:
 
 def _clean_query(query: str) -> str:
     """Remove filler words and clean up the extracted query."""
-    # Remove leading articles and common filler words
-    stopwords = [
-        'the', 'a', 'an', 'to', 'for', 'with', 'about', 'on',
-        'in', 'at', 'by', 'from', 'of', 'and', 'or'
-    ]
-
+    # For cybersecurity queries, preserve technical flags and parameters
+    # Only remove very basic filler words that don't affect meaning
+    
+    # Preserve technical content - don't modify anything that looks like flags/parameters
+    if any(char in query for char in ['-', '/', '\\', ':', '=']):
+        # Contains technical syntax, preserve as-is
+        return query
+    
+    # Only remove leading articles for simple queries
+    stopwords = ['the', 'a', 'an']
     words = query.split()
-    # Remove stopwords from the beginning only
-    while words and words[0] in stopwords:
+    
+    # Remove only leading articles, not technical terms
+    while words and words[0].lower() in stopwords:
         words.pop(0)
 
     cleaned = ' '.join(words)

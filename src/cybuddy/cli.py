@@ -25,7 +25,7 @@ Usage:
   cybuddy                    Launch interactive learning interface (TUI)
   cybuddy <command> [args]   Run specific command
 
-7 Core Commands (Interactive TUI):
+8 Core Commands (Interactive TUI):
   explain '<command>'        Learn what commands do (e.g., explain 'nmap -sV')
   tip '<topic>'              Study guide for security topics
   help '<error>'             Troubleshoot errors and issues
@@ -33,6 +33,7 @@ Usage:
   quiz '<topic>'             Active recall with flashcards
   plan '<context>'           Get next steps guidance (3 steps)
   history                    Show command history
+  clear                      Clear the terminal screen
   exit                       Exit the interface
 
 Additional Commands:
@@ -256,6 +257,9 @@ def main(argv: list[str] | None = None) -> int:
     if cmd == "history":
         from .commands.history import cmd_history
         return cmd_history(args[1:])
+    
+    if cmd == "clear":
+        return cmd_clear()
 
     # Unknown command - provide smart suggestions
     from .errors import handle_unknown_command
@@ -304,6 +308,13 @@ def quiz_flashcards(topic: str) -> str:
 def step_planner(context: str) -> str:
     from .data import smart_plan
     return smart_plan(context)
+
+
+def cmd_clear() -> int:
+    """Clear the terminal screen."""
+    import os
+    os.system('clear' if os.name == 'posix' else 'cls')
+    return 0
 
 
 # === Lightweight session history and TODO tracker ===

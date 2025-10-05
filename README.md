@@ -34,9 +34,9 @@ cybuddy
 
 That's it. You're ready to learn cybersecurity.
 
-### The 7 Commands
+### The 8 Commands
 
-Once you run `cybuddy`, you have exactly 7 commands with smart features:
+Once you run `cybuddy`, you have exactly 8 commands with smart features:
 
 | Command | Purpose | Example | Smart Features |
 |---------|---------|---------|----------------|
@@ -47,6 +47,7 @@ Once you run `cybuddy`, you have exactly 7 commands with smart features:
 | **quiz** | Test your knowledge with flashcards | `quiz 'Buffer Overflow'` | Adaptive difficulty based on history |
 | **plan** | Get unstuck with next steps | `plan 'found port 80 open'` | Contextual next-step recommendations |
 | **history** | Show your command history | `history` | **NEW**: Analytics, search, smart suggestions |
+| **clear** | Clear the terminal screen | `clear` | - |
 | **exit** | Leave the interactive mode | `exit` | - |
 
 ### 🆕 Enhanced History Command

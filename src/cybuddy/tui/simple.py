@@ -24,7 +24,7 @@ class SmartCompleter(Completer):
     def __init__(self):
         self.history = get_history()
         self.base_commands = [
-            "explain", "tip", "help", "assist", "report", "quiz", "plan", "history", "exit"
+            "explain", "tip", "help", "assist", "report", "quiz", "plan", "history", "clear", "exit"
         ]
     
     def get_completions(self, document, complete_event):
@@ -100,7 +100,8 @@ class SmartCompleter(Completer):
             "plan": [
                 "found open port 80", "discovered sql injection", "got initial access",
                 "identified admin panel", "found credentials"
-            ]
+            ],
+            "clear": []  # Clear command doesn't need suggestions
         }
         return suggestions.get(command, [])
 
@@ -117,6 +118,7 @@ class SimpleTUI:
         "quiz": "Active recall (e.g., quiz 'SQL Injection')",
         "plan": "Next steps (e.g., plan 'found port 80 open')",
         "history": "View command history and analytics",
+        "clear": "Clear the terminal screen",
         "exit": "Exit CyBuddy",
     }
 
@@ -288,6 +290,9 @@ class SimpleTUI:
         elif cmd == "history":
             self._handle_history_command(arg)
 
+        elif cmd == "clear":
+            self._handle_clear_command()
+
         else:
             self.console.print(f"[red]⚠[/red] Unknown command: {cmd}")
             self.console.print("[dim]Available: " + ", ".join(self.COMMANDS.keys()) + "[/dim]")
@@ -456,6 +461,11 @@ class SimpleTUI:
         # Invalid arguments
         self.console.print("[red]⚠[/red] Invalid history arguments")
         self.console.print("[dim]Usage: history [--clear|--search <query>|--stats|--suggest <input>][/dim]")
+
+    def _handle_clear_command(self) -> None:
+        """Handle clear command to clear the terminal screen."""
+        import os
+        os.system('clear' if os.name == 'posix' else 'cls')
 
 
 __all__ = ["SimpleTUI"]

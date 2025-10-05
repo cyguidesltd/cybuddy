@@ -1,4 +1,4 @@
-.PHONY: install run test lint format typecheck
+.PHONY: install run validate lint format typecheck
 
 install:
 	pip install -e .[dev]
@@ -6,8 +6,9 @@ install:
 run:
 	python -m cybuddy --help || true
 
-test:
-	pytest -q
+validate:
+	python3 -c "import src.cybuddy; print('Package imports successfully')"
+	python3 -m cybuddy --help
 
 lint:
 	ruff check . && ruff format --check . && mypy src

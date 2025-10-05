@@ -29,13 +29,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         
-    - name: Validate package structure
+    - name: Quick validation (development)
       run: |
-        python -c "import src.cybuddy; print('Package imports successfully')"
+        python -c "import src.cybuddy; print('Source imports successfully')"
         
-    - name: Check CLI works
+    - name: Build and test package (production)
       run: |
-        python -m cybuddy --help
+        pip install build
+        python -m build --wheel
+        pip install dist/*.whl
+        python -c "import cybuddy; print('Package imports successfully')"
+        cybuddy --help
 
   build:
     needs: validate

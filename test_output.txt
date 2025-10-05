@@ -1,3 +1,0 @@
-Network mapper - port scanning and service detection
-Use when: Use for: Network reconnaissance, port scanning, service enumeration
-⚠ Use responsibly. Some scans may be detected by IDS/IPS

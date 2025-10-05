@@ -4,60 +4,10 @@ import json
 import os
 import sys
 from collections.abc import Iterable
-from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
 from .history import add_command
-
-
-@dataclass(frozen=True)
-class ChecklistItem:
-    name: str
-    steps: list[str]
-
-
-CHECKLISTS: dict[str, ChecklistItem] = {
-    "recon": ChecklistItem(
-        name="Recon",
-        steps=[
-            "Gather target scope and constraints",
-            "Passive recon (whois, crt.sh, Google dorking)",
-            "Scan with safe defaults (nmap -sV -Pn)",
-            "Enumerate services (http, ssh, smb, etc.)",
-            "Document findings with timestamps",
-        ],
-    ),
-    "web": ChecklistItem(
-        name="Web",
-        steps=[
-            "Check robots.txt and sitemap.xml",
-            "Look for common endpoints (/admin, /api)",
-            "Test inputs for auth/broken access control",
-            "Check for injection and XSS",
-            "Review cookies, headers, CSP",
-        ],
-    ),
-    "crypto": ChecklistItem(
-        name="Crypto",
-        steps=[
-            "Identify cipher/hash/encoding",
-            "Check for common mistakes (ECB, reuse, weak keys)",
-            "Try known tools (hashid, cyberchef)",
-            "Validate assumptions with small test vectors",
-        ],
-    ),
-    "forensics": ChecklistItem(
-        name="Forensics",
-        steps=[
-            "Verify file magic and metadata",
-            "Strings and hexdump for quick clues",
-            "Carve/inspect with appropriate tools",
-            "Keep a chain-of-custody log",
-        ],
-    ),
-}
-
 
 STARTER_PROMPT = (
     "You are CyBuddy, a helpful cybersecurity study companion. "
@@ -71,32 +21,31 @@ def print_help() -> int:
         """
 CyBuddy - beginner-friendly cybersecurity helper
 
+Usage:
+  cybuddy                    Launch interactive learning interface (TUI)
+  cybuddy <command> [args]   Run specific command
+
 7 Core Commands (Interactive TUI):
-  cybuddy guide [--tui|--cli]   Launch interactive learning interface (auto-detects mode)
-    → explain '<command>'        Learn what commands do (e.g., explain 'nmap -sV')
-    → tip '<topic>'              Study guide for security topics
-    → help '<error>'             Troubleshoot errors and issues
-    → report '<finding>'         Practice writing security reports (2-3 lines)
-    → quiz '<topic>'             Active recall with flashcards
-    → plan '<context>'           Get next steps guidance (3 steps)
-    → exit                       Exit the interface
+  explain '<command>'        Learn what commands do (e.g., explain 'nmap -sV')
+  tip '<topic>'              Study guide for security topics
+  help '<error>'             Troubleshoot errors and issues
+  report '<finding>'         Practice writing security reports (2-3 lines)
+  quiz '<topic>'             Active recall with flashcards
+  plan '<context>'           Get next steps guidance (3 steps)
+  history                    Show command history
+  exit                       Exit the interface
 
 Additional Commands:
-  cybuddy checklist [topic]     Show a checklist (recon|web|crypto|forensics)
-  cybuddy prompt                Print a starter LLM system prompt
   cybuddy explain "<command>"   One-shot explain (use TUI for interactive)
   cybuddy tip "<topic>"         One-shot tip (use TUI for interactive)
   cybuddy assist "<issue>"      One-shot troubleshoot
   cybuddy report "<finding>"    One-shot report template
   cybuddy quiz "<topic>"        One-shot quiz
   cybuddy plan "<context>"      One-shot plan
-  cybuddy todo [subcmd]         Plan tracker: list/add/done/clear
   cybuddy history [--clear]     Show or clear recent session history
-  cybuddy config                Show resolved configuration
-  cybuddy run <tool> "<args>"   Dry-run wrapper with safety notes (use --exec to run)
 
 Examples:
-  cybuddy guide --tui                    # Launch interactive mode
+  cybuddy                      # Launch interactive mode
   explain 'nmap -sV target.local'         # Inside TUI
   tip 'SQL injection basics'              # Inside TUI
   help 'sqlmap connection refused'        # Inside TUI
@@ -105,28 +54,6 @@ Examples:
     return 0
 
 
-def cmd_prompt() -> int:
-    print(STARTER_PROMPT)
-    return 0
-
-
-def cmd_checklist(topic: str | None) -> int:
-    if not topic:
-        print("Available topics:")
-        for key in sorted(CHECKLISTS):
-            print(f"- {key}")
-        return 0
-
-    key = topic.lower()
-    item = CHECKLISTS.get(key)
-    if not item:
-        from .errors import handle_unknown_topic
-        return handle_unknown_topic(topic, list(CHECKLISTS.keys()))
-
-    print(f"{item.name} Checklist:")
-    for i, step in enumerate(item.steps, start=1):
-        print(f"{i}. {step}")
-    return 0
 
 
 def cmd_guide(stdin: Iterable[str] = sys.stdin, session: str | None = None) -> int:
@@ -262,8 +189,10 @@ def main(argv: list[str] | None = None) -> int:
     if not args or args[0] in {"-h", "--help", "help"}:
         return print_help()
 
-    engine = _select_engine()
-    
+    # If no arguments, launch TUI directly
+    if not args:
+        return cmd_guide_tui()
+
     # Check for natural language query (quoted string or multiple words)
     if len(args) == 1 and (' ' in args[0] or args[0].startswith('"') or args[0].startswith("'")):
         from .nl_parser import is_natural_language, parse_natural_query
@@ -277,41 +206,6 @@ def main(argv: list[str] | None = None) -> int:
             cmd = args[0]
     else:
         cmd = args[0]
-    if cmd == "prompt":
-        return cmd_prompt()
-    if cmd == "checklist":
-        topic = args[1] if len(args) > 1 else None
-        return cmd_checklist(topic)
-    if cmd == "guide":
-        session = None
-        use_tui = False
-        remaining_args = args[1:]
-
-        # Parse --session, --tui, and --cli flags
-        while remaining_args:
-            if remaining_args[0] == "--session" and len(remaining_args) > 1:
-                session = remaining_args[1]
-                remaining_args = remaining_args[2:]
-            elif remaining_args[0] == "--tui":
-                use_tui = True
-                remaining_args = remaining_args[1:]
-            elif remaining_args[0] == "--cli":
-                use_tui = False
-                remaining_args = remaining_args[1:]
-            else:
-                remaining_args = remaining_args[1:]
-
-        # Auto-detect mode if not explicitly specified
-        if not any(flag in args for flag in ["--tui", "--cli"]):
-            from .terminal_detection import get_fallback_message, select_mode
-            mode = select_mode()
-            if mode == 'cli':
-                print(get_fallback_message())
-            use_tui = (mode == 'tui')
-
-        if use_tui:
-            return cmd_guide_tui(session=session)
-        return cmd_guide(session=session)
 
     # Student helpers
     if cmd == "explain":
@@ -320,63 +214,53 @@ def main(argv: list[str] | None = None) -> int:
             return handle_missing_argument("explain", "command", "cybuddy explain 'nmap -sV'")
         text, send = _extract_text_and_send(args[1:])
         add_command(f"explain {text}")
-        return _maybe_json_print("explain", text, _maybe_ai(engine, "explain", text, send))
+        return _maybe_json_print("explain", text, explain_command(text))
     if cmd in {"assist", "help"}:
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument(cmd, "issue", "cybuddy assist 'connection refused'")
         text, send = _extract_text_and_send(args[1:])
         add_command(f"{cmd} {text}")
-        return _maybe_json_print("assist", text, _maybe_ai(engine, "assist", text, send))
+        return _maybe_json_print("assist", text, help_troubleshoot(text))
     if cmd == "tip":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("tip", "topic", "cybuddy tip 'sql injection'")
         text, send = _extract_text_and_send(args[1:])
         add_command(f"tip {text}")
-        return _maybe_json_print("tip", text, _maybe_ai(engine, "tip", text, send))
+        return _maybe_json_print("tip", text, quick_tip(text))
     if cmd == "report":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("report", "finding", "cybuddy report 'found XSS in login'")
         text, send = _extract_text_and_send(args[1:])
         add_command(f"report {text}")
-        return _maybe_json_print("report", text, _maybe_ai(engine, "report", text, send))
+        return _maybe_json_print("report", text, micro_report(text))
     if cmd == "quiz":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("quiz", "topic", "cybuddy quiz 'nmap'")
         text, send = _extract_text_and_send(args[1:])
         add_command(f"quiz {text}")
-        return _maybe_json_print("quiz", text, _maybe_ai(engine, "quiz", text, send))
+        return _maybe_json_print("quiz", text, quiz_flashcards(text))
     if cmd == "plan":
         if len(args) < 2:
             from .errors import handle_missing_argument
             return handle_missing_argument("plan", "context", "cybuddy plan 'found open port 8080'")
         text, send = _extract_text_and_send(args[1:])
         add_command(f"plan {text}")
-        return _maybe_json_print("plan", text, _maybe_ai(engine, "plan", text, send))
+        return _maybe_json_print("plan", text, step_planner(text))
         
 
-    if cmd == "todo":
-        return cmd_todo(args[1:])
     if cmd == "history":
         from .commands.history import cmd_history
         return cmd_history(args[1:])
-    if cmd == "config":
-        return cmd_config()
-    if cmd == "run":
-        # Add to history before processing
-        if len(args) > 1:
-            add_command(f"run {' '.join(args[1:])}")
-        return cmd_run(args[1:])
 
     # Unknown command - provide smart suggestions
     from .errors import handle_unknown_command
     available_commands = [
-        "guide", "explain", "tip", "assist", "help", "report",
-        "quiz", "plan", "checklist", "prompt", "todo", "history",
-        "config", "run"
+        "explain", "tip", "assist", "help", "report",
+        "quiz", "plan", "history"
     ]
     return handle_unknown_command(cmd, available_commands)
 
@@ -447,18 +331,6 @@ def _history_file(session: str | None = None) -> Path:
     return path
 
 
-def _todo_file(session: str | None = None) -> Path:
-    cfg = load_config()
-    if session:
-        base = _app_dir() / "sessions" / session
-        path = base / "todo.json"
-    else:
-        path = Path(os.path.expanduser(cfg.get("todo.path", str(_app_dir() / "todo.json"))))
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-    except Exception:
-        pass
-    return path
 
 
 def _config_file() -> Path:
@@ -477,30 +349,13 @@ def load_config() -> dict:
     cfg = {
         "history.enabled": new_config.get("history", {}).get("enabled", True),
         "history.path": new_config.get("history", {}).get("path", str(_app_dir() / "history.jsonl")),
-        "todo.path": str(_app_dir() / "todo.json"),
         "output.truncate_lines": new_config.get("output", {}).get("truncate_lines", 60),
-        "approvals.require_exec": new_config.get("approvals", {}).get("require_exec", True),
-        "approvals.ai_consent": new_config.get("approvals", {}).get("ai_consent", False),
-        "ai.enabled": new_config.get("ai", {}).get("enabled", False),
-        "ai.provider": new_config.get("ai", {}).get("provider", "openai"),
-        "ai.redact": new_config.get("ai", {}).get("redact", True),
-        "ai.max_tokens": new_config.get("ai", {}).get("max_tokens", 300),
         "history.verbatim": new_config.get("history", {}).get("verbatim", False),
     }
     
     return cfg
 
 
-def cmd_config() -> int:
-    from .config import _config_path
-    
-    cfg = load_config()
-    print("Config file:", _config_path())
-    print("(Config is optional - CyBuddy works with defaults)")
-    print()
-    for k in sorted(cfg):
-        print(f"{k} = {cfg[k]}")
-    return 0
 
 
 def _now_iso() -> str:
@@ -526,105 +381,12 @@ def history_append(event: dict, session: str | None = None) -> None:
 
 
 
-def _todo_load(session: str | None = None) -> list[dict]:
-    path = _todo_file(session)
-    if not path.exists():
-        return []
-    try:
-        return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:
-        return []
 
 
-def _todo_save(items: list[dict], session: str | None = None) -> None:
-    _todo_file(session).write_text(json.dumps(items, indent=2), encoding="utf-8")
 
 
-def cmd_todo(args: list[str]) -> int:
-    session = None
-    if args[:2] == ["--session"] and len(args) > 2:
-        session = args[2]
-        args = args[3:]
-    items = _todo_load(session)
-    if not args:
-        if not items:
-            print("No TODO items. Add one with: cybuddy todo add \"Do recon\"")
-            return 0
-        for i, it in enumerate(items, 1):
-            status = it.get("status", "pending")
-            print(f"{i}. [{status}] {it.get('text','')}")
-        return 0
-
-    sub = args[0]
-    if sub == "add" and len(args) > 1:
-        text = " ".join(args[1:]).strip("\"")
-        items.append({"text": text, "status": "pending", "added": _now_iso()})
-        _todo_save(items, session)
-        history_append({"type": "todo:add", "data": text}, session=session)
-        print(f"Added: {text}")
-        return 0
-    if sub == "done" and len(args) > 1:
-        try:
-            idx = int(args[1]) - 1
-            if idx < 0 or idx >= len(items):
-                raise ValueError
-        except ValueError:
-            print("Provide a valid item number.")
-            return 1
-        items[idx]["status"] = "completed"
-        items[idx]["completed"] = _now_iso()
-        _todo_save(items, session)
-        history_append({"type": "todo:done", "data": items[idx]["text"]}, session=session)
-        print(f"Done: {items[idx]['text']}")
-        return 0
-    if sub == "clear":
-        _todo_save([], session)
-        history_append({"type": "todo:clear", "data": None}, session=session)
-        print("Cleared all TODO items.")
-        return 0
-
-    print("Unknown todo command. Use: list | add <text> | done <num> | clear")
-    return 1
 
 
-def _select_engine() -> AnswerEngine:
-    cfg = load_config()
-    if not cfg.get("ai.enabled", False):
-        return HeuristicEngine(
-            explain_fn=explain_command,
-            tip_fn=quick_tip,
-            assist_fn=help_troubleshoot,
-            report_fn=micro_report,
-            quiz_fn=quiz_flashcards,
-            plan_fn=step_planner,
-        )
-    provider = str(cfg.get("ai.provider", "openai"))
-    if provider == "openai":
-        api_key = str(cfg.get("openai.api_key", ""))
-        model = str(cfg.get("openai.model", "gpt-4o-mini"))
-        if not api_key:
-            return HeuristicEngine(
-                explain_fn=explain_command,
-                tip_fn=quick_tip,
-                assist_fn=help_troubleshoot,
-                report_fn=micro_report,
-                quiz_fn=quiz_flashcards,
-                plan_fn=step_planner,
-            )
-        return OpenAIEngine(api_key=api_key, model=model, redact_fn=redact)
-    if provider == "claude":
-        return ClaudeEngine(api_key=str(cfg.get("claude.api_key", "")), model=str(cfg.get("claude.model", "claude-3")), redact_fn=redact)
-    if provider == "gemini":
-        return GeminiEngine(api_key=str(cfg.get("gemini.api_key", "")), model=str(cfg.get("gemini.model", "gemini-1.5")), redact_fn=redact)
-    # Future: claude, gemini, custom
-    return HeuristicEngine(
-        explain_fn=explain_command,
-        tip_fn=quick_tip,
-        assist_fn=help_troubleshoot,
-        report_fn=micro_report,
-        quiz_fn=quiz_flashcards,
-        plan_fn=step_planner,
-    )
 
 
 def _extract_text_and_send(args: list[str]) -> tuple[str, bool]:
@@ -638,118 +400,9 @@ def _extract_text_and_send(args: list[str]) -> tuple[str, bool]:
     return " ".join(cleaned).strip("\""), send
 
 
-def _maybe_ai(engine: AnswerEngine, kind: str, text: str, send: bool) -> str:
-    cfg = load_config()
-    if not cfg.get("ai.enabled", False):
-        return getattr(_HeuristicProxy(), kind)(text)
-    if not cfg.get("approvals.ai_consent", False) and not send:
-        return "[AI disabled without consent] Use --send or set approvals.ai_consent=true.\n" + getattr(_HeuristicProxy(), kind)(text)
-    redacted_text, summary = redact(text) if cfg.get("ai.redact", True) else (text, "no redaction")
-    history_append({"type": "ai:request", "data": {"kind": kind, "redaction": summary}})
-    result = getattr(engine, kind)(text)
-    history_append({"type": "ai:response", "data": {"kind": kind, "len": len(result)}})
-    return result
-
-
-def _HeuristicProxy() -> AnswerEngine:
-    return HeuristicEngine(
-        explain_fn=explain_command,
-        tip_fn=quick_tip,
-        assist_fn=help_troubleshoot,
-        report_fn=micro_report,
-        quiz_fn=quiz_flashcards,
-        plan_fn=step_planner,
-    )
 
 
 # === Dry-run runner (approvals-like) ===
 
-def cmd_run(args: list[str]) -> int:
-    if not args:
-        from .errors import handle_missing_argument
-        return handle_missing_argument("run", "tool", "cybuddy run nmap '-sV target.local'")
-    tool = args[0]
-    exec_flag = "--exec" in args
-    joined = " ".join(a for a in args[1:] if a != "--exec").strip()
-    command = f"{tool} {joined}".strip()
-
-    safety, notes = _safety_review(tool, joined)
-    print("SAFETY:")
-    for n in safety:
-        print(f"- {n}")
-    for tip in notes:
-        print(f"- TIP: {tip}")
-    print("CMD:")
-    print(command or tool)
-
-    if not exec_flag and load_config().get("approvals.require_exec", True):
-        print("NOT RUN (dry-run). Pass --exec to execute.")
-        history_append({"type": "run:dry", "data": command})
-        return 0
-
-    # Actually run the command
-    try:
-        import subprocess
-
-        proc = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=300)
-        out = proc.stdout.strip()
-        err = proc.stderr.strip()
-        code = proc.returncode
-        print("OUT:")
-        print(_truncate_lines(out))
-        if err:
-            print("ERR:")
-            print(_truncate_lines(err))
-        history_append({"type": "run:exec", "data": {"cmd": command, "code": code}})
-        return code
-    except Exception as e:
-        print(f"Failed to execute: {e}")
-        return 1
 
 
-def _truncate_lines(s: str) -> str:
-    if not s:
-        return ""
-    max_lines = int(load_config().get("output.truncate_lines", 60) or 60)
-    lines = s.splitlines()
-    if len(lines) <= max_lines:
-        return s
-    return "\n".join(lines[:max_lines] + ["(truncated)"])
-
-
-def _safety_review(tool: str, argstr: str) -> tuple[list[str], list[str]]:
-    notes: list[str] = []
-    tips: list[str] = []
-    t = (tool + " " + argstr).lower()
-    if tool == "nmap":
-        if " -t5" in t or " -t4" in t:
-            notes.append("Timing is aggressive; prefer T2 in shared labs")
-        if " --script" in t:
-            notes.append("NSE scripts can be intrusive; review scripts")
-        if " -a " in t:
-            notes.append("-A bundles aggressive scans; use selectively")
-        if " -p-" in t:
-            notes.append("Full port scan can be noisy and slow")
-        if " -suv" in t or " -su" in t:
-            notes.append("UDP scans are slow/noisy; consider targeting")
-        tips.append("Common safe start: nmap -sV -Pn -T2 <target>")
-    elif tool == "gobuster":
-        if " -w " not in t:
-            notes.append("Provide a wordlist with -w <file>")
-        if " dir " in t or " -u " in t:
-            tips.append("Start with small wordlists to reduce noise")
-        notes.append("Respect robots.txt and scope; avoid production targets")
-    elif tool == "nikto":
-        notes.append("Nikto can be noisy; prefer off-hours in labs")
-        tips.append("Target specific host: nikto -h <url>")
-    else:
-        notes.append("Unknown tool; review flags before execution")
-    return notes, tips
-from .engine import (
-    AnswerEngine,
-    ClaudeEngine,
-    GeminiEngine,
-    HeuristicEngine,
-    OpenAIEngine,
-    redact,
-)

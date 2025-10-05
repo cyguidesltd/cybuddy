@@ -26,6 +26,13 @@ def parse_natural_query(text: str) -> tuple[str, str]:
         Tuple of (command_name, extracted_query)
     """
     text_lower = text.lower().strip()
+    
+    # Handle direct command usage (e.g., "explain nmap -Pn")
+    command_words = ['explain', 'tip', 'help', 'report', 'quiz', 'plan']
+    for cmd in command_words:
+        if text_lower.startswith(cmd + ' '):
+            query = text[len(cmd):].strip()
+            return cmd, query
 
     # Intent detection patterns (order matters - more specific first)
     intents = {
@@ -174,8 +181,9 @@ def is_natural_language(text: str) -> bool:
     Natural language indicators:
     - Contains question marks
     - Has question words (how, what, why, etc.)
-    - Has multiple words (4+)
+    - Has multiple words (3+)
     - Contains verbs like "do", "can", "should"
+    - Starts with command words like "explain", "tip", "help", etc.
     """
     text_lower = text.lower()
 
@@ -186,6 +194,11 @@ def is_natural_language(text: str) -> bool:
     # Question words
     question_words = ['how', 'what', 'why', 'when', 'where', 'who', 'which']
     if any(text_lower.startswith(word + ' ') for word in question_words):
+        return True
+
+    # Command words that indicate natural language intent
+    command_words = ['explain', 'tip', 'help', 'report', 'quiz', 'plan']
+    if any(text_lower.startswith(word + ' ') for word in command_words):
         return True
 
     # Common natural language patterns
@@ -202,9 +215,9 @@ def is_natural_language(text: str) -> bool:
     if any(re.search(pattern, text_lower) for pattern in nl_patterns):
         return True
 
-    # Multiple words might indicate natural language
+    # Multiple words might indicate natural language (reduced threshold)
     word_count = len(text.split())
-    if word_count >= 4:
+    if word_count >= 3:
         return True
 
     return False

@@ -3068,3 +3068,236 @@ def smart_plan(context: str) -> str:
     return """1. Clarify scope and objective (what are you trying to achieve?)
 2. Choose appropriate tools with safe default settings
 3. Document findings and plan next targeted probe based on results"""
+
+
+# ============================================================================
+# ENHANCED FEATURE INTEGRATION
+# ============================================================================
+
+def get_command_suggestions(command_type: str, partial_input: str = "") -> list[str]:
+    """Get smart command suggestions based on type and partial input."""
+    suggestions = {
+        "explain": [
+            "nmap -sV -A", "nmap -sS -O", "nmap --script vuln", "nmap -p- --open",
+            "burp suite", "sqlmap -u", "metasploit", "wireshark", "tcpdump",
+            "hydra -l admin -P passwords.txt", "john --wordlist=rockyou.txt",
+            "gobuster dir -u", "ffuf -w wordlist.txt", "nikto -h", "netcat -lvp"
+        ],
+        "tip": [
+            "sql injection", "xss cross-site scripting", "csrf cross-site request forgery",
+            "privilege escalation", "buffer overflow", "network scanning techniques",
+            "password cracking", "web application testing", "social engineering",
+            "forensics analysis", "incident response", "cloud security"
+        ],
+        "help": [
+            "connection refused", "permission denied", "command not found",
+            "port already in use", "authentication failed", "timeout occurred",
+            "access denied", "file not found", "network unreachable"
+        ],
+        "report": [
+            "found sql injection vulnerability", "discovered open ports",
+            "identified cross-site scripting", "completed penetration test",
+            "security assessment findings", "vulnerability assessment report"
+        ],
+        "quiz": [
+            "sql injection", "network protocols", "cryptography", "web security",
+            "penetration testing", "forensics", "incident response", "cloud security",
+            "mobile security", "iot security", "malware analysis"
+        ],
+        "plan": [
+            "found open port 80", "discovered sql injection", "got initial access",
+            "identified admin panel", "found credentials", "enumerated users",
+            "discovered vulnerability", "gained shell access", "found sensitive data"
+        ]
+    }
+    
+    base_suggestions = suggestions.get(command_type, [])
+    
+    if not partial_input:
+        return base_suggestions[:5]
+    
+    # Filter suggestions based on partial input
+    filtered = [s for s in base_suggestions if partial_input.lower() in s.lower()]
+    return filtered[:5] if filtered else base_suggestions[:3]
+
+
+def get_tool_categories() -> dict[str, list[str]]:
+    """Get categorized security tools for better suggestions."""
+    return {
+        "Network Scanning": [
+            "nmap", "masscan", "zmap", "unicornscan", "angry ip scanner"
+        ],
+        "Web Application Testing": [
+            "burp suite", "owasp zap", "sqlmap", "nikto", "dirb", "gobuster",
+            "ffuf", "wfuzz", "whatweb", "wpscan"
+        ],
+        "Password Cracking": [
+            "john the ripper", "hashcat", "hydra", "medusa", "crunch", "cewl"
+        ],
+        "Exploitation": [
+            "metasploit", "exploit-db", "searchsploit", "msfvenom", "msfconsole"
+        ],
+        "Network Analysis": [
+            "wireshark", "tcpdump", "netcat", "ncat", "socat", "netstat"
+        ],
+        "Forensics": [
+            "volatility", "autopsy", "sleuth kit", "binwalk", "foremost", "scalpel"
+        ],
+        "Reconnaissance": [
+            "theharvester", "recon-ng", "maltego", "spiderfoot", "amass", "subfinder"
+        ],
+        "Post-Exploitation": [
+            "mimikatz", "bloodhound", "empire", "crackmapexec", "responder"
+        ]
+    }
+
+
+def get_technique_categories() -> dict[str, list[str]]:
+    """Get categorized attack techniques for better suggestions."""
+    return {
+        "Web Application Attacks": [
+            "sql injection", "cross-site scripting", "csrf", "ssrf", "xxe",
+            "file inclusion", "command injection", "deserialization"
+        ],
+        "Network Attacks": [
+            "man-in-the-middle", "arp spoofing", "dns spoofing", "port scanning",
+            "service enumeration", "vulnerability scanning"
+        ],
+        "System Attacks": [
+            "privilege escalation", "buffer overflow", "format string", "race condition",
+            "dll hijacking", "dll injection", "process injection"
+        ],
+        "Social Engineering": [
+            "phishing", "pretexting", "baiting", "quid pro quo", "tailgating"
+        ],
+        "Cryptographic Attacks": [
+            "brute force", "dictionary attack", "rainbow table", "side-channel",
+            "timing attack", "power analysis"
+        ]
+    }
+
+
+def get_learning_paths() -> dict[str, list[str]]:
+    """Get structured learning paths for different security domains."""
+    return {
+        "Web Application Security": [
+            "1. Learn HTTP/HTTPS protocols",
+            "2. Understand OWASP Top 10",
+            "3. Practice with DVWA and WebGoat",
+            "4. Learn Burp Suite and OWASP ZAP",
+            "5. Study authentication and session management",
+            "6. Practice SQL injection and XSS",
+            "7. Learn about CSRF and SSRF",
+            "8. Understand file upload vulnerabilities"
+        ],
+        "Network Security": [
+            "1. Learn TCP/IP fundamentals",
+            "2. Understand network protocols",
+            "3. Practice with nmap and masscan",
+            "4. Learn about firewalls and IDS/IPS",
+            "5. Study network segmentation",
+            "6. Practice with Wireshark and tcpdump",
+            "7. Learn about VPNs and encryption",
+            "8. Understand network monitoring"
+        ],
+        "Penetration Testing": [
+            "1. Learn reconnaissance techniques",
+            "2. Practice vulnerability assessment",
+            "3. Study exploitation frameworks",
+            "4. Learn post-exploitation techniques",
+            "5. Practice privilege escalation",
+            "6. Study lateral movement",
+            "7. Learn about persistence",
+            "8. Practice report writing"
+        ],
+        "Digital Forensics": [
+            "1. Learn file systems and data structures",
+            "2. Understand evidence handling",
+            "3. Practice with forensic tools",
+            "4. Learn about memory analysis",
+            "5. Study network forensics",
+            "6. Practice with Volatility",
+            "7. Learn about mobile forensics",
+            "8. Understand legal considerations"
+        ]
+    }
+
+
+def get_common_scenarios() -> dict[str, str]:
+    """Get common penetration testing scenarios with detailed steps."""
+    return {
+        "Web Application Assessment": """
+1. Reconnaissance
+   - Subdomain enumeration (subfinder, amass)
+   - Port scanning (nmap, masscan)
+   - Technology identification (whatweb, wappalyzer)
+
+2. Vulnerability Discovery
+   - Automated scanning (nikto, dirb, gobuster)
+   - Manual testing (burp suite, owasp zap)
+   - Authentication bypass attempts
+   - Input validation testing
+
+3. Exploitation
+   - SQL injection testing
+   - XSS payload development
+   - File upload exploitation
+   - Authentication bypass
+
+4. Post-Exploitation
+   - Privilege escalation
+   - Data exfiltration
+   - Lateral movement
+   - Persistence establishment
+        """,
+        "Network Penetration Test": """
+1. Network Discovery
+   - Host discovery (nmap -sn)
+   - Port scanning (nmap -sS)
+   - Service enumeration (nmap -sV)
+   - OS detection (nmap -O)
+
+2. Vulnerability Assessment
+   - Service-specific testing
+   - Default credential testing
+   - Vulnerability scanning
+   - Manual verification
+
+3. Exploitation
+   - Exploit development
+   - Payload delivery
+   - Shell establishment
+   - Privilege escalation
+
+4. Post-Exploitation
+   - Network mapping
+   - Credential harvesting
+   - Lateral movement
+   - Data collection
+        """,
+        "Social Engineering Assessment": """
+1. Information Gathering
+   - OSINT collection
+   - Social media analysis
+   - Company research
+   - Employee identification
+
+2. Attack Vector Development
+   - Phishing email creation
+   - Malicious website setup
+   - USB drop preparation
+   - Phone call scripting
+
+3. Execution
+   - Email delivery
+   - Website hosting
+   - Physical delivery
+   - Phone calls
+
+4. Results Analysis
+   - Click tracking
+   - Credential capture
+   - System access
+   - Behavior analysis
+        """
+    }

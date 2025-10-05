@@ -1,178 +1,118 @@
 # CyBuddy 🛡️
 
-**Your AI-powered cybersecurity learning companion** — Get instant answers about security tools, attack techniques, and CTF scenarios. No tabs, no confusion, just fast learning.
+**Your cybersecurity learning companion** — Get instant answers about security tools, attack techniques, and CTF scenarios. No tabs, no confusion, just fast learning.
 
-## Quick Start
+## What is CyBuddy?
+
+CyBuddy is an intelligent terminal tool that helps you learn cybersecurity. Instead of juggling 50+ browser tabs and outdated blog posts, you get instant, focused answers through smart commands with intelligent suggestions and learning analytics.
+
+**Built for:** Students learning cyber security • CTF players • Lab learners (HTB, TryHackMe) • Anyone who needs quick security answers
+
+
+## Why Use CyBuddy?
+
+- **No browser needed** — Everything works in your terminal
+- **300+ cybersecurity entries** — Tools, techniques, attack scenarios explained simply  
+- **7 focused commands** — Everything you need, nothing you don't
+- **Smart suggestions** — Get intelligent recommendations based on your learning history
+- **Command analytics** — Track your progress and identify learning patterns
+- **Zero configuration** — Works out of the box, no setup required
+- **Offline-first** — Built-in knowledge base works without internet
+- **Safe defaults** — Won't suggest dangerous commands without warnings
+
+## How to Use
+
+### Quick Start
 
 ```bash
 # Install
 pip install cybuddy
 
 # Start learning
-cybuddy guide --tui
+cybuddy
 ```
 
 That's it. You're ready to learn cybersecurity.
 
----
+### The 7 Commands
 
-## What is CyBuddy?
+Once you run `cybuddy`, you have exactly 7 commands with smart features:
 
-**The Problem:** Learning cybersecurity means juggling 50+ browser tabs, outdated blog posts, and tool docs that assume you already know everything. You're stuck at 2am during a CTF, Googling "how to enumerate port 8080" and getting overwhelmed.
+| Command | Purpose | Example | Smart Features |
+|---------|---------|---------|----------------|
+| **explain** | Learn what commands/tools do | `explain 'nmap -sV'` | Auto-suggestions for common tools |
+| **tip** | Quick study guide for topics | `tip 'SQL injection'` | Context-aware technique suggestions |
+| **help** | Troubleshoot errors | `help 'connection refused'` | Smart error pattern matching |
+| **report** | Practice writing security reports | `report 'Found SQLi in login'` | Template suggestions based on findings |
+| **quiz** | Test your knowledge with flashcards | `quiz 'Buffer Overflow'` | Adaptive difficulty based on history |
+| **plan** | Get unstuck with next steps | `plan 'found port 80 open'` | Contextual next-step recommendations |
+| **history** | Show your command history | `history` | **NEW**: Analytics, search, smart suggestions |
+| **exit** | Leave the interactive mode | `exit` | - |
 
-**The Solution:** CyBuddy gives you instant, focused answers through 7 simple commands. Ask about tools, techniques, or scenarios — get clear explanations with practical next steps. No browser needed.
+### 🆕 Enhanced History Command
 
-**Built for:** Students learning cyber security • CTF players • Lab learners (HTB, TryHackMe) • Anyone who needs quick security answers
-
----
-
-## The 7 Commands
-
-Once you run `cybuddy guide`, you have exactly 7 commands:
-
-| Command | Purpose | Example |
-|---------|---------|---------|
-| **explain** | Learn what commands/tools do | `explain 'nmap -sV'` |
-| **tip** | Quick study guide for topics | `tip 'SQL injection'` |
-| **help** | Troubleshoot errors | `help 'connection refused'` |
-| **report** | Practice writing security reports | `report 'Found SQLi in login'` |
-| **quiz** | Test your knowledge with flashcards | `quiz 'Buffer Overflow'` |
-| **plan** | Get unstuck with next steps | `plan 'found port 80 open'` |
-| **exit** | Leave the interactive mode | `exit` |
-
-**Why only 7?** Because 7 commands is all you need to learn effectively. More = confusion.
-
----
-
-## Real-World Usage
-
-### Scenario: Stuck on a Web CTF Challenge
+The `history` command now includes powerful analytics and smart features:
 
 ```bash
-❯ cybuddy guide --tui
+❯ history                    # Show recent commands + smart suggestions
+❯ history --stats           # View learning analytics and patterns  
+❯ history --search "nmap"   # Search your command history
+❯ history --suggest "sql"   # Get smart suggestions for partial input
+❯ history --clear           # Clear your command history
+```
 
-❯ explain 'gobuster dir -u http://target -w wordlist.txt'
+### Example Usage
+
+```bash
+❯ cybuddy
+
+❯ explain 'nmap -sV'
 ─── Explanation ─────────────────────────────────────
-  dir: directory brute-forcing mode
-  -u: target URL
-  -w: wordlist file
-  Use when: looking for hidden endpoints
-  Watch out: can be noisy, start with small wordlists
+  Network Mapper - powerful port scanner and service detection tool
+  -sV: Version detection: probe open ports to determine service/version info
+  Use when: Network reconnaissance, port scanning, service enumeration
+  ⚠ Use responsibly. Some scans may be detected by IDS/IPS
 ─────────────────────────────────────────────────────
 
-❯ tip 'directory brute forcing'
+❯ tip 'SQL injection'
 ─── Tip ─────────────────────────────────────────────
-  Check robots.txt first
-  Common dirs: /admin, /api, /backup
-  Use small wordlists in CTFs to avoid rate limits
+  • Look for ' or " in inputs to trigger SQL errors
+  • Test with: ' OR '1'='1 -- (boolean bypass)
+  • Use UNION SELECT to extract data: ' UNION SELECT null,username,password FROM users--
+  • Check INFORMATION_SCHEMA for table/column names
+  • Always test login pages, search boxes, and URL parameters
 ─────────────────────────────────────────────────────
 
-❯ plan 'gobuster found /admin endpoint'
+❯ plan 'found port 80 open'
 ─── Next Steps ──────────────────────────────────────
-  1. Try default credentials (admin/admin, admin/password)
-  2. Check for authentication bypass
-  3. Look for SQLi in login form
+  1. Enumerate web service with nikto -h http://target or whatweb http://target
+  2. Check robots.txt, sitemap.xml, and common endpoints (/admin, /api, /.git)
+  3. Run directory brute-force with gobuster or ffuf using medium wordlist
+─────────────────────────────────────────────────────
+
+❯ history --stats
+📊 Command History Analytics:
+========================================
+
+📈 Commands by Category:
+  explain     :  15
+  tip         :   8
+  help        :   5
+  plan        :   3
+
+🛠️  Most Used Tools/Techniques:
+  nmap               :   8
+  sql injection      :   5
+  burp suite         :   3
+  metasploit         :   2
+
+🔥 Recent Patterns (7 days):
+  • Network scanning with nmap
+  • Web application testing techniques
+  • SQL injection exploitation
 ─────────────────────────────────────────────────────
 ```
 
-**Result:** You went from stuck → understanding → action in 3 commands. Zero browser tabs.
-
----
-
-## Features
-
-✅ **300+ cybersecurity entries** — Tools, techniques, attack scenarios explained simply
-✅ **7 focused commands** — Everything you need, nothing you don't
-✅ **Beautiful TUI interface** — Clean, readable, distraction-free
-✅ **Zero configuration** — Works out of the box, no setup required
-✅ **Offline-first** — Built-in knowledge base works without internet
-✅ **Safe defaults** — Won't suggest dangerous commands without warnings
-✅ **Session tracking** — Review your learning history
-✅ **CTF-optimized** — Designed for the flow of challenges
-
----
-
-## Command Line Usage (Outside Interactive Mode)
-
-Use CyBuddy commands directly from your terminal:
-
-```bash
-# Tool explanations
-cybuddy explain "nmap -sV"
-
-# Study tips
-cybuddy tip "SQL injection"
-
-# Troubleshooting
-cybuddy help "connection refused"
-
-# Report writing practice
-cybuddy report "Found XSS in login form"
-
-# Test knowledge
-cybuddy quiz "Buffer overflow"
-
-# Next steps guidance
-cybuddy plan "found port 80 open"
-
-# Checklists for common tasks
-cybuddy checklist web
-cybuddy checklist recon
-cybuddy checklist crypto
-cybuddy checklist forensics
-```
-
----
-
-## Optional: AI Mode (Advanced)
-
-Want deeper, context-aware answers? Enable AI with your own API key:
-
-```bash
-# Set your API key (OpenAI, Claude, or Gemini)
-export CYBUDDY_API_KEY="sk-..."
-
-# Use --send flag for AI responses
-cybuddy explain "nmap -A target" --send
-```
-
-**Default mode:** Built-in knowledge base (no API needed)
-**AI mode:** Enhanced explanations using your API key (BYOK — Bring Your Own Key)
-
-Create `~/.config/cybuddy/config.yaml` for persistent AI settings:
-
-```yaml
-ai:
-  enabled: true
-  provider: openai  # or 'anthropic' or 'google'
-  api_key: sk-...
-  model: gpt-4o-mini
-```
-
----
-
-## Configuration (Optional)
-
-CyBuddy works perfectly with **zero configuration**. For advanced customization:
-
-```yaml
-# ~/.config/cybuddy/config.yaml
-tui:
-  theme: default  # 'dark', 'light', 'default'
-  show_tips: true
-
-cli:
-  color: true
-  verbose: false
-
-ai:
-  enabled: false  # Set to true for AI mode
-  provider: openai
-  redact: true
-  max_tokens: 300
-```
-
----
 
 ## FAQ
 
@@ -183,26 +123,22 @@ A: No. CyBuddy is a *learning tool* to help you understand and use real tools ef
 A: For quick hints and common tasks, yes. For deep technical dives, no.
 
 **Q: Can I use this during exams/CTFs?**
-A: Check your specific rules. Built-in knowledge base is usually OK. AI mode may have restrictions.
+A: Check your specific rules. Built-in knowledge base is usually OK.
 
 **Q: Is my data sent anywhere?**
-A: Only if you enable AI mode with `--send`. Otherwise, everything is local.
+A: No. Everything is local and offline. Your command history is stored locally in `~/.cybuddy/history.json`.
 
-**Q: What's the difference between TUI and CLI mode?**
-A: TUI mode (`--tui`) provides a rich interactive interface. CLI mode (`--cli`) is simple text for any terminal.
+**Q: How does the smart history work?**
+A: CyBuddy analyzes your command patterns, categorizes your learning topics, and provides intelligent suggestions based on your usage patterns and cybersecurity knowledge base.
 
 **Q: Why is it called CyBuddy?**
 A: It's your cybersecurity buddy — always ready to help you learn, no judgment, no confusion.
-
----
 
 ## Contributing
 
 We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 **Built by learners, for learners.** Someone who remembers being stuck at 2am during a CTF wanted to make learning easier.
-
----
 
 ## License
 
@@ -213,5 +149,5 @@ MIT License - see LICENSE file for details.
 **Start learning now:**
 ```bash
 pip install cybuddy
-cybuddy guide --tui
+cybuddy
 ```

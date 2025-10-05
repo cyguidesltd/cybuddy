@@ -1,7 +1,8 @@
-"""Simple TUI using prompt_toolkit's proper async API."""
+"""Simple TUI using prompt_toolkit's proper async API with smart suggestions."""
 from __future__ import annotations
 
 from prompt_toolkit import PromptSession
+from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.patch_stdout import patch_stdout
 from rich.console import Console
 
@@ -14,10 +15,91 @@ from ..cli import (
     quiz_flashcards,
     step_planner,
 )
+from ..history import get_history
+
+
+class SmartCompleter(Completer):
+    """Smart command completer with history-based suggestions."""
+    
+    def __init__(self):
+        self.history = get_history()
+        self.base_commands = [
+            "explain", "tip", "help", "report", "quiz", "plan", "history", "exit"
+        ]
+    
+    def get_completions(self, document, complete_event):
+        """Provide smart completions based on context and history."""
+        text = document.text_before_cursor.lower()
+        words = text.split()
+        
+        # If no words, suggest base commands
+        if not words:
+            for cmd in self.base_commands:
+                yield Completion(cmd, start_position=0, display=cmd, style="class:completion")
+            return
+        
+        # If first word is a command, suggest smart completions
+        if words[0] in self.base_commands:
+            if len(words) == 1:
+                # Suggest common queries for this command
+                suggestions = self._get_command_suggestions(words[0])
+                for suggestion in suggestions:
+                    yield Completion(
+                        f"{words[0]} '{suggestion}'", 
+                        start_position=0,
+                        display=suggestion,
+                        style="class:completion"
+                    )
+            else:
+                # Suggest based on partial input
+                partial = " ".join(words[1:])
+                suggestions = self.history.get_smart_suggestions(partial, limit=5)
+                for suggestion in suggestions:
+                    yield Completion(
+                        f"{words[0]} '{suggestion}'",
+                        start_position=0,
+                        display=suggestion,
+                        style="class:completion"
+                    )
+        else:
+            # Suggest base commands
+            for cmd in self.base_commands:
+                if cmd.startswith(words[0]):
+                    yield Completion(cmd, start_position=0, display=cmd, style="class:completion")
+    
+    def _get_command_suggestions(self, command: str) -> list[str]:
+        """Get common suggestions for specific commands."""
+        suggestions = {
+            "explain": [
+                "nmap -sV", "burp suite", "sqlmap", "metasploit", "wireshark",
+                "hydra", "john the ripper", "gobuster", "nikto", "netcat"
+            ],
+            "tip": [
+                "sql injection", "xss", "csrf", "privilege escalation", "buffer overflow",
+                "network scanning", "password cracking", "web application testing"
+            ],
+            "help": [
+                "connection refused", "permission denied", "command not found",
+                "port already in use", "authentication failed"
+            ],
+            "report": [
+                "found sql injection", "discovered open ports", "identified vulnerabilities",
+                "completed penetration test", "security assessment findings"
+            ],
+            "quiz": [
+                "sql injection", "network protocols", "cryptography", "web security",
+                "penetration testing", "forensics", "incident response"
+            ],
+            "plan": [
+                "found open port 80", "discovered sql injection", "got initial access",
+                "identified admin panel", "found credentials"
+            ]
+        }
+        return suggestions.get(command, [])
 
 
 class SimpleTUI:
-    """Minimal TUI with 7 core commands using prompt_toolkit properly."""
+    """Enhanced TUI with 8 core commands and smart suggestions."""
 
     COMMANDS = {
         "explain": "Learn commands (e.g., explain 'nmap -sV')",
@@ -26,13 +108,15 @@ class SimpleTUI:
         "report": "Practice write-ups (e.g., report 'Found SQLi')",
         "quiz": "Active recall (e.g., quiz 'SQL Injection')",
         "plan": "Next steps (e.g., plan 'found port 80 open')",
+        "history": "View command history and analytics",
         "exit": "Exit CyBuddy",
     }
 
     def __init__(self, session: str | None = None) -> None:
         self.console = Console()
         self.session_name = session
-        self.prompt_session = PromptSession()
+        self.completer = SmartCompleter()
+        self.prompt_session = PromptSession(completer=self.completer)
 
     async def run(self) -> None:
         """Run the interactive TUI using prompt_toolkit's async API."""
@@ -173,6 +257,9 @@ class SimpleTUI:
                 result = step_planner(arg)
                 self._print_response("Next Steps", result)
 
+        elif cmd == "history":
+            self._handle_history_command(arg)
+
         else:
             self.console.print(f"[red]⚠[/red] Unknown command: {cmd}")
             self.console.print("[dim]Available: " + ", ".join(self.COMMANDS.keys()) + "[/dim]")
@@ -235,6 +322,112 @@ class SimpleTUI:
 
         # Bottom border
         self.console.print("[bold yellow]{'─' * 60}[/bold yellow]")
+
+    def _handle_history_command(self, arg: str) -> None:
+        """Handle history command with smart suggestions."""
+        from ..history import get_history
+        
+        history = get_history()
+        
+        if not arg:
+            # Show recent history with smart suggestions
+            entries = history.get_history()
+            if not entries:
+                self.console.print("[yellow]📚 No command history yet.[/yellow]")
+                self.console.print("\n[cyan]💡 Try these commands to get started:[/cyan]")
+                self.console.print("  [dim]explain 'nmap -sV'[/dim]")
+                self.console.print("  [dim]tip 'sql injection'[/dim]")
+                self.console.print("  [dim]help 'connection refused'[/dim]")
+                return
+            
+            self.console.print("[cyan]📚 Recent Commands:[/cyan]")
+            recent_entries = entries[-20:]  # Show last 20
+            for i, cmd in enumerate(recent_entries, 1):
+                self.console.print(f"  [dim]{i:3d}.[/dim] {cmd}")
+            
+            # Show smart suggestions
+            suggestions = history.get_smart_suggestions(limit=3)
+            if suggestions:
+                self.console.print("\n[green]💡 Smart Suggestions:[/green]")
+                for i, suggestion in enumerate(suggestions, 1):
+                    self.console.print(f"  [dim]{i}.[/dim] {suggestion}")
+            return
+        
+        # Parse history arguments
+        args = arg.split()
+        
+        if args[0] == "--clear":
+            history.clear()
+            self.console.print("[green]🗑️  Command history cleared.[/green]")
+            return
+        
+        if args[0] == "--search" and len(args) > 1:
+            query = " ".join(args[1:])
+            results = history.search(query)
+            if not results:
+                self.console.print(f"[red]❌ No commands found matching '{query}'.[/red]")
+                
+                # Provide smart suggestions based on query
+                suggestions = history.get_smart_suggestions(query, limit=3)
+                if suggestions:
+                    self.console.print("\n[green]💡 Did you mean one of these?[/green]")
+                    for i, suggestion in enumerate(suggestions, 1):
+                        self.console.print(f"  [dim]{i}.[/dim] {suggestion}")
+                return
+            
+            self.console.print(f"[cyan]🔍 Commands matching '{query}':[/cyan]")
+            for i, cmd in enumerate(results, 1):
+                self.console.print(f"  [dim]{i:3d}.[/dim] {cmd}")
+            return
+        
+        if args[0] == "--stats":
+            # Show analytics and statistics
+            if not history.get_history():
+                self.console.print("[yellow]No command history yet.[/yellow]")
+                return
+            
+            self.console.print("[cyan]📊 Command History Analytics:[/cyan]")
+            self.console.print("=" * 40)
+            
+            # Category statistics
+            category_stats = history.get_category_stats()
+            if category_stats:
+                self.console.print("\n[green]📈 Commands by Category:[/green]")
+                for category, count in sorted(category_stats.items(), key=lambda x: x[1], reverse=True):
+                    self.console.print(f"  [yellow]{category:12}[/yellow]: [cyan]{count:3d}[/cyan]")
+            
+            # Most used tools
+            tools = history.get_most_used_tools(limit=5)
+            if tools:
+                self.console.print("\n[green]🛠️  Most Used Tools/Techniques:[/green]")
+                for tool, count in tools:
+                    self.console.print(f"  [yellow]{tool:20}[/yellow]: [cyan]{count:3d}[/cyan]")
+            
+            # Recent patterns
+            patterns = history.get_recent_patterns(days=7)
+            if patterns:
+                self.console.print("\n[green]🔥 Recent Patterns (7 days):[/green]")
+                for pattern in patterns[:5]:
+                    self.console.print(f"  [dim]•[/dim] {pattern}")
+            return
+        
+        if args[0] == "--suggest" and len(args) > 1:
+            # Get smart suggestions for specific input
+            query = " ".join(args[1:])
+            suggestions = history.get_smart_suggestions(query, limit=5)
+            
+            if not suggestions:
+                self.console.print(f"[red]❌ No suggestions found for '{query}'.[/red]")
+                return
+            
+            self.console.print(f"[green]💡 Smart Suggestions for '{query}':[/green]")
+            for i, suggestion in enumerate(suggestions, 1):
+                self.console.print(f"  [dim]{i:2d}.[/dim] {suggestion}")
+            return
+        
+        # Invalid arguments
+        self.console.print("[red]⚠[/red] Invalid history arguments")
+        self.console.print("[dim]Usage: history [--clear|--search <query>|--stats|--suggest <input>][/dim]")
 
 
 __all__ = ["SimpleTUI"]

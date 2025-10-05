@@ -22,6 +22,18 @@ from enum import Enum
 import json
 from pathlib import Path
 
+# Import thefuzz for enhanced fuzzy matching
+try:
+    from thefuzz import fuzz, process
+    THEFUZZ_AVAILABLE = True
+except ImportError:
+    THEFUZZ_AVAILABLE = False
+    # Fallback functions if thefuzz is not available
+    def fuzz_ratio(a, b):
+        return 0
+    def process_extract(query, choices, limit=5, scorer=None):
+        return []
+
 
 # ============================================================================
 # Enhanced Data Structures for Intelligent Parsing
@@ -101,21 +113,35 @@ class TrieNode:
         self.is_end: bool = False
 
 class FuzzyMatcher:
-    """Efficient fuzzy matching using trie and precomputed scores."""
+    """Enhanced fuzzy matching using thefuzz library with trie fallback."""
     
-    def __init__(self):
-        """Initialize fuzzy matcher with empty trie root and scores."""
+    def __init__(self, high_threshold: float = 0.8, medium_threshold: float = 0.6):
+        """Initialize fuzzy matcher with configurable thresholds.
+        
+        Args:
+            high_threshold: Score above which to auto-correct (default: 0.8)
+            medium_threshold: Score above which to suggest corrections (default: 0.6)
+        """
         self.trie_root = TrieNode()
         self.entity_scores: Dict[str, float] = {}
         self._built = False
+        self.high_threshold = high_threshold
+        self.medium_threshold = medium_threshold
+        self._entity_names: List[str] = []
+        self._entity_map: Dict[str, Entity] = {}
     
     def build_trie(self, entities: Dict[str, Entity]) -> None:
         """Build trie from entities for fast prefix matching."""
+        self._entity_map = entities.copy()
+        self._entity_names = []
+        
         for name, entity in entities.items():
             self._insert_entity(name.lower(), entity)
+            self._entity_names.append(name.lower())
             # Insert aliases
             for alias in entity.aliases:
                 self._insert_entity(alias.lower(), entity)
+                self._entity_names.append(alias.lower())
         self._built = True
     
     def _insert_entity(self, text: str, entity: Entity) -> None:
@@ -129,27 +155,70 @@ class FuzzyMatcher:
         node.is_end = True
     
     def find_matches(self, query: str, max_results: int = 5) -> List[Tuple[Entity, float]]:
-        """Find fuzzy matches using trie traversal."""
+        """Find fuzzy matches using thefuzz library with trie fallback."""
         if not self._built:
             return []
         
-        query_lower = query.lower()
+        query_lower = query.lower().strip()
+        matches = []
+        
+        # Use thefuzz if available for better scoring
+        if THEFUZZ_AVAILABLE and self._entity_names:
+            # Get top matches using thefuzz
+            thefuzz_matches = process.extract(
+                query_lower, 
+                self._entity_names, 
+                limit=max_results * 2,  # Get more to filter by entity
+                scorer=fuzz.ratio
+            )
+            
+            # Convert thefuzz results to our format
+            for match_name, score in thefuzz_matches:
+                # Find the entity for this match
+                entity = self._find_entity_by_name(match_name)
+                if entity and score >= self.medium_threshold * 100:  # Convert to 0-100 scale
+                    matches.append((entity, score / 100.0))  # Convert back to 0-1 scale
+        else:
+            # Fallback to trie-based matching
+            matches = self._trie_based_matching(query_lower, max_results)
+        
+        # Sort by score and return top matches
+        matches.sort(key=lambda x: x[1], reverse=True)
+        return matches[:max_results]
+    
+    def _find_entity_by_name(self, name: str) -> Optional[Entity]:
+        """Find entity by name (handles aliases)."""
+        # Direct lookup first
+        # Get all entities
+        all_entities = self._get_all_entities()
+        
+        # Direct lookup first
+        if name in all_entities:
+            return all_entities[name]
+        
+        # Search through all entities for aliases
+        for entity in all_entities.values():
+            if name == entity.name.lower() or name in [alias.lower() for alias in entity.aliases]:
+                return entity
+        
+        return None
+    
+    def _trie_based_matching(self, query: str, max_results: int) -> List[Tuple[Entity, float]]:
+        """Fallback trie-based matching when thefuzz is not available."""
         matches = []
         
         # Try exact prefix match first
         node = self.trie_root
-        for char in query_lower:
+        for char in query:
             if char not in node.children:
                 break
             node = node.children[char]
             if node.is_end:
                 for entity in node.entities:
-                    score = self._calculate_score(query_lower, entity.name.lower())
+                    score = self._calculate_score(query, entity.name.lower())
                     matches.append((entity, score))
         
-        # Sort by score and return top matches
-        matches.sort(key=lambda x: x[1], reverse=True)
-        return matches[:max_results]
+        return matches
     
     def _calculate_score(self, query: str, entity_name: str) -> float:
         """Calculate similarity score between query and entity name."""
@@ -169,6 +238,161 @@ class FuzzyMatcher:
         total = len(query_chars | entity_chars)
         
         return overlap / total if total > 0 else 0.0
+    
+    def get_confidence_level(self, score: float) -> str:
+        """Get confidence level based on score."""
+        if score >= self.high_threshold:
+            return "high"
+        elif score >= self.medium_threshold:
+            return "medium"
+        else:
+            return "low"
+    
+    def should_auto_correct(self, score: float) -> bool:
+        """Determine if score is high enough for auto-correction."""
+        return score >= self.high_threshold
+    
+    def should_suggest_correction(self, score: float) -> bool:
+        """Determine if score is high enough to suggest correction."""
+        return score >= self.medium_threshold
+
+
+class DisambiguationDialogue:
+    """Handle disambiguation when multiple fuzzy matches are found."""
+    
+    def __init__(self, fuzzy_matcher: FuzzyMatcher):
+        """Initialize disambiguation dialogue with fuzzy matcher."""
+        self.fuzzy_matcher = fuzzy_matcher
+    
+    def handle_multiple_matches(self, query: str, matches: List[Tuple[Entity, float]]) -> Dict[str, Any]:
+        """Handle multiple fuzzy matches by creating disambiguation dialogue.
+        
+        Args:
+            query: Original user query
+            matches: List of (entity, score) tuples
+            
+        Returns:
+            Dictionary with disambiguation information
+        """
+        if len(matches) == 0:
+            return {"needs_disambiguation": False}
+        elif len(matches) == 1:
+            # Single match - auto-select if confidence is high enough
+            entity, score = matches[0]
+            if score >= self.fuzzy_matcher.high_threshold:
+                return {
+                    "needs_disambiguation": False,
+                    "auto_selected": entity,
+                    "confidence": "high"
+                }
+            else:
+                return {"needs_disambiguation": False}
+        
+        # Filter matches by confidence level
+        high_confidence = [m for m in matches if m[1] >= self.fuzzy_matcher.high_threshold]
+        medium_confidence = [m for m in matches if m[1] >= self.fuzzy_matcher.medium_threshold]
+        
+        if len(high_confidence) == 1:
+            # Single high confidence match - auto-select
+            return {
+                "needs_disambiguation": False,
+                "auto_selected": high_confidence[0][0],
+                "confidence": "high"
+            }
+        elif len(high_confidence) > 1:
+            # Multiple high confidence matches - need disambiguation
+            return self._create_disambiguation_options(query, high_confidence, "high")
+        elif len(medium_confidence) > 1:
+            # Multiple medium confidence matches - need disambiguation
+            return self._create_disambiguation_options(query, medium_confidence, "medium")
+        else:
+            # Low confidence matches - suggest alternatives
+            return self._create_suggestion_options(query, matches)
+    
+    def _create_disambiguation_options(self, query: str, matches: List[Tuple[Entity, float]], confidence_level: str) -> Dict[str, Any]:
+        """Create disambiguation options for multiple matches."""
+        options = []
+        for i, (entity, score) in enumerate(matches[:5]):  # Limit to 5 options
+            options.append({
+                "index": i + 1,
+                "entity": entity.name,
+                "aliases": entity.aliases[:2],  # Show first 2 aliases
+                "entity_type": entity.entity_type.value,
+                "score": score,
+                "description": self._get_entity_description(entity)
+            })
+        
+        return {
+            "needs_disambiguation": True,
+            "confidence_level": confidence_level,
+            "query": query,
+            "options": options,
+            "message": self._generate_disambiguation_message(query, confidence_level, len(options))
+        }
+    
+    def _create_suggestion_options(self, query: str, matches: List[Tuple[Entity, float]]) -> Dict[str, Any]:
+        """Create suggestion options for low confidence matches."""
+        suggestions = []
+        for entity, score in matches[:3]:  # Top 3 suggestions
+            suggestions.append({
+                "entity": entity.name,
+                "aliases": entity.aliases[:1],
+                "entity_type": entity.entity_type.value,
+                "score": score
+            })
+        
+        return {
+            "needs_disambiguation": False,
+            "needs_suggestion": True,
+            "query": query,
+            "suggestions": suggestions,
+            "message": f"Did you mean one of these? {', '.join([s['entity'] for s in suggestions])}"
+        }
+    
+    def _get_entity_description(self, entity: Entity) -> str:
+        """Get a brief description of the entity for disambiguation."""
+        if entity.entity_type == EntityType.TOOL:
+            return f"Security tool: {entity.name}"
+        elif entity.entity_type == EntityType.TECHNIQUE:
+            return f"Attack technique: {entity.name}"
+        elif entity.entity_type == EntityType.VULNERABILITY:
+            return f"Vulnerability: {entity.name}"
+        elif entity.entity_type == EntityType.PROTOCOL:
+            return f"Network protocol: {entity.name}"
+        elif entity.entity_type == EntityType.PLATFORM:
+            return f"Platform: {entity.name}"
+        else:
+            return f"Security concept: {entity.name}"
+    
+    def _generate_disambiguation_message(self, query: str, confidence_level: str, num_options: int) -> str:
+        """Generate disambiguation message for user."""
+        if confidence_level == "high":
+            return f"I found multiple high-confidence matches for '{query}'. Which one did you mean?"
+        else:
+            return f"I found {num_options} possible matches for '{query}'. Which one did you mean?"
+    
+    def resolve_disambiguation(self, disambiguation_info: Dict[str, Any], user_choice: int) -> Optional[Entity]:
+        """Resolve user's disambiguation choice.
+        
+        Args:
+            disambiguation_info: Information from handle_multiple_matches
+            user_choice: User's choice (1-based index)
+            
+        Returns:
+            Selected entity or None if invalid choice
+        """
+        if not disambiguation_info.get("needs_disambiguation", False):
+            return None
+        
+        options = disambiguation_info.get("options", [])
+        if 1 <= user_choice <= len(options):
+            selected_option = options[user_choice - 1]
+            # Find the entity by name
+            for entity in self.fuzzy_matcher._entity_map.values():
+                if entity.name == selected_option["entity"]:
+                    return entity
+        
+        return None
 
 class PerformanceMonitor:
     """Monitor performance metrics for optimization."""
@@ -239,7 +463,8 @@ class DataDrivenKnowledgeBase:
         
         # Fast lookup structures
         self._alias_index: Dict[str, Entity] = {}
-        self._fuzzy_matcher = FuzzyMatcher()
+        self._fuzzy_matcher = FuzzyMatcher(high_threshold=0.8, medium_threshold=0.6)
+        self._disambiguation_dialogue = DisambiguationDialogue(self._fuzzy_matcher)
         self._entity_cache: Dict[str, Optional[Entity]] = {}
         
         # Data.py integration
@@ -632,7 +857,7 @@ class DataDrivenKnowledgeBase:
     
     @lru_cache(maxsize=1000)
     def resolve_entity(self, text: str) -> Optional[Entity]:
-        """High-performance entity resolution with caching."""
+        """High-performance entity resolution with enhanced fuzzy matching."""
         if self.monitor:
             self.monitor.entity_lookups += 1
         
@@ -650,18 +875,33 @@ class DataDrivenKnowledgeBase:
         if self.monitor:
             self.monitor.cache_misses += 1
         
-        # Fast hash lookup
+        # Fast hash lookup first
         entity = self._alias_index.get(text_lower)
         if entity:
             self._entity_cache[text_lower] = entity
             return entity
         
-        # Fuzzy matching for partial matches
-        fuzzy_matches = self._fuzzy_matcher.find_matches(text_lower, max_results=1)
+        # Enhanced fuzzy matching
+        fuzzy_matches = self._fuzzy_matcher.find_matches(text_lower, max_results=5)
         if fuzzy_matches:
-            entity = fuzzy_matches[0][0]
-            self._entity_cache[text_lower] = entity
-            return entity
+            # Check if we need disambiguation
+            disambiguation_info = self._disambiguation_dialogue.handle_multiple_matches(text_lower, fuzzy_matches)
+            
+            if disambiguation_info.get("needs_disambiguation", False):
+                # Return the disambiguation info instead of an entity
+                # This will be handled by the calling code
+                self._entity_cache[text_lower] = disambiguation_info
+                return disambiguation_info
+            elif disambiguation_info.get("auto_selected"):
+                # Auto-selected high confidence match
+                entity = disambiguation_info["auto_selected"]
+                self._entity_cache[text_lower] = entity
+                return entity
+            elif fuzzy_matches:
+                # Single best match
+                entity = fuzzy_matches[0][0]
+                self._entity_cache[text_lower] = entity
+                return entity
         
         # Cache miss
         self._entity_cache[text_lower] = None
@@ -675,6 +915,23 @@ class DataDrivenKnowledgeBase:
             if related_entity:
                 related.append(related_entity)
         return related
+    
+    def _find_entity_by_name(self, name: str) -> Optional[Entity]:
+        """Find entity by name (handles aliases)."""
+        # Direct lookup first
+        # Get all entities
+        all_entities = self._get_all_entities()
+        
+        # Direct lookup first
+        if name in all_entities:
+            return all_entities[name]
+        
+        # Search through all entities for aliases
+        for entity in all_entities.values():
+            if name == entity.name.lower() or name in [alias.lower() for alias in entity.aliases]:
+                return entity
+        
+        return None
     
     def get_performance_stats(self) -> Dict[str, Any]:
         """Get performance statistics."""
@@ -950,7 +1207,7 @@ class IntentClassifier:
         return intent_result
     
     def _extract_entities(self, query: str) -> List[Entity]:
-        """Extract cybersecurity entities from query."""
+        """Extract cybersecurity entities from query with enhanced fuzzy matching."""
         entities = []
         words = query.split()
         
@@ -958,15 +1215,35 @@ class IntentClassifier:
         for i in range(len(words)):
             for j in range(i + 1, min(i + 4, len(words) + 1)):  # Check up to 3-word phrases
                 phrase = ' '.join(words[i:j])
-                entity = self.knowledge_base.resolve_entity(phrase)
-                if entity and entity not in entities:
-                    entities.append(entity)
+                result = self.knowledge_base.resolve_entity(phrase)
+                
+                # Handle disambiguation info
+                if isinstance(result, dict) and result.get("needs_disambiguation"):
+                    # For now, just use the first option for multi-word phrases
+                    # In a full implementation, this would trigger disambiguation dialogue
+                    continue
+                elif isinstance(result, Entity):
+                    if result not in entities:
+                        entities.append(result)
         
-        # Check for single-word entities
+        # Check for single-word entities with fuzzy matching
         for word in words:
-            entity = self.knowledge_base.resolve_entity(word)
-            if entity and entity not in entities:
-                entities.append(entity)
+            result = self.knowledge_base.resolve_entity(word)
+            
+            # Handle disambiguation info
+            if isinstance(result, dict) and result.get("needs_disambiguation"):
+                # For single words, we can handle disambiguation more gracefully
+                # Use the highest confidence match for now
+                options = result.get("options", [])
+                if options:
+                    # Find the entity for the first option
+                    first_option = options[0]
+                    entity = self.knowledge_base._find_entity_by_name(first_option["entity"])
+                    if entity and entity not in entities:
+                        entities.append(entity)
+            elif isinstance(result, Entity):
+                if result not in entities:
+                    entities.append(result)
         
         return entities
 

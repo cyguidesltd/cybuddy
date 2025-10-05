@@ -199,17 +199,44 @@ class SimpleTUI:
         self.console.print("  [dim]tip 'SQL injection basics'[/dim]")
         self.console.print("  [dim]help 'connection refused'[/dim]")
         self.console.print()
+        self.console.print("[green]💡 Natural Language Support:[/green]")
+        self.console.print("  [dim]how do I scan ports?[/dim]")
+        self.console.print("  [dim]what is nmap?[/dim]")
+        self.console.print("  [dim]tips on sql injection[/dim]")
+        self.console.print("  [dim]I'm stuck on this nmap thing[/dim]")
+        self.console.print()
 
     def _process_command(self, text: str) -> None:
         """Process user command."""
         import shlex
+        from ..nl_parser import is_natural_language, parse_natural_query
 
-        # Parse command using shlex for proper shell-like parsing
-        try:
-            parts = shlex.split(text)
-        except ValueError:
-            # Fallback for unclosed quotes
-            parts = text.split()
+        # Check if input is natural language first
+        if is_natural_language(text):
+            self.console.print()
+            self.console.print("[cyan]🤔 Detected natural language input[/cyan]")
+            
+            # Parse the natural language query
+            cmd, parsed_query = parse_natural_query(text)
+            
+            # Show what we understood
+            self.console.print(f"[dim]I think you mean: {cmd} '{parsed_query}'[/dim]")
+            self.console.print()
+            
+            # Process as the parsed command
+            if cmd == "clarify":
+                self.console.print(f"[yellow]❓ {parsed_query}[/yellow]")
+                return
+            
+            # Set up for normal command processing
+            parts = [cmd, parsed_query]
+        else:
+            # Parse command using shlex for proper shell-like parsing
+            try:
+                parts = shlex.split(text)
+            except ValueError:
+                # Fallback for unclosed quotes
+                parts = text.split()
 
         if not parts:
             return

@@ -1,4 +1,4 @@
-# Cybuddy 🛡️
+# 🛡️ Cybuddy 
 
 **Your cybersecurity learning companion** — Get instant answers about security tools, attack techniques, and CTF scenarios. No tabs, no confusion, just fast learning.
 
@@ -112,22 +112,22 @@ Once you run `cybuddy`, you have exactly 8 commands with smart features:
 ## FAQ
 
 **Q: Is this better than using real security tools?**
-A: No. Cybuddy is a *learning tool* to help you understand and use real tools effectively.
+No. Cybuddy is a *learning tool* to help you understand and use real tools effectively.
 
 **Q: Does it replace Google/Stack Overflow?**
-A: For quick hints and common tasks, yes. For deep technical dives, no.
+For quick hints and common tasks, yes. For deep technical dives, no.
 
 **Q: Can I use this during exams/CTFs?**
-A: Check your specific rules. Built-in knowledge base is usually OK.
+Check your specific rules. Built-in knowledge base is usually OK.
 
 **Q: Is my data sent anywhere?**
-A: No. Everything is local and offline. Your command history is stored locally in `~/.cybuddy/history.json`.
+No. Everything is local and offline. Your command history is stored locally in `~/.cybuddy/history.json`.
 
 **Q: How does the smart history work?**
-A: Cybuddy analyzes your command patterns, categorizes your learning topics, and provides intelligent suggestions based on your usage patterns and cybersecurity knowledge base.
+Cybuddy analyzes your command patterns, categorizes your learning topics, and provides intelligent suggestions based on your usage patterns and cybersecurity knowledge base.
 
 **Q: Why is it called Cybuddy?**
-A: It's your cybersecurity buddy — always ready to help you learn, no judgment, no confusion.
+It's your cybersecurity buddy — always ready to help you learn, no judgment, no confusion.
 
 ## Contributing
 

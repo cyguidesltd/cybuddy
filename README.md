@@ -5,7 +5,7 @@
 ## Access Levels
 Public Access (Free): Everyone can use CyBuddy’s core features and explore hundreds of cybersecurity topics instantly.
 
-Cyguides Bootcamp Access (Pro): Bootcamp users unlock advanced AI-powered prompts, personalized learning paths, and deeper interactive guidance directly integrated within CyBuddy.
+**Cyguides Bootcamp Access (Pro)**: Bootcamp users unlock advanced AI-powered prompts, personalized learning paths, and deeper interactive guidance directly integrated within CyBuddy.
 
 
 ## What is Cybuddy?

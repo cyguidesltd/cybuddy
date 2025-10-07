@@ -72,7 +72,6 @@ Thumbs.db
 .cursor/
 memory/
 coordination/
-docs/
 tests/
 
 
@@ -93,3 +92,4 @@ src/*.egg-info/
 # Claude Flow
 .claude-flow/
 .swarm/
+/docs/

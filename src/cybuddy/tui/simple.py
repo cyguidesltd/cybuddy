@@ -161,36 +161,17 @@ class SimpleTUI:
         """Show welcome message."""
         self.console.clear()
         self.console.print()
-        # Enhanced logo using block characters and gradient colors matching SVG
-        # Shield with medical cross: rgb(0,255,136) → rgb(0,255,255)
-        from rich.text import Text
-
-        # Create shield logo with gradient
-        logo_lines = [
-            Text("        ▄▀▀▀▄", style="bold rgb(0,255,136)"),
-            Text("       █  │  █", style="bold rgb(0,255,150)"),
-            Text("      █ ──┼── █", style="bold rgb(0,255,170)"),
-            Text("      █   │   █", style="bold rgb(0,255,190)"),
-            Text("       █     █", style="bold rgb(0,255,210)"),
-            Text("        █   █", style="bold rgb(0,255,230)"),
-            Text("         █ █", style="bold rgb(0,255,245)"),
-            Text("          ▀", style="bold rgb(0,255,255)"),
-        ]
-
-        # Print shield
-        for line in logo_lines:
-            self.console.print(line, justify="center")
-
-        self.console.print()
-
-        # Print title with gradient effect (CY in white, BUDDY in cyan)
-        title = Text()
-        title.append("CY", style="bold white")
-        title.append("BUDDY", style="bold rgb(0,255,255)")
-        self.console.print(title, justify="center")
-
-        self.console.print("Your Security Learning Companion", style="dim italic", justify="center")
-        self.console.print()
+        
+        # Print colored shield logo with gradient (green to cyan) and medical cross
+        # Matches the SVG design: rgb(0,255,136) → rgb(0,255,255)
+        print("\033[1;38;2;0;255;136m        ▄▀▀▀▄\033[0m")
+        print("\033[1;38;2;0;255;150m       █  │  █\033[0m")
+        print("\033[1;38;2;0;255;170m      █ ──┼── █\033[0m      \033[1;97mCY\033[1;38;2;0;255;255mBUDDY\033[0m")
+        print("\033[1;38;2;0;255;190m      █   │   █\033[0m")
+        print("\033[1;38;2;0;255;210m       █     █\033[0m       \033[2mYour Security Learning Companion\033[0m")
+        print("\033[1;38;2;0;255;230m        █   █\033[0m")
+        print("\033[1;38;2;0;255;245m         █ █\033[0m")
+        print("\033[1;38;2;0;255;255m          ▀\033[0m\n")
 
         self.console.print("[cyan]Available commands:[/cyan]")
         for cmd, desc in self.COMMANDS.items():

@@ -45,7 +45,7 @@ Issues = "https://github.com/cyguidesltd/cybuddy/issues"
 Source = "https://github.com/cyguidesltd/cybuddy"
 
 [project.scripts]
-cybuddy = "cybuddy.cli:main"
+cybuddy = "cybuddy.__main__:run"
 
 [tool.ruff]
 line-length = 88

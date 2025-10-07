@@ -66,33 +66,10 @@ class SimpleTUI:
     def _show_welcome(self) -> None:
         """Show welcome message."""
         self.console.clear()
-        self.console.print()
-        # Enhanced logo using block characters and gradient colors matching SVG
-        # Shield with medical cross: rgb(0,255,136) → rgb(0,255,255)
+        from .tui.logo import render_logo  # type: ignore
+        logo = render_logo(self.console.width)
+        self.console.print(logo)
         from rich.text import Text
-
-        # Create shield logo with gradient
-        logo_lines = [
-            Text("        ▄▀▀▀▄", style="bold rgb(0,255,136)"),
-            Text("       █  │  █", style="bold rgb(0,255,150)"),
-            Text("      █ ──┼── █", style="bold rgb(0,255,170)"),
-            Text("      █   │   █", style="bold rgb(0,255,190)"),
-            Text("       █     █", style="bold rgb(0,255,210)"),
-            Text("        █   █", style="bold rgb(0,255,230)"),
-            Text("         █ █", style="bold rgb(0,255,245)"),
-            Text("          ▀", style="bold rgb(0,255,255)"),
-        ]
-
-        # Print shield
-        for line in logo_lines:
-            self.console.print(line, justify="center")
-
-        self.console.print()
-
-        # Print title with gradient effect (CY in white, BUDDY in cyan)
-        title = Text()
-        title.append("CY", style="bold white")
-        title.append("BUDDY", style="bold rgb(0,255,255)")
         self.console.print(title, justify="center")
 
         self.console.print("Your Security Learning Companion", style="dim italic", justify="center")

@@ -3,9 +3,9 @@
 **Your cybersecurity learning companion** — Get instant answers about security tools, attack techniques, and CTF scenarios. No tabs, no confusion, just fast learning.
 
 ## Access Levels
-Public Access (Free): Everyone can use CyBuddy’s core features and explore hundreds of cybersecurity topics instantly.
+Public Access (Free): Everyone can use Cybuddy’s core features and explore hundreds of cybersecurity topics instantly.
 
-**Cyguides Bootcamp Access (Pro)**: Bootcamp users unlock advanced AI-powered prompts, personalized learning paths, and deeper interactive guidance directly integrated within CyBuddy.
+**Cyguides Bootcamp Access (Pro)**: Bootcamp users unlock advanced AI-powered prompts, personalized learning paths, and deeper interactive guidance directly integrated within Cybuddy.
 
 
 ## What is Cybuddy?

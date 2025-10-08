@@ -131,10 +131,11 @@ class FuzzyMatcher:
         self._entity_names: List[str] = []
         self._entity_map: Dict[str, Entity] = {}
     
-    def build_trie(self, entities: Dict[str, Entity]) -> None:
+    def build_trie(self, entities: Dict[str, Entity], alias_index: Dict[str, Entity] = None) -> None:
         """Build trie from entities for fast prefix matching."""
         self._entity_map = entities.copy()
         self._entity_names = []
+        self._alias_index = alias_index or {}
         
         for name, entity in entities.items():
             self._insert_entity(name.lower(), entity)
@@ -167,8 +168,8 @@ class FuzzyMatcher:
             entity = self._entity_map[query_lower]
             return [(entity, 1.0)]
         
-        # Check alias index for fast lookup
-        if query_lower in self._alias_index:
+        # Check if we have access to alias index (from knowledge base)
+        if hasattr(self, '_alias_index') and query_lower in self._alias_index:
             entity = self._alias_index[query_lower]
             return [(entity, 0.95)]  # High confidence for alias matches
         
@@ -663,7 +664,7 @@ class DataDrivenKnowledgeBase:
         
         # Build fuzzy matcher
         all_entities = self._get_all_entities()
-        self._fuzzy_matcher.build_trie(all_entities)
+        self._fuzzy_matcher.build_trie(all_entities, self._alias_index)
         
         self._indexes_built = True
     

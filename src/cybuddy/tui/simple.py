@@ -191,14 +191,15 @@ class SimpleTUI:
         self.console.print()
 
     def _process_command(self, text: str) -> None:
-        """Process user command."""
+        """Process user command with progressive loading feedback."""
         import shlex
         from ..nl_parser import is_natural_language, parse_natural_query
 
-        # Check if input is natural language first
+        # Show processing feedback for natural language queries
         if is_natural_language(text):
-            # Parse the natural language query
-            cmd, parsed_query = parse_natural_query(text)
+            # Show processing indicator
+            with self.console.status("[bold green]Processing natural language query...", spinner="dots"):
+                cmd, parsed_query = parse_natural_query(text)
             
             # Process as the parsed command
             if cmd == "clarify":
@@ -223,9 +224,24 @@ class SimpleTUI:
         # This preserves the original behavior but handles quotes properly
         arg = " ".join(parts[1:]) if len(parts) > 1 else ""
 
-        # Route to handler
+        # Route to handler with processing feedback
         self.console.print()
+        
+        # Show processing feedback for complex operations
+        if cmd in ["explain", "tip", "help", "assist", "report", "quiz", "plan"]:
+            with self.console.status(f"[bold green]Processing {cmd} request...", spinner="dots"):
+                self._execute_command(cmd, arg)
+        else:
+            self._execute_command(cmd, arg)
 
+        # Log to history
+        history_append(
+            {"type": "tui", "data": {"cmd": cmd, "arg": arg}},
+            session=self.session_name
+        )
+
+    def _execute_command(self, cmd: str, arg: str) -> None:
+        """Execute a command with the given argument."""
         if cmd == "explain":
             if not arg:
                 self.console.print("[red]⚠[/red] Usage: explain '<command>'")
@@ -279,12 +295,6 @@ class SimpleTUI:
             self.console.print("[dim]Available: " + ", ".join(self.COMMANDS.keys()) + "[/dim]")
 
         self.console.print()
-
-        # Log to history
-        history_append(
-            {"type": "tui", "data": {"cmd": cmd, "arg": arg}},
-            session=self.session_name
-        )
 
     def _print_response(self, title: str, content: str) -> None:
         """Print formatted response with README-style borders and syntax highlighting."""

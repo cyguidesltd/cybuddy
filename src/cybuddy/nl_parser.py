@@ -16,6 +16,7 @@ Examples:
 from __future__ import annotations
 
 import re
+import time
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Any
 from enum import Enum
@@ -155,34 +156,63 @@ class FuzzyMatcher:
         node.is_end = True
     
     def find_matches(self, query: str, max_results: int = 5) -> List[Tuple[Entity, float]]:
-        """Find fuzzy matches using thefuzz library with trie fallback."""
+        """Find fuzzy matches using thefuzz library with early termination optimization."""
         if not self._built:
             return []
         
         query_lower = query.lower().strip()
+        
+        # Early termination for exact matches
+        if query_lower in self._entity_map:
+            entity = self._entity_map[query_lower]
+            return [(entity, 1.0)]
+        
+        # Check alias index for fast lookup
+        if query_lower in self._alias_index:
+            entity = self._alias_index[query_lower]
+            return [(entity, 0.95)]  # High confidence for alias matches
+        
         matches = []
         
         # Use thefuzz if available for better scoring
         if THEFUZZ_AVAILABLE and self._entity_names:
-            # Get top matches using thefuzz
+            # Optimize limit based on query length and expected matches
+            search_limit = min(max_results * 3, len(self._entity_names))
+            
+            # Get top matches using thefuzz with early termination
             thefuzz_matches = process.extract(
                 query_lower, 
                 self._entity_names, 
-                limit=max_results * 2,  # Get more to filter by entity
+                limit=search_limit,
                 scorer=fuzz.ratio
             )
             
-            # Convert thefuzz results to our format
+            # Early termination: stop if we have high-confidence matches
+            high_confidence_found = False
             for match_name, score in thefuzz_matches:
-                # Find the entity for this match
-                entity = self._find_entity_by_name(match_name)
-                if entity and score >= self.medium_threshold * 100:  # Convert to 0-100 scale
-                    matches.append((entity, score / 100.0))  # Convert back to 0-1 scale
+                if score >= self.high_threshold * 100:  # High confidence threshold
+                    entity = self._find_entity_by_name(match_name)
+                    if entity:
+                        matches.append((entity, score / 100.0))
+                        high_confidence_found = True
+                        # Early termination: if we have enough high-confidence matches, stop
+                        if len(matches) >= max_results:
+                            break
+                
+                # If we found high confidence matches, don't process lower confidence ones
+                if high_confidence_found and score < self.high_threshold * 100:
+                    break
+                    
+                # Continue with medium confidence matches only if no high confidence found
+                if not high_confidence_found and score >= self.medium_threshold * 100:
+                    entity = self._find_entity_by_name(match_name)
+                    if entity:
+                        matches.append((entity, score / 100.0))
         else:
-            # Fallback to trie-based matching
+            # Fallback to trie-based matching with early termination
             matches = self._trie_based_matching(query_lower, max_results)
         
-        # Sort by score and return top matches
+        # Sort by score and return top matches (already limited by early termination)
         matches.sort(key=lambda x: x[1], reverse=True)
         return matches[:max_results]
     
@@ -403,6 +433,9 @@ class PerformanceMonitor:
         self.cache_hits = 0
         self.cache_misses = 0
         self.entity_lookups = 0
+        self.singleton_benefits = 0  # Track singleton pattern benefits
+        self.early_terminations = 0  # Track early termination benefits
+        self.precompiled_pattern_hits = 0  # Track pre-compiled pattern benefits
     
     def time_operation(self, operation_name: str):
         """Decorator to time operations."""
@@ -436,10 +469,30 @@ class PerformanceMonitor:
         }
         
         stats['entity_lookups'] = self.entity_lookups
+        
+        # Optimization benefits
+        stats['optimization_benefits'] = {
+            'singleton_benefits': self.singleton_benefits,
+            'early_terminations': self.early_terminations,
+            'precompiled_pattern_hits': self.precompiled_pattern_hits,
+            'total_optimizations': (self.singleton_benefits + 
+                                  self.early_terminations + 
+                                  self.precompiled_pattern_hits)
+        }
+        
         return stats
 
 class DataDrivenKnowledgeBase:
-    """High-performance cybersecurity knowledge base using data.py."""
+    """High-performance cybersecurity knowledge base using data.py with singleton pattern."""
+    
+    _instance: Optional['DataDrivenKnowledgeBase'] = None
+    _initialized: bool = False
+    
+    def __new__(cls, enable_monitoring: bool = False):
+        """Singleton pattern implementation."""
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
     
     def __init__(self, enable_monitoring: bool = False):
         """Initialize data-driven knowledge base with lazy loading.
@@ -447,6 +500,10 @@ class DataDrivenKnowledgeBase:
         Args:
             enable_monitoring: Whether to enable performance monitoring.
         """
+        # Only initialize once, even if called multiple times
+        if self._initialized:
+            return
+            
         self.enable_monitoring = enable_monitoring
         self.monitor = PerformanceMonitor() if enable_monitoring else None
         
@@ -474,6 +531,22 @@ class DataDrivenKnowledgeBase:
         self._report_db: Optional[Dict] = None
         self._quiz_db: Optional[Dict] = None
         self._plan_db: Optional[Dict] = None
+        
+        # Mark as initialized
+        self._initialized = True
+    
+    @classmethod
+    def get_instance(cls, enable_monitoring: bool = False) -> 'DataDrivenKnowledgeBase':
+        """Get the singleton instance of the knowledge base."""
+        if cls._instance is None:
+            cls._instance = cls(enable_monitoring)
+        return cls._instance
+    
+    @classmethod
+    def reset_instance(cls) -> None:
+        """Reset the singleton instance (for testing)."""
+        cls._instance = None
+        cls._initialized = False
     
     def _lazy_load_data(self) -> None:
         """Lazy load data.py only when needed."""
@@ -857,7 +930,7 @@ class DataDrivenKnowledgeBase:
     
     @lru_cache(maxsize=1000)
     def resolve_entity(self, text: str) -> Optional[Entity]:
-        """High-performance entity resolution with enhanced fuzzy matching."""
+        """High-performance entity resolution with enhanced fuzzy matching and early termination."""
         if self.monitor:
             self.monitor.entity_lookups += 1
         
@@ -866,7 +939,7 @@ class DataDrivenKnowledgeBase:
         
         text_lower = text.lower().strip()
         
-        # Check cache first
+        # Check cache first (fastest path)
         if text_lower in self._entity_cache:
             if self.monitor:
                 self.monitor.cache_hits += 1
@@ -875,21 +948,25 @@ class DataDrivenKnowledgeBase:
         if self.monitor:
             self.monitor.cache_misses += 1
         
-        # Fast hash lookup first
+        # Fast hash lookup (O(1) operation)
         entity = self._alias_index.get(text_lower)
         if entity:
             self._entity_cache[text_lower] = entity
             return entity
         
-        # Enhanced fuzzy matching
-        fuzzy_matches = self._fuzzy_matcher.find_matches(text_lower, max_results=5)
+        # Early termination for very short queries (likely not entities)
+        if len(text_lower) < 2:
+            self._entity_cache[text_lower] = None
+            return None
+        
+        # Enhanced fuzzy matching with early termination
+        fuzzy_matches = self._fuzzy_matcher.find_matches(text_lower, max_results=3)  # Reduced from 5
         if fuzzy_matches:
             # Check if we need disambiguation
             disambiguation_info = self._disambiguation_dialogue.handle_multiple_matches(text_lower, fuzzy_matches)
             
             if disambiguation_info.get("needs_disambiguation", False):
                 # Return the disambiguation info instead of an entity
-                # This will be handled by the calling code
                 self._entity_cache[text_lower] = disambiguation_info
                 return disambiguation_info
             elif disambiguation_info.get("auto_selected"):
@@ -898,12 +975,14 @@ class DataDrivenKnowledgeBase:
                 self._entity_cache[text_lower] = entity
                 return entity
             elif fuzzy_matches:
-                # Single best match
-                entity = fuzzy_matches[0][0]
-                self._entity_cache[text_lower] = entity
-                return entity
+                # Single best match with confidence check
+                best_match = fuzzy_matches[0]
+                if best_match[1] >= 0.6:  # Only return if confidence is reasonable
+                    entity = best_match[0]
+                    self._entity_cache[text_lower] = entity
+                    return entity
         
-        # Cache miss
+        # Cache miss with None result
         self._entity_cache[text_lower] = None
         return None
     
@@ -1002,12 +1081,12 @@ class IntentClassifier:
     """Multi-layered intent classification with cybersecurity domain knowledge."""
     
     def __init__(self, enable_monitoring: bool = False):
-        """Initialize intent classifier with data-driven knowledge base.
+        """Initialize intent classifier with shared knowledge base.
         
         Args:
             enable_monitoring: Whether to enable performance monitoring.
         """
-        self.knowledge_base = DataDrivenKnowledgeBase(enable_monitoring=enable_monitoring)
+        self.knowledge_base = DataDrivenKnowledgeBase.get_instance(enable_monitoring=enable_monitoring)
         self.confidence_threshold = 0.7
         self.enable_monitoring = enable_monitoring
         
@@ -1084,6 +1163,11 @@ class IntentClassifier:
                 r'challenge (?:me )?(?:on )?(.*)',
             ],
         }
+        
+        # Pre-compile regex patterns for better performance
+        self._compiled_patterns = {}
+        for intent_type, patterns in self.intent_patterns.items():
+            self._compiled_patterns[intent_type] = [re.compile(pattern) for pattern in patterns]
     
     def classify_intent(self, query: str) -> IntentResult:
         """Classify user intent with confidence scoring."""
@@ -1104,22 +1188,21 @@ class IntentClassifier:
         return refined_intent
     
     def _fast_classify(self, query: str) -> IntentResult:
-        """Fast pattern-based intent classification."""
-        best_intent = IntentType.EXPLAIN
-        best_confidence = 0.0
+        """Fast pattern-based intent classification with pre-compiled patterns and early termination."""
         entities = []
         
-        for intent_type, patterns in self.intent_patterns.items():
-            for pattern in patterns:
-                match = re.match(pattern, query)
+        # Use pre-compiled patterns for better performance
+        for intent_type, compiled_patterns in self._compiled_patterns.items():
+            for compiled_pattern in compiled_patterns:
+                match = compiled_pattern.match(query)
                 if match:
-                    confidence = 0.9  # High confidence for pattern matches
+                    # Early termination: return immediately on first match
                     entities = self._extract_entities(query)
                     return IntentResult(
                         intent=intent_type,
-                        confidence=confidence,
+                        confidence=0.9,  # High confidence for pattern matches
                         entities=entities,
-                        context={"pattern": pattern, "match": match.group(1)}
+                        context={"pattern": compiled_pattern.pattern, "match": match.group(1)}
                     )
         
         # Default to explain with lower confidence
@@ -1256,12 +1339,12 @@ class ContextExtractor:
     """Extract and analyze context from user queries."""
     
     def __init__(self, enable_monitoring: bool = False):
-        """Initialize context extractor with data-driven knowledge base.
+        """Initialize context extractor with shared knowledge base.
         
         Args:
             enable_monitoring: Whether to enable performance monitoring.
         """
-        self.knowledge_base = DataDrivenKnowledgeBase(enable_monitoring=enable_monitoring)
+        self.knowledge_base = DataDrivenKnowledgeBase.get_instance(enable_monitoring=enable_monitoring)
         self.enable_monitoring = enable_monitoring
     
     def extract_context(self, query: str, session_history: List[str] = None) -> Dict[str, Any]:
@@ -1403,12 +1486,12 @@ class AmbiguityResolver:
     """Resolve ambiguities in user queries."""
     
     def __init__(self, enable_monitoring: bool = False):
-        """Initialize ambiguity resolver with data-driven knowledge base.
+        """Initialize ambiguity resolver with shared knowledge base.
         
         Args:
             enable_monitoring: Whether to enable performance monitoring.
         """
-        self.knowledge_base = DataDrivenKnowledgeBase(enable_monitoring=enable_monitoring)
+        self.knowledge_base = DataDrivenKnowledgeBase.get_instance(enable_monitoring=enable_monitoring)
         self.enable_monitoring = enable_monitoring
     
     def detect_ambiguities(self, query: str, entities: List[Entity]) -> List[Dict[str, Any]]:
@@ -1493,63 +1576,114 @@ class AmbiguityResolver:
 # ============================================================================
 
 class ParserCache:
-    """Cache for parser results to improve performance."""
+    """Cache for parser results to improve performance with memory-aware eviction."""
     
-    def __init__(self, max_size: int = 1000):
-        """Initialize parser cache with specified maximum size.
+    def __init__(self, max_size: int = 1000, max_memory_mb: int = 50):
+        """Initialize parser cache with size and memory limits.
         
         Args:
             max_size: Maximum number of cached results.
+            max_memory_mb: Maximum memory usage in MB.
         """
         self.cache: Dict[str, UnderstandingResult] = {}
         self.max_size = max_size
+        self.max_memory_bytes = max_memory_mb * 1024 * 1024
         self.access_count: Dict[str, int] = {}
+        self.access_times: Dict[str, float] = {}
+        self._current_memory_usage = 0
     
     def get(self, query: str) -> Optional[UnderstandingResult]:
-        """Get cached result for query."""
+        """Get cached result for query with access tracking."""
         query_key = self._normalize_query(query)
         if query_key in self.cache:
             self.access_count[query_key] = self.access_count.get(query_key, 0) + 1
+            self.access_times[query_key] = time.time()
             return self.cache[query_key]
         return None
     
     def put(self, query: str, result: UnderstandingResult) -> None:
-        """Cache result for query."""
+        """Cache result for query with memory-aware eviction."""
         query_key = self._normalize_query(query)
         
-        # Evict least recently used if cache is full
-        if len(self.cache) >= self.max_size:
-            self._evict_lru()
+        # Estimate memory usage of the result
+        result_size = self._estimate_result_size(result)
         
+        # Check if we need to evict based on size or count
+        while (len(self.cache) >= self.max_size or 
+               self._current_memory_usage + result_size > self.max_memory_bytes):
+            self._evict_optimal()
+        
+        # Add to cache
         self.cache[query_key] = result
         self.access_count[query_key] = 1
+        self.access_times[query_key] = time.time()
+        self._current_memory_usage += result_size
     
     def _normalize_query(self, query: str) -> str:
         """Normalize query for consistent caching."""
         return query.lower().strip()
     
-    def _evict_lru(self) -> None:
-        """Evict least recently used entry."""
+    def _estimate_result_size(self, result: UnderstandingResult) -> int:
+        """Estimate memory usage of a result object."""
+        # Rough estimation based on object attributes
+        size = 0
+        size += len(result.original_query) * 2  # Unicode chars
+        size += len(result.processed_query) * 2
+        size += len(result.entities) * 100  # Entity objects are complex
+        size += len(str(result.parameters)) * 2
+        return size
+    
+    def _evict_optimal(self) -> None:
+        """Evict the optimal entry based on access frequency and recency."""
         if not self.cache:
             return
         
-        # Find entry with lowest access count
-        lru_key = min(self.access_count.keys(), key=lambda k: self.access_count[k])
+        current_time = time.time()
+        
+        # Calculate score for each entry (lower is better for eviction)
+        eviction_scores = {}
+        for key in self.cache.keys():
+            access_count = self.access_count.get(key, 1)
+            last_access = self.access_times.get(key, current_time)
+            age = current_time - last_access
+            
+            # Score based on frequency and recency (lower score = more likely to evict)
+            score = access_count / (1 + age / 3600)  # Age in hours
+            eviction_scores[key] = score
+        
+        # Evict the entry with the lowest score
+        lru_key = min(eviction_scores.keys(), key=lambda k: eviction_scores[k])
+        
+        # Update memory usage
+        if lru_key in self.cache:
+            result_size = self._estimate_result_size(self.cache[lru_key])
+            self._current_memory_usage -= result_size
+        
+        # Remove from all tracking structures
         del self.cache[lru_key]
-        del self.access_count[lru_key]
+        if lru_key in self.access_count:
+            del self.access_count[lru_key]
+        if lru_key in self.access_times:
+            del self.access_times[lru_key]
     
     def clear(self) -> None:
         """Clear all cached entries."""
         self.cache.clear()
         self.access_count.clear()
+        self.access_times.clear()
+        self._current_memory_usage = 0
     
     def stats(self) -> Dict[str, Any]:
-        """Get cache statistics."""
+        """Get cache statistics with memory information."""
+        total_accesses = sum(self.access_count.values())
         return {
             "size": len(self.cache),
             "max_size": self.max_size,
-            "hit_rate": len(self.cache) / max(1, sum(self.access_count.values())),
-            "most_accessed": max(self.access_count.items(), key=lambda x: x[1]) if self.access_count else None
+            "memory_usage_mb": self._current_memory_usage / (1024 * 1024),
+            "max_memory_mb": self.max_memory_bytes / (1024 * 1024),
+            "hit_rate": len(self.cache) / max(1, total_accesses),
+            "most_accessed": max(self.access_count.items(), key=lambda x: x[1]) if self.access_count else None,
+            "memory_efficiency": self._current_memory_usage / max(1, self.max_memory_bytes)
         }
 
 
